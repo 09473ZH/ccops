@@ -1,0 +1,5 @@
+---
+- name: 使用 apt 模块安装 htop
+  apt:
+    name: htop
+    state: present

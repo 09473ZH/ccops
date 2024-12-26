@@ -1,0 +1,3 @@
+---
+- name: 使用 command 模块 echo 123
+  command: echo 123

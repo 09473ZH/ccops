@@ -1,0 +1,23 @@
+{
+  "components": {
+    "host-selector": {
+      "host": "Host",
+      "label": "Labels",
+      "host-placeholder": "Select hosts",
+      "label-placeholder": "Select labels",
+      "label-tooltip": "Select labels to filter hosts",
+      "host-tooltip": "Select additional hosts",
+      "no-available-hosts": "No available hosts",
+      "enable-label-filter": "Enable Label Filter",
+      "disable-label-filter": "Disable Label Filter",
+      "show-more": "Show more",
+      "hosts": "hosts",
+      "host-selected-by-label": "Host Selected by Label",
+      "host-selected-by-label-des": "Host Selected by Label",
+      "no-hosts": "No hosts available",
+      "no-matching-hosts": "No matching hosts found",
+      "no-labels": "No labels available",
+      "no-matching-labels": "No matching labels found"
+    }
+  }
+}

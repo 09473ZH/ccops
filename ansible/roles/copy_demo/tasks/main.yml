@@ -1,0 +1,5 @@
+---
+- name: 使用 copy 拷贝
+  copy:
+    src: ws.py
+    dest: /tmp/ws.py

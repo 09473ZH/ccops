@@ -1,0 +1,7 @@
+---
+- name: copy
+  hosts: web
+  roles:
+    # - copy_demo
+    - debug_vars
+    - debug_vars2

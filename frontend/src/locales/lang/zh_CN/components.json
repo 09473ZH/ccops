@@ -1,0 +1,23 @@
+{
+  "components": {
+    "host-selector": {
+      "disable-label-filter": "禁用标签筛选",
+      "enable-label-filter": "启用标签筛选",
+      "host": "主机",
+      "host-placeholder": "选择主机",
+      "host-selected-by-label-des": "主机已通过标签选中",
+      "host-selected-by-label": "已选中",
+      "host-tooltip": "选择其他主机",
+      "label": "标签",
+      "label-placeholder": "选择标签",
+      "label-tooltip": "选择标签以筛选主机",
+      "no-available-hosts": "没有可用的主机",
+      "show-more": "查看全部",
+      "hosts": "台主机",
+      "no-hosts": "暂无主机",
+      "no-matching-hosts": "未找到匹配的主机",
+      "no-labels": "暂无标签",
+      "no-matching-labels": "未找到匹配的标签"
+    }
+  }
+}
