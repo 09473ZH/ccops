@@ -15,8 +15,8 @@ func AddRootPublicKey(pubKey string) error {
 		return nil
 	}
 
-	// 如果公钥不存在，先删除含有 cc@cc.ops 后缀的旧公钥
-	cleanCmd := exec.Command("sh", "-c", "sed -i '/cc@cc.ops$/d' /root/.ssh/authorized_keys")
+	// 如果公钥不存在，先删除含有 @cc.ops 后缀的旧公钥
+	cleanCmd := exec.Command("sh", "-c", "sed -i '/@cc.ops$/d' /root/.ssh/authorized_keys")
 	var cleanStderr bytes.Buffer
 	cleanCmd.Stderr = &cleanStderr
 	if err := cleanCmd.Run(); err != nil {

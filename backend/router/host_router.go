@@ -10,7 +10,7 @@ func (router RouterGroup) HostRouter() {
 	router.GET("host_list", app.HostListView)
 	router.GET("host/:id/", app.HostInfoView)
 	router.DELETE("host", app.HostRemoveView)
-	router.GET("host_access", app.HostAccessCommand)
+	router.GET("install", app.HostInstall)
 	router.POST("host_flush", app.HostFlushInfoView)
 	router.POST("host_rename", app.HostRename)
 	router.POST("host_label_create", app.HostLabelCreate)
