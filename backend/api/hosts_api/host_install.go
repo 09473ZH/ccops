@@ -13,7 +13,7 @@ type HostTypeQuery struct {
 
 }
 
-func (HostsApi) HostAccessCommand(c *gin.Context) {
+func (HostsApi) HostInstall(c *gin.Context) {
 	var cr HostTypeQuery
 	err := c.ShouldBindQuery(&cr)
 	if err != nil {
@@ -24,7 +24,7 @@ func (HostsApi) HostAccessCommand(c *gin.Context) {
 	var data string
 	global.DB.Model(&models.Configuration{}).Where("field_name = ?", "ServerUrl").Select("field_value").Scan(&serverUrl)
 	if serverUrl == "" {
-		res.FailWithMessage("请完善配置信息", c)
+		res.FailWithMessage("需要在系统配置中填入服务端地址", c)
 		return
 	}
 	if cr.OsFamily == "debian" {
