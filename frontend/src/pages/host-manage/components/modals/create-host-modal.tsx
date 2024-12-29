@@ -1,34 +1,40 @@
 import { Modal, Button, Tabs, Typography } from 'antd';
+import { useState } from 'react';
 
+import { useCreateHostCommand } from '../../hooks/useHost';
 import { TextAreaWithCopy } from '../text-area-with-copy';
 
 interface CreateHostModalProps {
   open: boolean;
   onClose: () => void;
 }
-const commands = [
-  {
-    key: '1',
-    label: 'Ubuntu/Debian',
-    command: `export DEBIAN_FRONTEND=noninteractive && curl -L -o /tmp/zerotier.deb "http://cdn.corgi.plus/ccops/zerotier-one_1.14.2_amd64_$(lsb_release -c -s).deb" && apt install -y -f /tmp/zerotier.deb && zerotier-cli join b6079f73c6b00640 && curl -L -o /tmp/osquery.deb http://cdn.corgi.plus/ccops/osquery_5.13.1-1.linux_amd64.deb && dpkg -i /tmp/osquery.deb && curl -o /tmp/ccagent.tgz http://cdn.corgi.plus/ccops/ccagent.tgz && tar zxvf /tmp/ccagent.tgz -C /usr/local/bin && /usr/local/bin/ccagent -action install -server ${
-      import.meta.env.VITE_CCSERVER_URL
-    }`,
-  },
-  {
-    key: '2',
-    label: 'CentOS',
-    command: `curl -L -o /tmp/osquery.rpm http://cdn.corgi.plus/ccops/osquery-5.13.1-1.linux.x86_64.rpm && sudo yum install /tmp/osquery.rpm && curl -o /tmp/ccagent.tgz http://cdn.corgi.plus/ccops/ccagent.tgz && tar zxvf /tmp/ccagent.tgz -C /usr/local/bin && /usr/local/bin/ccagent -action install -server ${
-      import.meta.env.VITE_CCSERVER_URL
-    }`,
-  },
+
+const osOptions = [
+  { key: '1', label: 'Ubuntu/Debian', osFamily: 'debian' },
+  { key: '2', label: 'CentOS', osFamily: 'redhat' },
 ];
 
 export function CreateHostModal({ open, onClose }: CreateHostModalProps) {
-  const items = commands.map(({ key, label, command }) => ({
+  const [osFamily, setOsFamily] = useState<string>('debian');
+  const { data: commandData, isLoading, error } = useCreateHostCommand(osFamily);
+
+  const getContent = (currentOs: string) => {
+    if (currentOs !== osFamily) return '切换标签加载';
+    if (isLoading) return '加载中...';
+    if (error) return error.toString();
+    return (typeof commandData === 'string' ? commandData : commandData?.command) || '';
+  };
+
+  const items = osOptions.map(({ key, label, osFamily: os }) => ({
     key,
     label,
-    children: <TextAreaWithCopy content={command} />,
+    children: <TextAreaWithCopy content={getContent(os)} />,
   }));
+
+  const handleTabChange = (key: string) => {
+    const selectedOs = osOptions.find((opt) => opt.key === key)?.osFamily || 'debian';
+    setOsFamily(selectedOs);
+  };
 
   return (
     <Modal
@@ -44,7 +50,7 @@ export function CreateHostModal({ open, onClose }: CreateHostModalProps) {
     >
       <div className="my-4">
         <Typography.Title level={5}>运行以下命令：</Typography.Title>
-        <Tabs defaultActiveKey="1" items={items} />
+        <Tabs defaultActiveKey="1" items={items} onChange={handleTabChange} />
       </div>
     </Modal>
   );

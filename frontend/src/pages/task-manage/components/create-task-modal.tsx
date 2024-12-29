@@ -94,12 +94,13 @@ export function CreateTaskModal({
               <Select
                 mode="multiple"
                 placeholder="请选择软件"
-                options={roleList
-                  .filter((role) => role.existActiveRevision)
-                  .map((role) => ({
-                    label: role.name,
-                    value: role.id,
-                  }))}
+                options={roleList.map((role) => ({
+                  label: role.existActiveRevision
+                    ? role.name
+                    : `${role.name}（请先激活版本后使用）`,
+                  value: role.id,
+                  disabled: !role.existActiveRevision,
+                }))}
               />
             </Form.Item>
           </Col>

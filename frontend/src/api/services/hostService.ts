@@ -80,6 +80,11 @@ const hostService = {
   assignLabels(params: { hostId: number; labelIds: number[] }) {
     return post<HostInfo, typeof params>('/api/host_assign_labels', params);
   },
+
+  /** 获取新增主机命令 */
+  getCreateHostCommand(osFamily: string) {
+    return get<{ command: string }>(`/api/install?osFamily=${osFamily}`);
+  },
 };
 
 export default hostService;

@@ -55,12 +55,6 @@ export const useUserToken = () => useUserStore((state) => state.userToken);
 export const useUserPermission = () => useUserStore((state) => state.userInfo.permissions);
 export const useUserActions = () => useUserStore((state) => state.actions);
 
-interface SignInResponse {
-  accessToken: string;
-  refreshToken: string;
-  userInfo: UserInfo;
-}
-
 export const useSignIn = () => {
   const navigatge = useNavigate();
   const { message } = App.useApp();
@@ -68,26 +62,42 @@ export const useSignIn = () => {
 
   const signInMutation = useMutation({
     mutationFn: userService.signin,
-  });
+    onSuccess: (res) => {
+      if (!res?.accessToken || !res?.refreshToken || !res?.userInfo) {
+        message.warning({
+          content: '登录失败',
+          duration: 3,
+        });
+        return;
+      }
 
-  const signIn = async (data: SignInReq) => {
-    try {
-      const res = await signInMutation.mutateAsync(data);
       setUserToken({
         accessToken: res.accessToken,
         refreshToken: res.refreshToken,
       });
       setUserInfo(res.userInfo);
       navigatge(HOMEPAGE, { replace: true });
-    } catch (err) {
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.message || '登录失败，请稍后重试';
       message.warning({
-        content: err.message,
+        content: errorMessage,
         duration: 3,
       });
-    }
-  };
+    },
+  });
 
-  return signIn;
+  return (data: SignInReq) => signInMutation.mutate(data);
+};
+
+export const useSignOut = () => {
+  const navigate = useNavigate();
+  const { clearUserInfoAndToken } = useUserActions();
+
+  return () => {
+    clearUserInfoAndToken();
+    navigate('/login', { replace: true });
+  };
 };
 
 export default useUserStore;

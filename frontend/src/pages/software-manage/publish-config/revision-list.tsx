@@ -1,5 +1,5 @@
 import { Table, Space, Modal, Typography, Select, List, Empty, Popconfirm } from 'antd';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 
 import { RevisionItem } from '@/api/services/softwareService';
 import { ActionButton } from '@/components/button';
@@ -16,9 +16,11 @@ import { formatTimeAgo } from '@/utils/format-time';
 
 interface RevisionListProps {
   id: number;
+  autoShowActivateModal?: boolean;
+  revisionIdToActivate?: number;
 }
 
-function RevisionList({ id }: RevisionListProps) {
+function RevisionList({ id, autoShowActivateModal, revisionIdToActivate }: RevisionListProps) {
   const { data: revisionList, isLoading } = useRoleRevisions(id);
   const { activeRevision, deleteRevision } = useRevisionOperations();
   const { open, close, isOpen } = useModalsControl({ modals: ['compare', 'versionFileList'] });
@@ -31,6 +33,7 @@ function RevisionList({ id }: RevisionListProps) {
     isComparing,
     actions,
   } = useRevisionStore();
+  const [showActivateModal, setShowActivateModal] = useState(autoShowActivateModal);
 
   const isNewVersion = (createdAt: string) => {
     const now = new Date();
@@ -100,6 +103,18 @@ function RevisionList({ id }: RevisionListProps) {
       }
     }
   }, [revisionList, handleCompare]);
+
+  useEffect(() => {
+    if (autoShowActivateModal) {
+      setShowActivateModal(true);
+    }
+  }, [autoShowActivateModal]);
+
+  const handleActivate = () => {
+    if (!revisionIdToActivate) return;
+    activeRevision(revisionIdToActivate);
+    setShowActivateModal(false);
+  };
 
   const columns = [
     {
@@ -265,6 +280,16 @@ function RevisionList({ id }: RevisionListProps) {
             </List.Item>
           )}
         />
+      </Modal>
+      <Modal
+        title="激活确认"
+        open={showActivateModal}
+        onOk={handleActivate}
+        onCancel={() => setShowActivateModal(false)}
+        okText="确认激活"
+        cancelText="取消"
+      >
+        <p>版本发布后，需要激活才可生效。是否激活？</p>
       </Modal>
     </div>
   );

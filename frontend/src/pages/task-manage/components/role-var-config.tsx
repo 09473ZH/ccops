@@ -7,6 +7,7 @@ import MonacoEditor from '@/components/monaco-editor';
 import ShowTooltip from '@/components/show-tooltip';
 import { useGetActiveRoleRevision } from '@/hooks/useRoleRevisions';
 import FileTable from '@/pages/file-manage/file-table';
+import { extractVariables } from '@/utils/ansible';
 import { formatDateTime, formatTimeAgo } from '@/utils/format-time';
 
 interface RoleVarConfigProps {
@@ -64,10 +65,7 @@ export function RoleVarConfig({ role, form }: RoleVarConfigProps) {
     }
 
     try {
-      const regex = /\{\{\s*([^{}]+?)\s*\}\}/g;
-      const matches = Array.from(revision.taskContent.matchAll(regex));
-      const uniqueVariables = new Set(matches.map((match) => match[1].trim()));
-      const vars = Array.from(uniqueVariables).map((varName) => ({
+      const vars = extractVariables(revision.taskContent).map((varName) => ({
         key: varName,
         value: '',
       }));

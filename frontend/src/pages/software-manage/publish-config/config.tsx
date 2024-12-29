@@ -17,7 +17,7 @@ import {
 
 interface ConfigProps {
   id: number;
-  onConfigRelease: () => void;
+  onConfigRelease: (revisionId: number) => void;
 }
 
 function EmptyConfig({ loading }: { loading?: boolean }) {
@@ -127,11 +127,9 @@ function Config({ id, onConfigRelease }: ConfigProps) {
   };
 
   const handleRelease = (versionId: number, changeInfo: string) => {
-    releaseRevision({ id: versionId, changeLog: changeInfo })
-      .then(() => {
-        onConfigRelease();
-      })
-      .catch(() => {});
+    releaseRevision({ id: versionId, changeLog: changeInfo }).then(() => {
+      onConfigRelease(versionId);
+    });
   };
 
   const handleFileSelectChange = (value: number[]) => {
@@ -342,7 +340,8 @@ function Config({ id, onConfigRelease }: ConfigProps) {
               title: '确认打包',
               content: (
                 <div className="py-2">
-                  <Input
+                  <Input.TextArea
+                    rows={4}
                     placeholder="请输入更新信息"
                     onChange={(e) => {
                       changeInfo = e.target.value;

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://d3george.github.io/react-admin-template",
+  "homepage": "https://09473zh.github.io/ccops",
   "scripts": {
     "dev": "vite",
     "dev:prod": "vite --mode production",

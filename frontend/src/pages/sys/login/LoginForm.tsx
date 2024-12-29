@@ -1,19 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Alert, Button, Checkbox, Col, Form, Input, Row } from 'antd';
+import { Button, Checkbox, Col, Form, Input, Row } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { SignInReq } from '@/api/services/userService';
 import { useSignIn } from '@/store/userStore';
-import ProTag from '@/theme/antd/components/tag';
-import { useThemeToken } from '@/theme/hooks';
 
-// 改为动态导入
+// TODO 使用手机号登录
 const { useLoginStateContext, LoginStateEnum } = await import('./providers/LoginStateProvider');
 
 function LoginForm() {
   const { t } = useTranslation();
-  const themeToken = useThemeToken();
   const [loading, setLoading] = useState(false);
 
   const { loginState, setLoginState } = useLoginStateContext();
@@ -60,16 +57,6 @@ function LoginForm() {
               <Form.Item name="remember" valuePropName="checked" noStyle>
                 <Checkbox>{t('sys.login.rememberMe')}</Checkbox>
               </Form.Item>
-            </Col>
-            <Col span={12} className="text-right">
-              <Button
-                type="link"
-                className="!underline"
-                onClick={() => setLoginState(LoginStateEnum.RESET_PASSWORD)}
-                size="small"
-              >
-                {t('sys.login.forgetPassword')}
-              </Button>
             </Col>
           </Row>
         </Form.Item>
