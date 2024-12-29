@@ -30,6 +30,7 @@ ccops
 * 终端：xterm.js
 
 ## 后端
+开发：@422949798 @shimada666
 * 框架：gin
 * ORM：gorm
 * 数据库：mysql
