@@ -125,11 +125,11 @@ export const getStyles = (theme: ThemeNames) => {
         container: 'flex items-center space-x-4',
         fontSelector: {
           container: 'flex items-center space-x-2',
-          select: getSelectStyle(),  // 使用新的选择器样式
+          select: getSelectStyle(), // 使用新的选择器样式
         },
         themeSelector: {
           container: 'relative inline-block',
-          select: getSelectStyle(),  // 使用新的选择器样式
+          select: getSelectStyle(), // 使用新的选择器样式
         },
         fontSizeButton: {
           container: 'flex items-center space-x-2',
@@ -156,12 +156,9 @@ export const getStyles = (theme: ThemeNames) => {
           'transition-all duration-200',
           {
             // 活动标签 - 增加对比度
-            'bg-terminal-dark-button text-terminal-dark-text':
-              isActive && theme === 'Dark',
-            'bg-terminal-light-button text-terminal-light-text ':
-              isActive && theme === 'Light',
-            'bg-terminal-retro-button text-terminal-retro-text':
-              isActive && theme === 'Retro',
+            'bg-terminal-dark-button text-terminal-dark-text': isActive && theme === 'Dark',
+            'bg-terminal-light-button text-terminal-light-text ': isActive && theme === 'Light',
+            'bg-terminal-retro-button text-terminal-retro-text': isActive && theme === 'Retro',
 
             // 非活动标签
             'hover:bg-gray-700/50 text-gray-600': !isActive && theme === 'Dark',
@@ -183,7 +180,7 @@ export const getStyles = (theme: ThemeNames) => {
           'hover:bg-gray-700 text-gray-400 hover:text-gray-200': theme === 'Dark',
           'hover:bg-gray-200 text-gray-600 hover:text-gray-800': theme === 'Light',
           'hover:bg-[#d5ccbf] text-[#45373a]/80 hover:text-[#45373a]': theme === 'Retro',
-        }
+        },
       ),
       addButton: cn(
         'flex h-9 w-9 items-center justify-center rounded-lg text-lg',
@@ -193,7 +190,7 @@ export const getStyles = (theme: ThemeNames) => {
           'text-gray-600 hover:bg-gray-200/30 hover:text-gray-800': theme === 'Light',
           'text-terminal-retro-text hover:bg-[#d5ccbf]/30 hover:text-terminal-retro-text':
             theme === 'Retro',
-        }
+        },
       ),
     },
 

@@ -56,13 +56,10 @@ export default function Header({ className = '' }: { className?: string }) {
           <div className="flex">
             <SearchBar />
             <LocalePicker />
-            <IconButton onClick={() => window.open('https://github.com/d3george/slash-admin')}>
+            <IconButton onClick={() => window.open('https://github.com/09473ZH/ccops')}>
               <Iconify icon="mdi:github" size={24} />
             </IconButton>
-            <IconButton onClick={() => window.open('https://discord.gg/fXemAXVNDa')}>
-              <Iconify icon="carbon:logo-discord" size={24} />
-            </IconButton>
-            <NoticeButton />
+            {/* <NoticeButton /> */}
             <SettingButton />
             <AccountDropdown />
           </div>

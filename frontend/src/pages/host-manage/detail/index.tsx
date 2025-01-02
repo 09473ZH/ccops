@@ -213,51 +213,52 @@ function HostDetail(): React.ReactElement {
       label: '基本信息',
       children: <BasicInfo hostInfo={hostInfo} />,
     },
-    {
-      key: 'disk',
-      label: '磁盘信息',
-      children: (
-        <Table
-          columns={[
-            { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-            {
-              title: '可用空间',
-              dataIndex: 'diskSpaceAvailable',
-              key: 'diskSpaceAvailable',
-              render: (value: number) => `${value.toFixed(1)} GB`,
-            },
-            {
-              title: '总空间',
-              dataIndex: 'totalDiskSpace',
-              key: 'totalDiskSpace',
-              render: (value: number) => `${value.toFixed(1)} GB`,
-            },
-            {
-              title: '可用比例',
-              dataIndex: 'percentDiskSpaceAvailable',
-              key: 'percentDiskSpaceAvailable',
-              render: (value: string) => `${value}%`,
-            },
-            {
-              title: '加密状态',
-              dataIndex: 'encrypted',
-              key: 'encrypted',
-              render: (value: boolean) => (value ? '已加密' : '未加密'),
-            },
-            {
-              title: '创建时间',
-              dataIndex: 'createdAt',
-              key: 'createdAt',
-              render: (text: string) => formatTimeAgo(text),
-            },
-          ]}
-          dataSource={hostInfo.disk}
-          rowKey="id"
-          pagination={false}
-          size="small"
-        />
-      ),
-    },
+    /** 磁盘信息 暂时不展示 */
+    // {
+    //   key: 'disk',
+    //   label: '磁盘信息',
+    //   children: (
+    //     <Table
+    //       columns={[
+    //         { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
+    //         {
+    //           title: '可用空间',
+    //           dataIndex: 'diskSpaceAvailable',
+    //           key: 'diskSpaceAvailable',
+    //           render: (value: number) => `${value.toFixed(1)} GB`,
+    //         },
+    //         {
+    //           title: '总空间',
+    //           dataIndex: 'totalDiskSpace',
+    //           key: 'totalDiskSpace',
+    //           render: (value: number) => `${value.toFixed(1)} GB`,
+    //         },
+    //         {
+    //           title: '可用比例',
+    //           dataIndex: 'percentDiskSpaceAvailable',
+    //           key: 'percentDiskSpaceAvailable',
+    //           render: (value: string) => `${value}%`,
+    //         },
+    //         {
+    //           title: '加密状态',
+    //           dataIndex: 'encrypted',
+    //           key: 'encrypted',
+    //           render: (value: boolean) => (value ? '已加密' : '未加密'),
+    //         },
+    //         {
+    //           title: '创建时间',
+    //           dataIndex: 'createdAt',
+    //           key: 'createdAt',
+    //           render: (text: string) => formatTimeAgo(text),
+    //         },
+    //       ]}
+    //       dataSource={hostInfo.disk}
+    //       rowKey="id"
+    //       pagination={false}
+    //       size="small"
+    //     />
+    //   ),
+    // },
     {
       key: 'users',
       label: '用户信息',
@@ -287,7 +288,6 @@ function HostDetail(): React.ReactElement {
       children: (
         <Table
           columns={[
-            { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
             { title: '名称', dataIndex: 'name', key: 'name' },
             { title: '版本', dataIndex: 'version', key: 'version' },
             { title: '型', dataIndex: 'type', key: 'type' },
@@ -302,6 +302,7 @@ function HostDetail(): React.ReactElement {
           rowKey="id"
           pagination={false}
           size="small"
+          scroll={{ y: 'calc(100vh - 220px)' }}
         />
       ),
     },

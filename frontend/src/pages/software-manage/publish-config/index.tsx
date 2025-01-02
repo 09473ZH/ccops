@@ -14,6 +14,14 @@ function PublishConfig() {
   const [activeTab, setActiveTab] = useState('1');
   const { list: softwareInfo } = useRoleList();
   const { setCustomBreadcrumbs } = useBreadcrumbStore();
+  const [showActivateModal, setShowActivateModal] = useState(false);
+  const [newRevisionId, setNewRevisionId] = useState<number>();
+
+  const handleConfigRelease = (revisionId: number) => {
+    setShowActivateModal(true);
+    setNewRevisionId(revisionId);
+    setActiveTab('2');
+  };
 
   const softwareId = Number(id);
   const softwareName = softwareInfo?.find((item) => item.id === softwareId)?.name;
@@ -22,12 +30,18 @@ function PublishConfig() {
     {
       key: '1',
       label: '基本信息',
-      children: <Config id={softwareId} onConfigRelease={() => setActiveTab('2')} />,
+      children: <Config id={softwareId} onConfigRelease={handleConfigRelease} />,
     },
     {
       key: '2',
       label: '版本列表',
-      children: <RevisionList id={softwareId} />,
+      children: (
+        <RevisionList
+          id={softwareId}
+          autoShowActivateModal={showActivateModal}
+          revisionIdToActivate={newRevisionId}
+        />
+      ),
     },
   ];
 

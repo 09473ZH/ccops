@@ -93,3 +93,13 @@ export function useHostDetail(hostId: number) {
     queryFn: () => hostService.getHostDetail(hostId),
   });
 }
+
+/**
+ * 获取新增主机命令
+ */
+export function useCreateHostCommand(osFamily: string) {
+  return useQuery({
+    queryKey: ['createHostCommand', osFamily],
+    queryFn: () => hostService.getCreateHostCommand(osFamily),
+  });
+}
