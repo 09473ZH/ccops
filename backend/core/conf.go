@@ -11,13 +11,12 @@ import (
 	"log"
 )
 
-const ConfigFile = "config/conf_yaml/settings.yaml"
 const DevConfigFile = "config/conf_yaml/settings-dev.yaml"
 const ProdConfigFile = "config/conf_yaml/settings-prod.yaml"
 
 // InitConf 读取yaml文件的配置
 func InitConf() {
-	applyFile := ConfigFile
+	applyFile := DevConfigFile
 	//fmt.Println(applyFile)
 
 	if os.Getenv("CCOPSENV") == "production" {
@@ -27,7 +26,7 @@ func InitConf() {
 		applyFile = DevConfigFile
 		log.Println("Be in dev environment")
 	} else {
-		log.Println("Be in local environment")
+		log.Println("Be in dev environment")
 	}
 	c := &config.Config{}
 	yamlConf, err := ioutil.ReadFile(applyFile) //yaml格式的数据存进去了，是个byte字节切片1

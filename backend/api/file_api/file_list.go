@@ -23,7 +23,7 @@ func (FileApi) FileListView(c *gin.Context) {
 
 	// 构建查询
 	query := global.DB.Model(&models.FileModel{}).
-		Select("id, file_name, file_md5, description, file_size, is_binary_file, tags, s3_bucket_name, s3_object_key, download_url")
+		Select("created_at,updated_at,id, file_name, file_md5, description, file_size, is_binary_file, tags, s3_bucket_name, s3_object_key, download_url")
 
 	// 如果提供了文件名，则添加 WHERE 条件和按匹配度排序
 	if cr.FileName != "" {
