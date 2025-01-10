@@ -5,6 +5,8 @@ import (
 	"ccops/global"
 	"ccops/models"
 	"ccops/models/res"
+	"ccops/utils/jwts"
+	"ccops/utils/permission"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -20,12 +22,19 @@ type HostNameRequest struct {
 }
 
 func (HostsApi) HostRename(c *gin.Context) {
+	_claims, _ := c.Get("claims")
+	claims := _claims.(*jwts.CustomClaims)
 	var cr HostNameRequest
 	if err := c.ShouldBindJSON(&cr); err != nil {
 		res.FailWithMessage(err.Error(), c)
 		return
 	}
-
+	var hostId uint
+	global.DB.Model(&models.HostModel{}).Where("host_server_url = ?", cr.HostServerUrl).Select("id").Scan(&hostId)
+	if !permission.IsPermission(claims.UserID, hostId) {
+		res.FailWithMessage("权限错误", c)
+		return
+	}
 	// 校验 host_name 是否符合要求
 
 	validHostName := regexp.MustCompile(`^[a-z0-9]+([-][a-z0-9]+)*$`)

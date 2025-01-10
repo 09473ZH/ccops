@@ -2,11 +2,12 @@ package router
 
 import (
 	"ccops/api"
+	"ccops/middleware"
 )
 
 func (router RouterGroup) HostRouter() {
 	app := api.ApiGroupApp.HostsApi
-	//router.Use(middleware.JwtUser())
+	router.Use(middleware.JwtUser())
 	router.GET("host_list", app.HostListView)
 	router.GET("host/:id/", app.HostInfoView)
 	router.DELETE("host", app.HostRemoveView)

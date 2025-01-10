@@ -2,11 +2,12 @@ package router
 
 import (
 	"ccops/api"
+	"ccops/middleware"
 )
 
 func (router RouterGroup) TaskRouter() {
 	app := api.ApiGroupApp.TaskApi
-	//router.Use(middleware.JwtUser())
+	router.Use(middleware.JwtUser())
 
 	router.POST("task", app.TaskCreateView)
 	router.GET("task", app.TaskListView)

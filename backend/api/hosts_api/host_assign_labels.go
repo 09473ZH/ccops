@@ -4,6 +4,8 @@ import (
 	"ccops/global"
 	"ccops/models"
 	"ccops/models/res"
+	"ccops/utils/jwts"
+	"ccops/utils/permission"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,9 +17,15 @@ type AssignLabelsRequest struct {
 }
 
 func (HostsApi) AssignLabelsToHost(c *gin.Context) {
+	_claims, _ := c.Get("claims")
+	claims := _claims.(*jwts.CustomClaims)
 	var req AssignLabelsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		res.FailWithMessage(err.Error(), c)
+		return
+	}
+	if !permission.IsAdmin(claims.UserID) {
+		res.FailWithMessage("权限错误", c)
 		return
 	}
 
