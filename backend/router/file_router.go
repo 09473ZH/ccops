@@ -2,11 +2,12 @@ package router
 
 import (
 	"ccops/api"
+	"ccops/middleware"
 )
 
 func (router RouterGroup) FileRouter() {
 	app := api.ApiGroupApp.FileApi
-	//router.Use(middleware.JwtUser())
+	router.Use(middleware.JwtUser())
 
 	router.POST("uploads", app.FilesUploadView)
 	router.GET("files", app.FileListView)

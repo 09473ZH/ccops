@@ -2,11 +2,12 @@ package router
 
 import (
 	"ccops/api"
+	"ccops/middleware"
 )
 
 func (router RouterGroup) RevisionRouter() {
 	app := api.ApiGroupApp.RoleRevisionApi
-	//router.Use(middleware.JwtUser())
+	router.Use(middleware.JwtUser())
 
 	router.PUT("role_revision/:id", app.RevisionFlush)
 	router.POST("role_revision/:id/release", app.RevisionReleaseView)

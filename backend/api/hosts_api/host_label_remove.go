@@ -4,12 +4,20 @@ import (
 	"ccops/global"
 	"ccops/models"
 	"ccops/models/res"
+	"ccops/utils/jwts"
+	"ccops/utils/permission"
 
 	"github.com/gin-gonic/gin"
 )
 
 // 删之前查标签下有没有标签，有的话不给删
 func (HostsApi) HostLabelRemoveView(c *gin.Context) {
+	_claims, _ := c.Get("claims")
+	claims := _claims.(*jwts.CustomClaims)
+	if !permission.IsAdmin(claims.UserID) {
+		res.FailWithMessage("权限错误", c)
+		return
+	}
 	id := c.Param("id")
 
 	// 开始事务

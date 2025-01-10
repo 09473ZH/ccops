@@ -2,11 +2,12 @@ package router
 
 import (
 	"ccops/api"
+	"ccops/middleware"
 )
 
 func (router RouterGroup) RoleRouter() {
 	app := api.ApiGroupApp.RoleApi
-	//router.Use(middleware.JwtUser())
+	router.Use(middleware.JwtUser())
 
 	router.POST("role", app.CreateRoleView)
 

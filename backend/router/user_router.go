@@ -2,6 +2,7 @@ package router
 
 import (
 	"ccops/api"
+	"ccops/middleware"
 )
 
 func (router RouterGroup) UserRouter() {
@@ -9,7 +10,8 @@ func (router RouterGroup) UserRouter() {
 
 	router.POST("login", app.UserLoginView)
 	router.POST("/refresh", app.RefreshTokenView)
-	//router.Use(middleware.JwtUser())
-	router.GET("/info", app.UserInfoView)
+	router.Use(middleware.JwtUser())
+	router.GET("/permission_info/:id", app.UserPermissionInfoView)
+	router.PUT("/assign_permission", app.AssignPermission)
 
 }

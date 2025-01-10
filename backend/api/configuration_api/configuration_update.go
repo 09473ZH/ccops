@@ -5,6 +5,8 @@ import (
 	"ccops/global"
 	"ccops/models"
 	"ccops/models/res"
+	"ccops/utils/jwts"
+	"ccops/utils/permission"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -22,6 +24,12 @@ type ConfigurationUpdateReq struct {
 }
 
 func (ConfigurationApi) ConfigurationUpdateView(c *gin.Context) {
+	_claims, _ := c.Get("claims")
+	claims := _claims.(*jwts.CustomClaims)
+	if !permission.IsAdmin(claims.UserID) {
+		res.FailWithMessage("权限错误", c)
+		return
+	}
 	var cr ConfigurationUpdateReq
 	if err := c.ShouldBindJSON(&cr); err != nil {
 		res.FailWithMessage("参数错误", c)

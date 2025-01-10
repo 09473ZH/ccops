@@ -32,6 +32,7 @@ func DB() {
 			&models.Configuration{},
 			&models.UserKeyModel{},
 			&models.SystemUserModel{},
+			&models.HostPermission{},
 		)
 	if err != nil {
 		global.Log.Error("[ error ] 生成数据库表结构失败")

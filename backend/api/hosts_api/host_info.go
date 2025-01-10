@@ -5,19 +5,22 @@ import (
 	"ccops/models"
 	"ccops/models/res"
 	"github.com/gin-gonic/gin"
+	"strconv"
 )
 
 func (HostsApi) HostInfoView(c *gin.Context) {
-	id := c.Param("id") // 从路径参数中获取 ID
+
+	hostID := c.Param("id")
+
+	id, _ := strconv.ParseUint(hostID, 10, 64)
+
 	var hostInfo models.HostModel
 	errHost := global.DB.Model(models.HostModel{}).
 		Where("id = ?", id).
 		Preload("Label").
-		
 		First(&hostInfo).Error
 
 	if errHost != nil {
-		// 检查错误信息
 		res.FailWithMessage("用户不存在: "+errHost.Error(), c)
 		return
 	}
