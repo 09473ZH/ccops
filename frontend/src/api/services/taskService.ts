@@ -131,7 +131,7 @@ const taskService = {
 
   /** 创建任务 */
   createTask(task: TaskReq) {
-    return post<number, TaskReq>('/api/task', task);
+    return post<number>('/api/task', task);
   },
 
   /** 删除任务 */
@@ -141,12 +141,12 @@ const taskService = {
 
   /** 创建Playbook类型任务（软件部署） */
   createPlaybookTask(task: Omit<PlaybookTaskReq, 'type'>) {
-    return post<number, TaskReq>('/api/task', { ...task, type: 'playbook' });
+    return post<number>('/api/task', { ...task, type: 'playbook' });
   },
 
   /** 创建Ad-hoc类型任务（快捷命令） */
   createAdHocTask(task: Omit<AdHocTaskReq, 'type'>) {
-    return post<number, TaskReq>('/api/task', { ...task, type: 'ad-hoc' });
+    return post<number>('/api/task', { ...task, type: 'ad-hoc' });
   },
 
   /** 获取任务WebSocket输出 */

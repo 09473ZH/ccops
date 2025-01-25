@@ -24,22 +24,22 @@ const labelService = {
 
   /** 分配标签 */
   assignLabel(params: { hostId: number; labelIds: number[] }) {
-    return post<void, typeof params>('/api/host_assign_labels', params);
+    return post<void>('/api/host_assign_labels', params);
   },
 
   /** 删除标签 */
   deleteLabel(labelId: number) {
-    return del<void, { labelId: number }>(`/api/host_label/${labelId}/`, { labelId });
+    return del<void>(`/api/host_label/${labelId}/`, { labelId });
   },
 
   /** 创建标签 */
   createLabel(params: { name: string }) {
-    return post<void, typeof params>('/api/host_label_create', params);
+    return post<void>('/api/host_label_create', params);
   },
 
   /** 解绑主机标签 */
   unbindHostsLabel(labelId: number) {
-    return put<void, { labelId: number }>(`/api/host_label_disassociate/${labelId}/`, { labelId });
+    return put<void>(`/api/host_label_disassociate/${labelId}/`, { labelId });
   },
 };
 

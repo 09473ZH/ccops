@@ -44,12 +44,12 @@ export interface RoleListResponse {
 const softwareService = {
   /** 创建软件配置 */
   createRole(role: Omit<RoleItem, 'id' | 'createdAt' | 'revision' | 'updatedAt'>) {
-    return post<RoleItem, typeof role>('/api/role', role);
+    return post<RoleItem>('/api/role', role);
   },
 
   /** 更新软件配置 */
   updateRole(id: number, data: { name?: string; description?: string; tags?: string[] }) {
-    return put<RoleItem, typeof data>(`/api/role/${id}`, data);
+    return put<RoleItem>(`/api/role/${id}`, data);
   },
 
   /** 删除软件配置 */
@@ -64,7 +64,7 @@ const softwareService = {
 
   /** 更新软件版本 */
   reviseRole(task: TaskInfo) {
-    return put<RevisionItem, typeof task>(`/api/role_revision/${task.id}`, task);
+    return put<RevisionItem>(`/api/role_revision/${task.id}`, task);
   },
 
   /**
@@ -83,9 +83,7 @@ const softwareService = {
 
   /** 锁定版本 */
   releaseRoleRevision(roleId: number, changeLog: string) {
-    return post<RevisionItem, { changeLog: string }>(`/api/role_revision/${roleId}/release`, {
-      changeLog,
-    });
+    return post<RevisionItem>(`/api/role_revision/${roleId}/release`, { changeLog });
   },
 
   /** 获取草稿版本 */
@@ -110,10 +108,9 @@ const softwareService = {
 
   /** 获取AI配置 */
   getAiConfig(requirement: string) {
-    return post<{ task_content: string; description: string }, { requirement: string }>(
-      `/api/role_revision/ai`,
-      { requirement },
-    );
+    return post<{ task_content: string; description: string }>(`/api/role_revision/ai`, {
+      requirement,
+    });
   },
 };
 

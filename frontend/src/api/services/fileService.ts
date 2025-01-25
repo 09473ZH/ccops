@@ -16,15 +16,6 @@ export interface FileListResponse {
   list: FileInfo[];
 }
 
-interface DeleteFilesRequest {
-  idList: number[];
-}
-
-interface UpdateFileRequest {
-  fileId: number;
-  content: string;
-}
-
 const BASE_URL = import.meta.env.VITE_APP_BASE_API;
 
 /**
@@ -38,7 +29,7 @@ const fileService = {
 
   /** 删除文件 */
   deleteFiles(idList: number[]) {
-    return del<void, DeleteFilesRequest>('/api/files', { idList });
+    return del<void>('/api/files', { idList });
   },
 
   /** 上传文件 */
@@ -47,17 +38,16 @@ const fileService = {
     files.forEach((file) => {
       formData.append('files', file);
     });
-    return post('/api/uploads', formData);
+    return post<void>('/api/uploads', formData);
   },
 
   /** 下载文件 */
   async downloadFile(fileId: number, fileName: string) {
-    const response = await fetch(`${BASE_URL}/api/file_download/${fileId}`);
-    if (!response.ok) {
-      throw new Error('Download failed');
-    }
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
+    const response = await get<Blob>(`/api/file_download/${fileId}`, {
+      responseType: 'blob',
+    });
+
+    const url = window.URL.createObjectURL(response);
     const link = document.createElement('a');
     link.href = url;
     link.download = fileName;
@@ -65,12 +55,11 @@ const fileService = {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-    return Promise.resolve();
   },
 
   /** 更新文件内容 */
   updateFileContent(fileId: number, content: string) {
-    return put<void, UpdateFileRequest>('/api/file', { fileId, content });
+    return put<void>('/api/file', { fileId, content });
   },
 
   /** 预览文件 */

@@ -3,179 +3,214 @@
  *
  * 提供统一的 HTTP 请求封装，包括：
  * - 自动处理请求头（Content-Type, Authorization）
+ * - 支持双token认证（access token 和 refresh token）
+ * - 支持 token 自动刷新
  * - 支持 JSON 和 FormData 请求
  * - 统一的错误处理
  * - 类型安全的请求方法
  */
 
-import { Result } from '#/api';
+import useUserStore from '@/store/userStore';
+
 import { ResultEnum } from '#/enum';
 
 type RequestConfig = RequestInit & {
   data?: unknown;
+  skipAuth?: boolean; // 是否跳过认证
+  retryCount?: number; // 重试次数
+  responseType?: string;
 };
 
 const BASE_URL = import.meta.env.VITE_APP_BASE_API;
 
-/**
- * HTTP GET 请求
- * @example const data = await get<ResponseType>('/api/endpoint');
- */
-export async function get<TResponse>(url: string, config?: RequestConfig) {
-  return request<TResponse>(url, { ...config, method: 'GET' });
-}
+// 不需要token的白名单接口
+const whiteList = ['/api/login', '/api/refresh'];
 
-/**
- * HTTP POST 请求
- * @example const result = await post<ResponseType, RequestType>('/api/endpoint', data);
- */
-export async function post<TResponse, TData = unknown>(
-  url: string,
-  data?: TData,
-  config?: Omit<RequestConfig, 'data'>,
-) {
-  let requestConfig: RequestInit = {
-    ...config,
-    method: 'POST',
-  };
+// 用于存储刷新 token 的 Promise
+let refreshTokenPromise: Promise<void> | null = null;
+// 请求队列
+let requestQueue: Array<() => Promise<void>> = [];
+// token是否正在刷新
+let isRefreshing = false;
 
-  // 如果是 FormData，不设置 Content-Type，让浏览器自动处理
-  if (data instanceof FormData) {
-    requestConfig = {
-      ...requestConfig,
-      body: data,
-    };
-  } else {
-    // 如果是普通数据，设置 JSON Content-Type
-    requestConfig = {
-      ...requestConfig,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(config?.headers as Record<string, string>),
-      },
-      body: JSON.stringify(data),
-    };
-  }
+// 判断token是否过期
+function isTokenExpired(): boolean {
+  const { userToken } = useUserStore.getState();
+  if (!userToken.accessToken) return true;
 
-  return request<TResponse>(url, requestConfig);
-}
-
-/**
- * HTTP PUT 请求
- * @example const updated = await put<ResponseType, RequestType>('/api/endpoint', data);
- */
-export async function put<TResponse, TData>(
-  url: string,
-  data?: TData,
-  config?: Omit<RequestConfig, 'data'>,
-) {
-  return request<TResponse>(url, {
-    ...config,
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(config?.headers as Record<string, string>),
-    },
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * HTTP DELETE 请求
- * @example await delete<void, { id: number }>('/api/endpoint', { id: 1 });
- */
-export async function del<TResponse, TData>(
-  url: string,
-  data?: TData,
-  config?: Omit<RequestConfig, 'data'>,
-) {
-  return request<TResponse>(url, {
-    ...config,
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(config?.headers as Record<string, string>),
-    },
-    body: JSON.stringify(data),
-  });
-}
-
-/**
- * 文件下载请求
- * @example await download('/api/files/1/download', 'example.txt');
- */
-export async function download(url: string, fileName: string) {
-  const response = await fetch(`${BASE_URL}${url}`, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/octet-stream',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('Download failed');
-  }
-
-  const blob = await response.blob();
-  const downloadUrl = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = downloadUrl;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(downloadUrl);
-}
-
-async function request<T>(endpoint: string, options?: RequestConfig): Promise<T> {
-  // 处理请求配置
-  const config: RequestInit = {
-    ...options,
-  };
-
-  // 如果没有设置 headers 且不是 FormData，则添加默认的 Content-Type
-  if (!options?.headers && !(options?.body instanceof FormData)) {
-    config.headers = {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    };
-  }
-
-  const response = await fetch(`${BASE_URL}${endpoint}`, config);
-
-  // 1. 检查是否为 EOF（空响应）
-  const text = await response.text();
-  if (!text) {
-    throw new Error('Empty response received');
-  }
-
-  // 2. 尝试解析 JSON
-  let responseData: Result;
   try {
-    responseData = JSON.parse(text);
-  } catch (error) {
-    throw new Error(`Failed to parse JSON response: ${text}`);
+    const payload = JSON.parse(atob(userToken.accessToken.split('.')[1]));
+    // 提前5分钟判定为过期
+    return payload.exp * 1000 < Date.now() + 5 * 60 * 1000;
+  } catch {
+    return true;
   }
-
-  // 3. 检查业务状态码，返回数据或抛出错误
-  if (responseData.code === ResultEnum.SUCCESS) {
-    return responseData.data;
-  }
-
-  // 如果data不包含code/msg，返回整个responseData
-  if (!('code' in (responseData.data || {}) && !('msg' in (responseData.data || {})))) {
-    return responseData as unknown as T;
-  }
-
-  throw new Error(responseData.msg);
 }
 
-export const apiClient = {
-  get,
-  post,
-  put,
-  delete: del,
-  download,
-};
+// 刷新 token
+async function refreshToken(): Promise<void> {
+  try {
+    if (refreshTokenPromise) return await refreshTokenPromise;
 
+    const { userToken } = useUserStore.getState();
+    if (!userToken.refreshToken) throw new Error('No refresh token');
+
+    isRefreshing = true;
+    refreshTokenPromise = (async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/api/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: userToken.refreshToken }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Refresh token invalid');
+        }
+
+        const data = await response.json();
+        if (data.code === ResultEnum.SUCCESS && data.data?.accessToken) {
+          useUserStore.getState().actions.setUserToken({
+            accessToken: data.data.accessToken,
+            refreshToken: userToken.refreshToken,
+          });
+
+          // 执行队列中的请求
+          requestQueue.forEach((callback) => callback());
+        } else {
+          throw new Error(data.msg || 'Refresh failed');
+        }
+      } catch (error) {
+        useUserStore.getState().actions.clearUserInfoAndToken();
+        throw error;
+      } finally {
+        refreshTokenPromise = null;
+        requestQueue = [];
+        isRefreshing = false;
+      }
+    })();
+
+    return await refreshTokenPromise;
+  } catch (error) {
+    refreshTokenPromise = null;
+    requestQueue = [];
+    isRefreshing = false;
+    useUserStore.getState().actions.clearUserInfoAndToken();
+    throw error;
+  }
+}
+
+// 统一的请求处理
+async function request<T>(endpoint: string, config: RequestConfig = {}): Promise<T> {
+  const { skipAuth, retryCount = 0, data, responseType, ...restConfig } = config;
+
+  // 只有不在白名单的接口才检查token
+  if (!skipAuth && !whiteList.includes(endpoint) && isTokenExpired()) {
+    if (isRefreshing) {
+      // 将请求加入队列
+      return new Promise((resolve, reject) => {
+        requestQueue.push(async () => {
+          try {
+            const result = await request<T>(endpoint, config);
+            resolve(result);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+    }
+    try {
+      await refreshToken();
+    } catch (error) {
+      window.location.href = '/login';
+      throw new Error('认证失败');
+    }
+  }
+
+  // 构建基础请求头
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  // 添加认证头，白名单接口不添加token
+  if (!skipAuth && !whiteList.includes(endpoint)) {
+    const { userToken } = useUserStore.getState();
+    if (userToken.accessToken) {
+      Object.assign(headers, {
+        Authorization: `Bearer ${userToken.accessToken}`,
+        'X-Refresh-Token': userToken.refreshToken || '',
+      });
+    }
+  }
+
+  // 构建请求配置
+  const requestConfig: RequestInit = {
+    ...restConfig,
+    headers,
+  };
+
+  // 如果有数据，添加到body
+  if (data) {
+    requestConfig.body = data instanceof FormData ? data : JSON.stringify(data);
+    // FormData不需要Content-Type，让浏览器自动处理
+    if (data instanceof FormData) {
+      delete (requestConfig.headers as Record<string, string>)['Content-Type'];
+    }
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}${endpoint}`, requestConfig);
+
+    // 处理401错误，尝试刷新token
+    if (response.status === 401 && !skipAuth) {
+      if (retryCount < 1) {
+        try {
+          await refreshToken();
+          return await request<T>(endpoint, { ...config, retryCount: retryCount + 1 });
+        } catch (error) {
+          window.location.href = '/login';
+          throw new Error('认证失败');
+        }
+      }
+      window.location.href = '/login';
+      throw new Error('认证失败');
+    }
+
+    // 如果是blob响应，直接返回
+    if (responseType === 'blob') {
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Download failed');
+      }
+      return await (response.blob() as Promise<T>);
+    }
+
+    const result = await response.json();
+    // 处理成功响应
+    if (result.code === ResultEnum.SUCCESS) {
+      return result.data;
+    }
+
+    // 处理其他错误
+    throw new Error(result.msg || '请求失败');
+  } catch (error) {
+    console.error('Request error:', error);
+    throw error;
+  }
+}
+
+// 导出请求方法
+export const get = <T>(url: string, config?: Omit<RequestConfig, 'data'>) =>
+  request<T>(url, { ...config, method: 'GET' });
+
+export const post = <T>(url: string, data?: unknown, config?: Omit<RequestConfig, 'data'>) =>
+  request<T>(url, { ...config, method: 'POST', data });
+
+export const put = <T>(url: string, data?: unknown, config?: Omit<RequestConfig, 'data'>) =>
+  request<T>(url, { ...config, method: 'PUT', data });
+
+export const del = <T>(url: string, data?: unknown, config?: Omit<RequestConfig, 'data'>) =>
+  request<T>(url, { ...config, method: 'DELETE', data });
+
+export const apiClient = { get, post, put, delete: del };
 export default apiClient;

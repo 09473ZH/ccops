@@ -68,17 +68,17 @@ const hostService = {
 
   /** 更新主机名称 */
   updateHostName(params: { hostname: string; hostServerUrl: string }) {
-    return post<HostInfo, typeof params>(`/api/host_rename`, params);
+    return post<HostInfo>(`/api/host_rename`, params);
   },
 
   /** 删除主机 */
   deleteHosts(hostIds: number[]) {
-    return del<void, { hostIds: number[] }>('/api/host', { hostIds });
+    return del<void>('/api/host', { hostIds });
   },
 
   /** 分配标签 */
   assignLabels(params: { hostId: number; labelIds: number[] }) {
-    return post<HostInfo, typeof params>('/api/host_assign_labels', params);
+    return post<HostInfo>('/api/host_assign_labels', params);
   },
 
   /** 获取新增主机命令 */
