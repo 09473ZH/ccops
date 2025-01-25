@@ -6,6 +6,7 @@
   "homepage": "https://09473zh.github.io/ccops",
   "scripts": {
     "dev": "vite",
+    "dev:local": "vite --mode localhost",
     "dev:prod": "vite --mode production",
     "build": "npm run build:dev",
     "build:dev": "tsc && vite build --mode development",
