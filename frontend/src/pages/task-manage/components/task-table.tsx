@@ -83,7 +83,7 @@ export function TaskTable({
       fixed: 'right',
       render: (_, record: TaskInfo) => (
         <Space>
-          <ActionButton icon="terminal" onClick={() => onViewOutput(record.id)} />
+          <ActionButton icon="view" onClick={() => onViewOutput(record.id)} />
           <ActionButton
             icon="replay"
             onClick={() => onRestart(record)}
