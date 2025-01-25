@@ -16,24 +16,21 @@ export const getShortcutKeys = () => {
 
   if (platform.includes('mac')) {
     return {
-      search: '⌘P',
+      search: '⌘F',
       clear: '⌘L',
-      fullscreen: '⌘F',
       reconnect: '⌘R',
     };
   }
   if (platform.includes('win')) {
     return {
-      search: 'Ctrl+P',
+      search: 'Ctrl+F',
       clear: 'Ctrl+L',
-      fullscreen: 'Ctrl+F',
       reconnect: 'Ctrl+R',
     };
   }
   return {
-    search: 'Ctrl+P',
+    search: 'Ctrl+F',
     clear: 'Ctrl+L',
-    fullscreen: 'Ctrl+F',
     reconnect: 'Ctrl+R',
   };
 };

@@ -2,6 +2,7 @@ import { createRef, useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import 'xterm/css/xterm.css';
 
+import type { HostInfo } from '@/api/services/hostService';
 import { useHostList } from '@/hooks/useHostList';
 import { cn } from '@/utils';
 import { getCurrentTheme, setTheme, getStyles } from '@/utils/jump-server-theme';
@@ -23,7 +24,6 @@ export default function JumpServer() {
   const { id } = useParams<{ id: string }>();
   const [isConnected, setIsConnected] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentTheme, setCurrentTheme] = useState<ThemeNames>(getCurrentTheme());
   const [fontSize, setFontSize] = useState<number>(14);
   const [sessions, setSessions] = useState<TerminalSession[]>([]);
@@ -44,7 +44,7 @@ export default function JumpServer() {
   }, [isSearchFocused]);
 
   const filteredHosts = hosts?.filter(
-    (host) =>
+    (host: HostInfo) =>
       host.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       host.hostServerUrl.toLowerCase().includes(searchQuery.toLowerCase()),
   );
@@ -57,25 +57,14 @@ export default function JumpServer() {
     return () => clearInterval(timer);
   }, []);
 
-  // 监听全屏变化
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, []);
-
   // 初始化第一个终端会话
   useEffect(() => {
     if (id && sessions.length === 0) {
-      const baseHostId = id.split('-')[0];
+      const [hostId, hostName, hostUrl] = id.split('|');
       const newSession: TerminalSession = {
         id,
-        hostId: baseHostId,
-        title: `终端 ${baseHostId}`,
+        hostId,
+        title: `${decodeURIComponent(hostName)}@${decodeURIComponent(hostUrl)}`,
         ref: createRef<HTMLDivElement>(),
         terminalRef: createRef<TerminalRef>(),
       };
@@ -87,6 +76,9 @@ export default function JumpServer() {
 
   // 添加新终端话
   const addNewSession = (hostId: string) => {
+    const host = hosts?.find((h: HostInfo) => h.id.toString() === hostId);
+    if (!host) return;
+
     const sameHostSessions = sessions.filter((s) => s.hostId === hostId);
     const sessionNumber = sameHostSessions.length + 1;
     const sessionId = `${hostId}-${Date.now()}`;
@@ -94,7 +86,10 @@ export default function JumpServer() {
     const newSession: TerminalSession = {
       id: sessionId,
       hostId,
-      title: sessionNumber === 1 ? `终端 ${hostId}` : `终端 ${hostId} (${sessionNumber - 1})`,
+      title:
+        sessionNumber === 1
+          ? `${host.name}@${host.hostServerUrl}`
+          : `${host.name}@${host.hostServerUrl} (${sessionNumber - 1})`,
       ref: createRef<HTMLDivElement>(),
       terminalRef: createRef<TerminalRef>(),
     };
@@ -147,23 +142,6 @@ export default function JumpServer() {
     }
   }, [sessions, activeSessionId]);
 
-  const toggleFullscreen = useCallback((e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch((err) => {
-        console.error(`全屏错误: ${err.message}`);
-      });
-    } else {
-      document.exitFullscreen().catch((err) => {
-        console.error(`退出全屏错误: ${err.message}`);
-      });
-    }
-  }, []);
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ctrl/Cmd + K 打开主机选择器
@@ -176,10 +154,10 @@ export default function JumpServer() {
         e.preventDefault();
         handleClear();
       }
-      // Ctrl/Cmd + F 切换全屏
+      // Ctrl/Cmd + F 搜索
       if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
         e.preventDefault();
-        toggleFullscreen();
+        setIsSearchFocused(true);
       }
       // Ctrl/Cmd + R 重新连接
       if ((e.metaKey || e.ctrlKey) && e.key === 'r') {
@@ -190,7 +168,7 @@ export default function JumpServer() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleClear, handleReconnect, toggleFullscreen]);
+  }, [handleClear, handleReconnect]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
@@ -397,11 +375,6 @@ export default function JumpServer() {
           <button className={styles.footer.button} onClick={handleClear}>
             <span>清除</span>
             <span className={styles.header.left.shortcut}>({shortcuts.clear})</span>
-          </button>
-
-          <button className={styles.footer.button} onClick={toggleFullscreen}>
-            <span>{isFullscreen ? '退出全屏' : '全屏'}</span>
-            <span className={styles.header.left.shortcut}>({shortcuts.fullscreen})</span>
           </button>
         </div>
       </div>

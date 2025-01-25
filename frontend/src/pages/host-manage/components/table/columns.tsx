@@ -6,7 +6,7 @@ import type { DiskInfo, HostInfo } from '@/api/services/hostService';
 import { LabelInfo } from '@/api/services/labelService';
 import ActionButton from '@/components/button/action-button';
 import CopyButton from '@/components/button/copy-button';
-import { OsIcon } from '@/components/icon';
+import { Iconify, OsIcon } from '@/components/icon';
 import ShowMoreTags from '@/components/show-more-tags';
 import ShowTooltip from '@/components/show-tooltip';
 import { formatBytes } from '@/utils/format-number';
@@ -52,7 +52,10 @@ export const getColumnGroups = (): ColumnGroup[] => [
   },
 ];
 
-const handleJumpServer = (id: number) => {
+const handleJumpServer = (record: HostInfo) => {
+  const id = `${record.id}|${encodeURIComponent(record.name)}|${encodeURIComponent(
+    record.hostServerUrl,
+  )}`;
   window.open(`/host_manage/jump-server/${id}`, '_blank');
 };
 
@@ -199,7 +202,7 @@ export const getColumns = (
         <Space>
           <ActionButton
             icon="terminal"
-            onClick={() => handleJumpServer(record.id)}
+            onClick={() => handleJumpServer(record)}
             tooltip="连接终端"
           />
           <ActionButton
