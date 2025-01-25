@@ -4,20 +4,21 @@ import (
 	"ccops/config"
 	"ccops/global"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"os"
+
+	"gopkg.in/yaml.v2"
 
 	"io/ioutil"
 	"log"
 )
 
+const LocalConfigFile = "config/conf_yaml/settings-local.yaml"
 const DevConfigFile = "config/conf_yaml/settings-dev.yaml"
 const ProdConfigFile = "config/conf_yaml/settings-prod.yaml"
 
 // InitConf 读取yaml文件的配置
 func InitConf() {
 	applyFile := DevConfigFile
-	//fmt.Println(applyFile)
 
 	if os.Getenv("CCOPSENV") == "production" {
 		applyFile = ProdConfigFile
@@ -26,7 +27,11 @@ func InitConf() {
 		applyFile = DevConfigFile
 		log.Println("Be in dev environment")
 	} else {
-		log.Println("Be in dev environment")
+		applyFile = LocalConfigFile
+		if _, err := os.Stat(LocalConfigFile); err != nil {
+			log.Panic("Local config file not found, please check the file")
+		}
+		log.Println("Be in local environment")
 	}
 	c := &config.Config{}
 	yamlConf, err := ioutil.ReadFile(applyFile) //yaml格式的数据存进去了，是个byte字节切片1
