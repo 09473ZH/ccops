@@ -3,6 +3,7 @@ package hosts_api
 import (
 	"ccops/global"
 	"ccops/models"
+
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -53,6 +54,7 @@ func isNormalClose(err error) bool {
 }
 
 func (HostsApi) HandleWebSocket(c *gin.Context) {
+
 	//_claims, _ := c.Get("claims")
 	//claims := _claims.(*jwts.CustomClaims)
 	hostID := c.Param("id")

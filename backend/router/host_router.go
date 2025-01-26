@@ -7,7 +7,9 @@ import (
 
 func (router RouterGroup) HostRouter() {
 	app := api.ApiGroupApp.HostsApi
+
 	router.GET("host_web_shell/:id", app.HandleWebSocket)
+
 	router.Use(middleware.JwtUser())
 	router.GET("host_list", app.HostListView)
 	router.GET("host/:id/", app.HostInfoView)
