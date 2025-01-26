@@ -7,6 +7,7 @@ import (
 
 func (router RouterGroup) HostRouter() {
 	app := api.ApiGroupApp.HostsApi
+	router.GET("host_web_shell/:id", app.HandleWebSocket)
 	router.Use(middleware.JwtUser())
 	router.GET("host_list", app.HostListView)
 	router.GET("host/:id/", app.HostInfoView)
@@ -20,5 +21,5 @@ func (router RouterGroup) HostRouter() {
 	router.PUT("host_label_update/:id/", app.HostLabelUpdateView)
 	router.DELETE("host_label/:id/", app.HostLabelRemoveView)
 	router.PUT("host_label_disassociate/:id/", app.LabelDisassociateView)
-	router.GET("host_web_shell/:id", app.HandleWebSocket)
+
 }

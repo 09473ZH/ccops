@@ -3,9 +3,6 @@ package hosts_api
 import (
 	"ccops/global"
 	"ccops/models"
-	"ccops/models/res"
-	"ccops/utils/jwts"
-	"ccops/utils/permission"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -56,17 +53,17 @@ func isNormalClose(err error) bool {
 }
 
 func (HostsApi) HandleWebSocket(c *gin.Context) {
-	_claims, _ := c.Get("claims")
-	claims := _claims.(*jwts.CustomClaims)
+	//_claims, _ := c.Get("claims")
+	//claims := _claims.(*jwts.CustomClaims)
 	hostID := c.Param("id")
 
-	id, _ := strconv.ParseUint(hostID, 10, 64)
-	if !permission.IsPermission(claims.UserID, uint(id)) {
-		res.FailWithMessage("权限错误", c)
-		return
-	}
+	//id, _ := strconv.ParseUint(hostID, 10, 64)
+	//if !permission.IsPermission(claims.UserID, uint(id)) {
+	//	res.FailWithMessage("权限错误", c)
+	//	return
+	//}
 	var host models.HostModel
-	global.DB.Model(&models.HostModel{}).First(&host, id)
+	global.DB.Model(&models.HostModel{}).First(&host, hostID)
 
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
