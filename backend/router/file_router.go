@@ -3,16 +3,17 @@ package router
 import (
 	"ccops/api"
 	"ccops/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
-func (router RouterGroup) FileRouter() {
+func (router RouterGroup) FileRouter(fileRouterGroup *gin.RouterGroup) {
 	app := api.ApiGroupApp.FileApi
-	router.Use(middleware.JwtUser())
-
-	router.POST("uploads", app.FilesUploadView)
-	router.GET("files", app.FileListView)
-	router.DELETE("files", app.FileRemoveView)
-	router.GET("file_download/:id", app.FilesDownloadView)
-	router.GET("file_preview", app.GetFileContent)
-	router.PUT("file", app.UpdateFileContent)
+	fileRouterGroup.Use(middleware.JwtUser())
+	fileRouterGroup.POST("uploads", app.FilesUploadView)
+	fileRouterGroup.GET("files", app.FileListView)
+	fileRouterGroup.DELETE("files", app.FileRemoveView)
+	fileRouterGroup.GET("file_download/:id", app.FilesDownloadView)
+	fileRouterGroup.GET("file_preview", app.GetFileContent)
+	fileRouterGroup.PUT("file", app.UpdateFileContent)
 }
