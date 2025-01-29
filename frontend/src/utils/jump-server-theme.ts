@@ -115,7 +115,7 @@ export const getStyles = (theme: ThemeNames) => {
             'h-2 w-2 rounded-full transition-colors duration-200',
             isConnected ? 'bg-green-500' : 'bg-red-500',
           ),
-        reconnectButton: getButtonStyle('small'),
+        button: getButtonStyle('small'),
         shortcut: 'opacity-60 ml-1',
       },
       right: {

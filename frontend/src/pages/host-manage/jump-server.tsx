@@ -1,4 +1,4 @@
-import { createRef, useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import 'xterm/css/xterm.css';
 
@@ -9,45 +9,44 @@ import { getCurrentTheme, setTheme, getStyles } from '@/utils/jump-server-theme'
 
 import { FontSelector } from './components/font-selector';
 import { SplitTerminal } from './components/split-terminal';
-import { TerminalRef } from './components/x-term';
 import { terminalThemes, type ThemeNames } from './config/themes';
+import { useHostSearch, useTerminalSessions, type TerminalSession } from './hooks';
 
-interface TerminalSession {
-  id: string;
-  hostId: string;
-  title: string;
-  ref: React.RefObject<HTMLDivElement>;
-  terminalRef: React.RefObject<TerminalRef>;
-}
+import type { TerminalRef } from './components/x-term';
 
 export default function JumpServer() {
   const { id } = useParams<{ id: string }>();
+  const { list: hosts } = useHostList();
   const [isConnected, setIsConnected] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
   const [currentTheme, setCurrentTheme] = useState<ThemeNames>(getCurrentTheme());
   const [fontSize, setFontSize] = useState<number>(14);
-  const [sessions, setSessions] = useState<TerminalSession[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string>('');
-  const { list: hosts } = useHostList();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const styles = getStyles(currentTheme);
-  const { shortcuts } = styles;
   const [fontFamily, setFontFamily] = useState('Consolas');
 
-  useEffect(() => {
-    if (isSearchFocused) {
-      searchInputRef.current?.focus();
-    }
-  }, [isSearchFocused]);
+  const {
+    sessions,
+    activeSessionId,
+    setActiveSessionId,
+    createSession,
+    closeSession,
+    updateSessionTitles,
+    handleActiveSession,
+  } = useTerminalSessions(id, hosts);
 
-  const filteredHosts = hosts?.filter(
-    (host: HostInfo) =>
-      host.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      host.hostServerUrl.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const {
+    searchQuery,
+    setSearchQuery,
+    isSearchFocused,
+    setIsSearchFocused,
+    activeIndex,
+    setActiveIndex,
+    searchInputRef,
+    filteredHosts,
+    handleKeyDown,
+  } = useHostSearch(hosts);
+
+  const styles = getStyles(currentTheme);
+  const { shortcuts } = styles;
 
   // 更新时间
   useEffect(() => {
@@ -59,66 +58,16 @@ export default function JumpServer() {
 
   // 初始化第一个终端会话
   useEffect(() => {
-    if (id && sessions.length === 0) {
-      const [hostId, hostName, hostUrl] = id.split('|');
-      const newSession: TerminalSession = {
-        id,
-        hostId,
-        title: `${decodeURIComponent(hostName)}@${decodeURIComponent(hostUrl)}`,
-        ref: createRef<HTMLDivElement>(),
-        terminalRef: createRef<TerminalRef>(),
-      };
-
-      setSessions([newSession]);
-      setActiveSessionId(id);
+    if (id && sessions.length === 0 && hosts) {
+      const [hostId] = id;
+      createSession(hostId);
     }
-  }, [id, sessions.length]);
+  }, [id, sessions.length, hosts, createSession]);
 
-  // 添加新终端话
-  const addNewSession = (hostId: string) => {
-    const host = hosts?.find((h: HostInfo) => h.id.toString() === hostId);
-    if (!host) return;
-
-    const sameHostSessions = sessions.filter((s) => s.hostId === hostId);
-    const sessionNumber = sameHostSessions.length + 1;
-    const sessionId = `${hostId}-${Date.now()}`;
-
-    const newSession: TerminalSession = {
-      id: sessionId,
-      hostId,
-      title:
-        sessionNumber === 1
-          ? `${host.name}@${host.hostServerUrl}`
-          : `${host.name}@${host.hostServerUrl} (${sessionNumber - 1})`,
-      ref: createRef<HTMLDivElement>(),
-      terminalRef: createRef<TerminalRef>(),
-    };
-
-    setSessions((prev) => [...prev, newSession]);
-    setActiveSessionId(sessionId);
-  };
-
-  // 关闭终端会话
-  const closeSession = (sessionId: string) => {
-    setSessions((prev) => {
-      const newSessions = prev.filter((s) => s.id !== sessionId);
-
-      // 如果关闭的是当前活动页签，需要切换到其他页签
-      if (activeSessionId === sessionId) {
-        // 找到被关闭页签的索引
-        const closedIndex = prev.findIndex((s) => s.id === sessionId);
-        if (newSessions.length > 0) {
-          // 优先选择右边的页签，如果没有则选择左边的
-          const nextSession = newSessions[closedIndex] || newSessions[closedIndex - 1];
-          setActiveSessionId(nextSession.id);
-        } else {
-          // 如果没有剩余页签，清空 activeSessionId
-          setActiveSessionId('');
-        }
-      }
-      return newSessions;
-    });
-  };
+  // 当hosts加载完成后，更新已有会话的标题
+  useEffect(() => {
+    updateSessionTitles();
+  }, [hosts, updateSessionTitles]);
 
   const handleThemeChange = (theme: ThemeNames) => {
     setCurrentTheme(theme);
@@ -131,62 +80,39 @@ export default function JumpServer() {
   };
 
   const handleClear = useCallback(() => {
-    const activeSession = sessions.find((s) => s.id === activeSessionId);
-    activeSession?.terminalRef.current?.clear();
-  }, [sessions, activeSessionId]);
+    handleActiveSession((terminal: TerminalRef) => terminal.clear());
+  }, [handleActiveSession]);
 
   const handleReconnect = useCallback(() => {
-    const activeSession = sessions.find((s) => s.id === activeSessionId);
-    if (activeSession?.terminalRef.current) {
-      activeSession.terminalRef.current.reconnect();
-    }
-  }, [sessions, activeSessionId]);
+    handleActiveSession((terminal: TerminalRef) => terminal.reconnect());
+  }, [handleActiveSession]);
+
+  const handleReset = useCallback(() => {
+    handleActiveSession((terminal: TerminalRef) => (terminal as any).reset?.());
+  }, [handleActiveSession]);
 
   useEffect(() => {
+    // 清屏
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl/Cmd + K 打开主机选择器
-      if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
-        e.preventDefault();
-        setIsSearchFocused(true);
-      }
-      // Ctrl/Cmd + L 清屏
       if ((e.metaKey || e.ctrlKey) && e.key === 'l') {
         e.preventDefault();
         handleClear();
       }
-      // Ctrl/Cmd + F 搜索
-      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
-        e.preventDefault();
-        setIsSearchFocused(true);
-      }
-      // Ctrl/Cmd + R 重新连接
+    };
+    // 重新连接
+    const handleReconnectKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'r') {
         e.preventDefault();
         handleReconnect();
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleReconnectKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleReconnectKeyDown);
+    };
   }, [handleClear, handleReconnect]);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setActiveIndex((prev) => (prev + 1) % (filteredHosts?.length || 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setActiveIndex(
-        (prev) => (prev - 1 + (filteredHosts?.length || 1)) % (filteredHosts?.length || 1),
-      );
-    } else if (e.key === 'Enter' && filteredHosts?.[activeIndex]) {
-      addNewSession(filteredHosts[activeIndex].id.toString());
-      setSearchQuery('');
-      setIsSearchFocused(false);
-    } else if (e.key === 'Escape') {
-      setIsSearchFocused(false);
-    }
-  };
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -194,13 +120,6 @@ export default function JumpServer() {
       setSearchQuery('');
     }
   };
-
-  const handleReset = useCallback(() => {
-    const activeSession = sessions.find((s) => s.id === activeSessionId);
-    if (activeSession?.terminalRef.current) {
-      (activeSession.terminalRef.current as any).reset?.();
-    }
-  }, [sessions, activeSessionId]);
 
   if (!id) return null;
 
@@ -226,17 +145,17 @@ export default function JumpServer() {
                   setIsSearchFocused(false);
                   setSearchQuery('');
                 } else {
-                  handleKeyDown(e);
+                  handleKeyDown(e, createSession);
                 }
               }}
             />
             <div className={styles.hostSelector.list}>
-              {filteredHosts?.map((host, index) => (
+              {filteredHosts?.map((host: HostInfo, index: number) => (
                 <div
                   key={host.id}
                   className={styles.hostSelector.item(activeIndex === index)}
                   onClick={() => {
-                    addNewSession(host.id.toString());
+                    createSession(host.id.toString());
                     setSearchQuery('');
                     setIsSearchFocused(false);
                   }}
@@ -264,9 +183,13 @@ export default function JumpServer() {
             <div className={styles.header.left.dot(isConnected)} />
             <span>{isConnected ? '已连接' : '未连接'}</span>
           </div>
-          <button className={cn(styles.header.left.reconnectButton)} onClick={handleReconnect}>
+          <button className={cn(styles.header.left.button)} onClick={handleReconnect}>
             <span>重新连接</span>
             <span className={styles.header.left.shortcut}>({shortcuts.reconnect})</span>
+          </button>
+          <button className={cn(styles.header.left.button)} onClick={handleClear}>
+            <span>清屏</span>
+            <span className={styles.header.left.shortcut}>({shortcuts.clear})</span>
           </button>
         </div>
 
@@ -319,22 +242,25 @@ export default function JumpServer() {
 
       {/* 标签栏 */}
       <div className={styles.tabBar.container}>
-        {sessions.map((session) => (
+        {sessions.map((session: TerminalSession) => (
           <div
             key={session.id}
             className={styles.tabBar.tab(activeSessionId === session.id)}
             onClick={() => setActiveSessionId(session.id)}
           >
             <span className={styles.tabBar.title}>{session.title}</span>
-            <button
-              className={styles.tabBar.closeButton}
-              onClick={(e) => {
-                e.stopPropagation();
-                closeSession(session.id);
-              }}
-            >
-              ×
-            </button>
+            {sessions.length > 1 && (
+              <button
+                disabled={sessions.length === 1}
+                className={styles.tabBar.closeButton}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  closeSession(session.id);
+                }}
+              >
+                ×
+              </button>
+            )}
           </div>
         ))}
         <button className={styles.tabBar.addButton} onClick={() => setIsSearchFocused(true)}>
@@ -345,7 +271,7 @@ export default function JumpServer() {
       {/* 终端区域 */}
       <div className={styles.terminal.container}>
         <div className={styles.terminal.wrapper}>
-          {sessions.map((session) => (
+          {sessions.map((session: TerminalSession) => (
             <div
               key={session.id}
               className={styles.terminal.session(activeSessionId === session.id)}
@@ -361,21 +287,6 @@ export default function JumpServer() {
               />
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* 底部工具栏 */}
-      <div className={styles.footer.container}>
-        <div className={styles.footer.buttonGroup}>
-          <button className={styles.footer.button} onClick={() => setIsSearchFocused(true)}>
-            <span>选择主机</span>
-            <span className={styles.header.left.shortcut}>({shortcuts.search})</span>
-          </button>
-
-          <button className={styles.footer.button} onClick={handleClear}>
-            <span>清除</span>
-            <span className={styles.header.left.shortcut}>({shortcuts.clear})</span>
-          </button>
         </div>
       </div>
     </div>
