@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
+import useUserStore from '@/store/userStore';
+
 import type { TaskOutput } from '../api/services/taskService';
 
 interface UseTaskWebSocketOptions {
@@ -9,6 +11,7 @@ interface UseTaskWebSocketOptions {
   withTimestamp?: boolean;
   preserveFormat?: boolean;
   onMessage?: (data: TaskOutput) => void;
+  onError?: (error: string) => void;
 }
 
 export function useTaskWebSocket({
@@ -17,24 +20,49 @@ export function useTaskWebSocket({
   withTimestamp = false,
   preserveFormat = false,
   onMessage,
+  onError,
 }: UseTaskWebSocketOptions) {
   const [messages, setMessages] = useState<string[]>([]);
-  const socketUrl = taskId ? `${import.meta.env.VITE_APP_WS_API}/api/task/${taskId}/message` : null;
+  const [error, setError] = useState<string | null>(null);
+  const { userToken } = useUserStore();
+
+  const socketUrl =
+    taskId && userToken.accessToken
+      ? `${import.meta.env.VITE_APP_WS_API}/api/task/${taskId}/message?token=${encodeURIComponent(
+          userToken.accessToken,
+        )}`
+      : null;
+
+  const handleError = useCallback(
+    (errorMessage: string) => {
+      setError(errorMessage);
+      onError?.(errorMessage);
+    },
+    [onError],
+  );
 
   const { lastMessage, readyState } = useWebSocket(
     socketUrl || '',
     {
       shouldReconnect: (closeEvent) => {
-        return closeEvent.code !== 1000 && Boolean(socketUrl);
+        return false;
       },
-      reconnectAttempts: 3,
-      reconnectInterval: 3000,
-      filter: (message) => {
+      onOpen: () => {
+        setError(null);
+      },
+      onError: () => {
+        handleError('连接失败，请检查网络连接或刷新页面重试');
+      },
+      onClose: (event) => {
+        if (event.code === 1006) {
+          handleError('连接异常断开，请刷新页面重试');
+        }
+      },
+      onMessage: (event) => {
         try {
-          const data = JSON.parse(message.data);
-          return Boolean(data.message?.trim());
-        } catch {
-          return false;
+          JSON.parse(event.data);
+        } catch (error) {
+          // 忽略解析错误
         }
       },
     },
@@ -43,6 +71,7 @@ export function useTaskWebSocket({
 
   const clearMessages = useCallback(() => {
     setMessages([]);
+    setError(null);
   }, []);
 
   useEffect(() => {
@@ -68,7 +97,7 @@ export function useTaskWebSocket({
           setMessages((prev) => [...prev, formattedMessage]);
         }
       } catch (error) {
-        console.error('Failed to parse WebSocket message:', error);
+        // 忽略消息处理错误
       }
     }
   }, [lastMessage, withTimestamp, preserveFormat, onMessage]);
@@ -76,6 +105,7 @@ export function useTaskWebSocket({
   return {
     messages,
     clearMessages,
+    error,
     isConnected: readyState === ReadyState.OPEN,
     isConnecting: readyState === ReadyState.CONNECTING,
     connectionStatus: readyState,

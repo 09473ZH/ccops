@@ -20,6 +20,7 @@ interface QuickCommandState {
   setAutoScroll: (autoScroll: boolean) => void;
   setCurrentTaskId: (taskId: number | null) => void;
   startExecution: () => void;
+  stopExecution: () => void;
   resetStatus: () => void;
   updateDuration: () => void;
   handleTaskMessage: (data: TaskOutput) => void;
@@ -71,6 +72,18 @@ export const useQuickCommand = create<QuickCommandState>((set, get) => ({
     }));
   },
 
+  stopExecution: () => {
+    set(() => ({
+      status: {
+        event: null,
+        startTime: null,
+        endTime: null,
+        duration: 0,
+      },
+      currentTaskId: null,
+    }));
+  },
+
   resetStatus: () => {
     set((state) => {
       const now = Date.now();
@@ -93,6 +106,7 @@ export const useQuickCommand = create<QuickCommandState>((set, get) => ({
       if (state.status.event === 'running' && state.status.startTime) {
         const now = Date.now();
         return {
+          ...state,
           status: {
             ...state.status,
             duration: Number(((now - state.status.startTime) / 1000).toFixed(2)),
@@ -103,13 +117,25 @@ export const useQuickCommand = create<QuickCommandState>((set, get) => ({
     });
   },
 
-  handleTaskMessage: (data) => {
+  handleTaskMessage: (data: TaskOutput) => {
+    console.log('Received task message:', data);
     set((state) => {
+      // 如果没有当前任务ID，不处理消息
+      if (state.currentTaskId === null) {
+        return state;
+      }
+
+      // 如果消息的taskId与当前任务ID不匹配，不处理消息
+      if (data.taskId && data.taskId !== state.currentTaskId) {
+        return state;
+      }
+
+      const now = Date.now();
       if (data.event === 'end' || data.event === 'error') {
-        const now = Date.now();
         return {
+          ...state,
           status: {
-            event: 'end',
+            event: 'end' as CommandEvent,
             startTime: state.status.startTime,
             endTime: now,
             duration: state.status.startTime
@@ -119,6 +145,21 @@ export const useQuickCommand = create<QuickCommandState>((set, get) => ({
           currentTaskId: null,
         };
       }
+
+      if (data.event === 'running') {
+        // 只有当状态不是running时才更新
+        if (state.status.event !== 'running') {
+          return {
+            ...state,
+            status: {
+              ...state.status,
+              event: 'running' as CommandEvent,
+              startTime: state.status.startTime || now,
+            },
+          };
+        }
+      }
+
       return state;
     });
   },

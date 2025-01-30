@@ -9,6 +9,7 @@ interface OutputPanelProps {
   onAutoScrollChange: (checked: boolean) => void;
   onClear: () => void;
   isDarkMode: boolean;
+  error?: string | null;
 }
 
 export function OutputPanel({
@@ -17,8 +18,40 @@ export function OutputPanel({
   onAutoScrollChange,
   onClear,
   isDarkMode,
+  error,
 }: OutputPanelProps) {
   const { t } = useTranslation();
+
+  const renderContent = () => {
+    if (error) {
+      return (
+        <div className="flex h-full items-center justify-center">
+          <div className="text-red-500 flex items-center gap-2">
+            <IconifyIcon icon="material-symbols:error-outline" size={16} />
+            <span>{error}</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (output.length === 0) {
+      return (
+        <div className="flex h-full items-center justify-center text-gray-400">
+          {t('quick-command.output.empty')}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-0.5">
+        {output.map((line, index) => (
+          <div key={index} className="leading-6">
+            {line}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="flex h-[300px] flex-col">
@@ -51,19 +84,7 @@ export function OutputPanel({
         `}
         id="output-container"
       >
-        {output.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-gray-400">
-            {t('quick-command.output.empty')}
-          </div>
-        ) : (
-          <div className="space-y-0.5">
-            {output.map((line, index) => (
-              <div key={index} className="leading-6">
-                {line}
-              </div>
-            ))}
-          </div>
-        )}
+        {renderContent()}
       </div>
     </div>
   );

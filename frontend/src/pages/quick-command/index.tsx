@@ -46,18 +46,22 @@ function QuickCommand() {
     setAutoScroll,
     setCurrentTaskId,
     startExecution: initExecution,
+    stopExecution,
     resetStatus,
     updateDuration,
     validateExecution,
   } = useQuickCommand();
 
-  const { messages, clearMessages } = useTaskWebSocket({
+  const { messages, clearMessages, error } = useTaskWebSocket({
     taskId: currentTaskId,
     autoClear: false,
     onMessage: (data) => {
       if (data.event === 'end' || data.event === 'error') {
         resetStatus();
       }
+    },
+    onError: () => {
+      stopExecution();
     },
   });
 
@@ -69,16 +73,21 @@ function QuickCommand() {
     }
 
     try {
-      initExecution();
+      resetStatus();
+      clearMessages();
+
       const taskId = await execQuickCommand({
         taskName: '快捷命令',
         hostIdList: selectedHosts,
         shortcutScriptContent: content,
       });
 
-      if (taskId) {
-        setCurrentTaskId(taskId);
+      if (!taskId) {
+        throw new Error('No task ID returned');
       }
+
+      setCurrentTaskId(taskId);
+      initExecution();
     } catch (error) {
       message.error(`${t('quick-command.execute.error')}: ${(error as Error).message}`);
       resetStatus();
@@ -93,6 +102,7 @@ function QuickCommand() {
     execQuickCommand,
     resetStatus,
     setCurrentTaskId,
+    clearMessages,
   ]);
 
   useEffect(() => {
@@ -195,6 +205,7 @@ function QuickCommand() {
         onAutoScrollChange={setAutoScroll}
         onClear={clearMessages}
         isDarkMode={isDarkMode}
+        error={error}
       />
     </div>
   );
