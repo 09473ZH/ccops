@@ -21,7 +21,7 @@ SET @@SESSION.SQL_LOG_BIN= 0;
 -- GTID state at the beginning of the backup 
 --
 
-SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '62fb5ac4-1d6c-11ef-baab-b8cef61596c6:1-1218785';
+SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '62fb5ac4-1d6c-11ef-baab-b8cef61596c6:1-2472602';
 
 --
 -- Table structure for table `configurations`
@@ -40,7 +40,7 @@ CREATE TABLE `configurations` (
   `field_description` text,
   `is_changed` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否更改过',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=79 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -61,7 +61,7 @@ CREATE TABLE `disk_models` (
   `encrypted` tinyint(1) DEFAULT NULL COMMENT '磁盘是否加密',
   PRIMARY KEY (`id`),
   KEY `idx_disk_models_host_id` (`host_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -78,7 +78,7 @@ CREATE TABLE `file_data_models` (
   `file_id` bigint unsigned DEFAULT NULL COMMENT '文件id',
   `data` mediumblob,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -103,7 +103,7 @@ CREATE TABLE `file_models` (
   `s3_object_key` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'S3对象键',
   `download_url` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '文件下载链接',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -169,14 +169,33 @@ CREATE TABLE `host_models` (
   `kernel_version` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '内核版本',
   `major` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '操作系统主版本号',
   `minor` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '操作系统次版本号',
-  `patch` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '��丁版本号',
+  `patch` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '补丁版本号',
   `platform` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '平台名称',
   `version` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '完整版本号',
   `host_user` json DEFAULT NULL COMMENT '主机用户列表',
   `software` json DEFAULT NULL COMMENT '主机软件列表',
   `disk` json DEFAULT NULL COMMENT '主机磁盘列表',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `host_permissions`
+--
+
+DROP TABLE IF EXISTS `host_permissions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `host_permissions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `created_at` datetime(3) DEFAULT NULL COMMENT '创建时间',
+  `updated_at` datetime(3) DEFAULT NULL COMMENT '更新时间',
+  `host_id` bigint unsigned DEFAULT NULL,
+  `user_id` bigint unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_host_permissions_user_id` (`user_id`),
+  KEY `idx_host_permissions_host_id` (`host_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -229,7 +248,7 @@ CREATE TABLE `label_models` (
   `updated_at` datetime(3) DEFAULT NULL COMMENT '更新时间',
   `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT '标签名称',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -285,7 +304,7 @@ CREATE TABLE `role_revision_models` (
   `change_log` text COLLATE utf8mb4_general_ci COMMENT '变更日志',
   PRIMARY KEY (`id`),
   KEY `idx_role_revision_models_role_id` (`role_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=67 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -307,7 +326,7 @@ CREATE TABLE `software_models` (
   PRIMARY KEY (`id`),
   KEY `idx_software_models_host_id` (`host_id`),
   KEY `idx_software_models_deleted_at` (`deleted_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=3624 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5568 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -332,7 +351,7 @@ CREATE TABLE `system_user_models` (
   PRIMARY KEY (`id`),
   KEY `idx_system_user_models_deleted_at` (`deleted_at`),
   KEY `idx_system_user_models_host_id` (`host_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=142 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=249 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -350,7 +369,7 @@ CREATE TABLE `target_association_models` (
   `host_ip` varchar(128) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '目标IP',
   PRIMARY KEY (`id`),
   KEY `idx_target_association_models_task_id` (`task_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=743 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=759 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -374,7 +393,7 @@ CREATE TABLE `task_association_models` (
   KEY `idx_task_association_models_role_id` (`role_id`),
   KEY `idx_task_association_models_revision_id` (`revision_id`),
   KEY `idx_task_association_models_user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=749 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=751 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -397,7 +416,7 @@ CREATE TABLE `task_models` (
   `role_details` json DEFAULT NULL COMMENT '''任务软件相关信息''',
   PRIMARY KEY (`id`),
   KEY `idx_task_models_user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=706 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=716 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -421,7 +440,7 @@ CREATE TABLE `user_key_models` (
   KEY `idx_user_key_models_deleted_at` (`deleted_at`),
   KEY `idx_user_key_models_host_id` (`host_id`),
   KEY `idx_user_key_models_username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -438,16 +457,11 @@ CREATE TABLE `user_models` (
   `nick_name` varchar(36) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '昵称',
   `username` varchar(36) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '用户名',
   `password` varchar(128) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '密码',
-  `role` tinyint DEFAULT '1' COMMENT '权限，1管理员，2普通用户，3游客',
   `is_init` tinyint DEFAULT '0' COMMENT '是否初始化，0未初始化，1已初始化',
+  `role` varchar(128) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '权限，1系统管理员，2服务负责人',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
--- 插入初始管理员用户
-INSERT INTO `user_models` VALUES (1,'2024-12-18 15:21:50.000','2024-12-18 15:21:50.000','注册用户','admin','$2a$04$iSKnu.OzNC8.T7aJEcTBX.96wCjj8p57f2MKjTEyHbMkzNNToLAP6',1,0);
-
 SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -459,4 +473,4 @@ SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-18 15:21:50
+-- Dump completed on 2025-01-30  1:58:42

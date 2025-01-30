@@ -2,10 +2,11 @@ package router
 
 import (
 	"ccops/global"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 type RouterGroup struct {
@@ -28,16 +29,29 @@ func InitRouter() *gin.Engine {
 
 	apiRouterGroup := router.Group("api")
 
+	// 为每个路由组创建单独的 RouterGroup，前缀为空字符串
+	userRouterGroup := apiRouterGroup.Group("")
+	coreRouterGroup := apiRouterGroup.Group("")
+	fileRouterGroup := apiRouterGroup.Group("")
+	hostRouterGroup := apiRouterGroup.Group("")
+	clientRouterGroup := apiRouterGroup.Group("")
+	roleRouterGroup := apiRouterGroup.Group("")
+	taskRouterGroup := apiRouterGroup.Group("")
+	revisionRouterGroup := apiRouterGroup.Group("")
+	configurationRouterGroup := apiRouterGroup.Group("")
+
 	routerGroupApp := RouterGroup{apiRouterGroup}
 
-	routerGroupApp.UserRouter()
-	routerGroupApp.CoreRouter()
-	routerGroupApp.FileRouter()
-	routerGroupApp.HostRouter()
-	routerGroupApp.ClientRouter()
-	routerGroupApp.RoleRouter()
-	routerGroupApp.TaskRouter()
-	routerGroupApp.RevisionRouter()
-	routerGroupApp.ConfigurationRouter()
+	// 使用不同的路由组
+	routerGroupApp.UserRouter(userRouterGroup)
+	routerGroupApp.CoreRouter(coreRouterGroup)
+	routerGroupApp.FileRouter(fileRouterGroup)
+	routerGroupApp.HostRouter(hostRouterGroup)
+	routerGroupApp.ClientRouter(clientRouterGroup)
+	routerGroupApp.RoleRouter(roleRouterGroup)
+	routerGroupApp.TaskRouter(taskRouterGroup)
+	routerGroupApp.RevisionRouter(revisionRouterGroup)
+	routerGroupApp.ConfigurationRouter(configurationRouterGroup)
+
 	return router
 }

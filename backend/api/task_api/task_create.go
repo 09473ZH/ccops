@@ -5,6 +5,8 @@ import (
 	"ccops/global"
 	"ccops/models"
 	"ccops/models/res"
+	"ccops/utils/jwts"
+	"ccops/utils/permission"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -154,10 +156,15 @@ func WebSocketHandler(c *gin.Context) {
 }
 
 func (TaskApi) TaskCreateView(c *gin.Context) {
-
+	_claims, _ := c.Get("claims")
+	claims := _claims.(*jwts.CustomClaims)
 	var req TaskCreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		res.FailWithCode(res.ArgumentError, c)
+		return
+	}
+	if !permission.IsPermissionForHosts(claims.UserID, req.HostIdList) {
+		res.FailWithMessage("权限错误", c)
 		return
 	}
 
@@ -201,6 +208,7 @@ func (TaskApi) TaskCreateView(c *gin.Context) {
 			Type:        req.Type,
 			Result:      "",
 			RoleDetails: jsonTaskRoleDetail,
+			UserID:      claims.UserID,
 		}
 		if err := tx.Debug().Create(&task).Error; err != nil {
 			res.FailWithMessage("创建任务失败", c)
@@ -289,6 +297,7 @@ func (TaskApi) TaskCreateView(c *gin.Context) {
 			Type:                  req.Type,
 			ShortcutScriptContent: req.ShortcutScriptContent,
 			Result:                "",
+			UserID:                claims.UserID,
 		}
 		if err := tx.Debug().Create(&task).Error; err != nil {
 			res.FailWithMessage("创建任务失败", c)

@@ -4,6 +4,8 @@ import (
 	"ccops/global"
 	"ccops/models"
 	"ccops/models/res"
+	"ccops/utils/jwts"
+	"ccops/utils/permission"
 	"fmt"
 	"github.com/gin-gonic/gin"
 )
@@ -14,11 +16,16 @@ type removeRequest struct {
 
 // 删的时候关联删除hostuser,disk,software,还有多对多的label
 func (HostsApi) HostRemoveView(c *gin.Context) {
-
+	_claims, _ := c.Get("claims")
+	claims := _claims.(*jwts.CustomClaims)
 	var cr removeRequest
 	err := c.ShouldBindJSON(&cr)
 	if err != nil {
 		res.FailWithCode(res.ArgumentError, c)
+		return
+	}
+	if !permission.IsPermissionForHosts(claims.UserID, cr.HostIds) {
+		res.FailWithMessage("权限错误", c)
 		return
 	}
 

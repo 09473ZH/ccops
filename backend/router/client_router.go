@@ -1,10 +1,13 @@
 package router
 
-import "ccops/api"
+import (
+	"ccops/api"
 
-func (router RouterGroup) ClientRouter() {
+	"github.com/gin-gonic/gin"
+)
+
+func (router RouterGroup) ClientRouter(clientRouterGroup *gin.RouterGroup) {
 	app := api.ApiGroupApp.ClientApi
-
-	router.POST("client/receive", app.ClientInfoReceive)
-	router.GET("client/public_key", app.GetPublicKey)
+	clientRouterGroup.POST("client/receive", app.ClientInfoReceive)
+	clientRouterGroup.GET("client/public_key", app.GetPublicKey)
 }

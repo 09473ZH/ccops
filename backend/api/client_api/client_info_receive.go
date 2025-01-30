@@ -26,6 +26,7 @@ type HostDetailInfo struct {
 
 // 接收客户端上报来的机器信息
 func (ClientApi) ClientInfoReceive(c *gin.Context) {
+
 	var cr HostDetailInfo
 	if err := c.ShouldBindJSON(&cr); err != nil {
 		res.FailWithMessage("参数错误", c)

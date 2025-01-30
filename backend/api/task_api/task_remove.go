@@ -4,10 +4,18 @@ import (
 	"ccops/global"
 	"ccops/models"
 	"ccops/models/res"
+	"ccops/utils/jwts"
+	"ccops/utils/permission"
 	"github.com/gin-gonic/gin"
 )
 
 func (TaskApi) TaskRemove(c *gin.Context) {
+	_claims, _ := c.Get("claims")
+	claims := _claims.(*jwts.CustomClaims)
+	if !permission.IsAdmin(claims.UserID) {
+		res.FailWithMessage("权限错误", c)
+		return
+	}
 	id := c.Param("id")
 	db := global.DB.Debug()
 

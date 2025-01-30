@@ -42,7 +42,7 @@ func (UserApi) UserLoginView(c *gin.Context) {
 
 	// 登录成功，生成token对
 	tokenPair, err := jwts.GenToken(jwts.JwtPayLoad{
-		Role:     int(userModel.Role),
+
 		UserID:   userModel.ID,
 		Username: userModel.UserName,
 	})

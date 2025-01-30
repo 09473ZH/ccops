@@ -2,13 +2,15 @@ package router
 
 import (
 	"ccops/api"
+	"ccops/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
-func (router RouterGroup) ConfigurationRouter() {
+func (router RouterGroup) ConfigurationRouter(configurationRouterGroup *gin.RouterGroup) {
 	app := api.ApiGroupApp.ConfigurationApi
-	//router.Use(middleware.JwtUser())
-	router.GET("/configuration", app.ConfigurationListView)
-	router.PUT("/configuration", app.ConfigurationUpdateView)
-	router.GET("/authorized_keys", app.UserKeyInfo)
-
+	configurationRouterGroup.GET("/authorized_keys", app.UserKeyInfo)
+	configurationRouterGroup.GET("/configuration", app.ConfigurationListView)
+	configurationRouterGroup.Use(middleware.JwtUser())
+	configurationRouterGroup.PUT("/configuration", app.ConfigurationUpdateView)
 }
