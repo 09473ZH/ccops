@@ -1,6 +1,7 @@
 ---
 name: 功能建议
 title: "[Feature] "
+about: "新功能、改进建议"
 labels: enhancement
 assignees: ''
 

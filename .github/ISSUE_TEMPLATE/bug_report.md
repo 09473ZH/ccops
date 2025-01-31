@@ -1,6 +1,7 @@
 ---
 name: Bug 报告
 title: "[Bug] "
+about: "系统问题、功能异常"
 labels: bug
 assignees: ''
 
