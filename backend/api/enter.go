@@ -3,7 +3,6 @@ package api
 import (
 	"ccops/api/client_api"
 	"ccops/api/configuration_api"
-	"ccops/api/core_api"
 	"ccops/api/file_api"
 	"ccops/api/hosts_api"
 	"ccops/api/role_api"
@@ -13,7 +12,6 @@ import (
 )
 
 type ApiGroup struct {
-	CoreApi          core_api.CoreApi
 	UserApi          user_api.UserApi
 	FileApi          file_api.FileApi
 	HostsApi         hosts_api.HostsApi
