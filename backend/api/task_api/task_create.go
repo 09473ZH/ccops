@@ -81,12 +81,22 @@ func WebSocketHandler(c *gin.Context) {
 
 	taskIDStr := c.Param("id")
 	taskID, err := strconv.ParseUint(taskIDStr, 10, 32)
+	if err != nil {
+		fmt.Println("解析任务ID失败:", err)
+		return
+	}
 	taskIDUint := uint(taskID)
+
+	// 添加日志
+	fmt.Printf("WebSocket连接已建立，任务ID: %d\n", taskIDUint)
+
 	tasksMutex.Lock()
 	task, exists := tasks[taskIDUint]
 	tasksMutex.Unlock()
 
 	if !exists {
+		// 添加日志
+		fmt.Printf("任务 %d 不存在于tasks map中\n", taskIDUint)
 		var result string
 		if err := global.DB.Model(&models.TaskModel{}).Where("id = ?", taskID).Select("result").First(&result).Error; err != nil {
 			conn.Close()
@@ -517,6 +527,7 @@ pipelining = True
 
 				jsonBytes, _ := json.Marshal(jsonData)
 				if err := client.WriteMessage(websocket.TextMessage, jsonBytes); err != nil {
+					fmt.Printf("发送消息失败: %v\n", err)
 					client.Close()
 					delete(t.ActiveClients, client)
 				}
@@ -596,19 +607,28 @@ func (t *Task) ExecuteShortcutScript(req TaskCreateRequest, taskID uint) error {
 
 	// 在 goroutine 中逐行读取输出
 	go func() {
+		// 添加日志
+		fmt.Println("开始读取命令输出")
+
 		for scanner.Scan() {
 			line := scanner.Text()
 			t.Mutex.Lock()
 			t.Output = append(t.Output, line)
+
+			// 添加日志
+			fmt.Printf("收到新的输出行: %s\n", line)
+			fmt.Printf("当前活跃客户端数: %d\n", len(t.ActiveClients))
+
 			for client := range t.ActiveClients {
 				jsonData := map[string]interface{}{
 					"message": line,
-					"event":   "progress", // 事件标识，执行过程中可以一直用 "task_update"
+					"event":   "progress",
 					"taskID":  taskID,
 				}
 
 				jsonBytes, _ := json.Marshal(jsonData)
 				if err := client.WriteMessage(websocket.TextMessage, jsonBytes); err != nil {
+					fmt.Printf("发送消息失败: %v\n", err)
 					client.Close()
 					delete(t.ActiveClients, client)
 				}
@@ -715,7 +735,6 @@ func CreateInventoryFile(req TaskCreateRequest) error {
 		return fmt.Errorf("写入 inventory 文件失败: %w", err)
 	}
 
-	fmt.Println("Inventory 文件写入��:", inventoryFilePath)
 	return nil
 }
 
