@@ -1,0 +1,3 @@
+blank_issues_enabled: false
+# 在创建 issue 时会显示的选择指南
+name: 选择合适的 Issue 模板
