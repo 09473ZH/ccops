@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"ccops/models/res"
 	"ccops/utils/jwts"
 	"github.com/gin-gonic/gin"
 	"strings"
@@ -11,18 +10,19 @@ func JwtUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractToken(c)
 		if token == "" {
-			res.FailWithMessage("未携带token", c)
+			c.JSON(401, gin.H{"code": 401, "data": map[string]any{}, "msg": "token为空"})
 			c.Abort()
 			return
 		}
 
 		claims, err := jwts.ParseToken(token)
 		if err == jwts.ErrTokenExpired {
-			res.FailWithMessage("token已过期", c)
+			c.JSON(401, gin.H{"code": 401, "data": map[string]any{}, "msg": "token已过期"})
 			c.Abort()
 			return
 		} else if err != nil {
-			res.FailWithMessage("token错误", c)
+
+			c.JSON(401, gin.H{"code": 401, "data": map[string]any{}, "msg": "token错误"})
 			c.Abort()
 			return
 		}
