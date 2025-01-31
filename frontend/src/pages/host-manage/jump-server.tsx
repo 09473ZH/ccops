@@ -59,8 +59,7 @@ export default function JumpServer() {
   // 初始化第一个终端会话
   useEffect(() => {
     if (id && sessions.length === 0 && hosts) {
-      const [hostId] = id;
-      createSession(hostId);
+      createSession(id);
     }
   }, [id, sessions.length, hosts, createSession]);
 

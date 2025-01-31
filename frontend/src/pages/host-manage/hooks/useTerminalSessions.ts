@@ -70,21 +70,28 @@ export function useTerminalSessions(initialId: string | undefined, hosts: HostIn
     });
   };
 
-  const updateSessionTitles = () => {
+  const updateSessionTitles = useCallback(() => {
     if (hosts) {
-      setSessions((prev) =>
-        prev.map((session) => {
+      setSessions((prev) => {
+        const updatedSessions = prev.map((session) => {
           const host = hosts.find((h) => h.id.toString() === session.hostId);
-          return host
+          if (!host) return session;
+          
+          const newTitle = `${host.name}@${host.hostServerUrl}`;
+          return session.title !== newTitle
             ? {
                 ...session,
-                title: `${host.name}@${host.hostServerUrl}`,
+                title: newTitle,
               }
             : session;
-        }),
-      );
+        });
+
+        return prev.every((session, i) => session.title === updatedSessions[i].title)
+          ? prev
+          : updatedSessions;
+      });
     }
-  };
+  }, [hosts]);
 
   return {
     sessions,
