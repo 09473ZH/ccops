@@ -76,7 +76,7 @@ export function useTerminalSessions(initialId: string | undefined, hosts: HostIn
         const updatedSessions = prev.map((session) => {
           const host = hosts.find((h) => h.id.toString() === session.hostId);
           if (!host) return session;
-          
+
           const newTitle = `${host.name}@${host.hostServerUrl}`;
           return session.title !== newTitle
             ? {
