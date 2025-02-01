@@ -3,6 +3,7 @@ import * as monaco from 'monaco-editor';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { TaskOutput } from '@/api/services/taskService';
 import { HostSelector } from '@/components/host/host-selector';
 import IconifyIcon from '@/components/icon/iconify-icon';
 import MonacoEditor from '@/components/monaco-editor';
@@ -55,14 +56,17 @@ function QuickCommand() {
   const { messages, clearMessages, error } = useTaskWebSocket({
     taskId: currentTaskId,
     autoClear: false,
-    onMessage: (data) => {
-      if (data.event === 'end' || data.event === 'error') {
-        resetStatus();
-      }
-    },
-    onError: () => {
+    onMessage: useCallback(
+      (data: TaskOutput) => {
+        if (data.event === 'end' || data.event === 'error') {
+          resetStatus();
+        }
+      },
+      [resetStatus],
+    ),
+    onError: useCallback(() => {
       stopExecution();
-    },
+    }, [stopExecution]),
   });
 
   const handleExecute = useCallback(async () => {
@@ -74,7 +78,6 @@ function QuickCommand() {
 
     try {
       resetStatus();
-      clearMessages();
 
       const taskId = await execQuickCommand({
         taskName: '快捷命令',
@@ -102,7 +105,6 @@ function QuickCommand() {
     execQuickCommand,
     resetStatus,
     setCurrentTaskId,
-    clearMessages,
   ]);
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 import useUserStore from '@/store/userStore';
@@ -25,6 +25,14 @@ export function useTaskWebSocket({
   const [messages, setMessages] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { userToken } = useUserStore();
+  const onMessageRef = useRef(onMessage);
+  const onErrorRef = useRef(onError);
+
+  // 更新 ref
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+    onErrorRef.current = onError;
+  }, [onMessage, onError]);
 
   const socketUrl =
     taskId && userToken.accessToken
@@ -33,20 +41,20 @@ export function useTaskWebSocket({
         )}`
       : null;
 
-  const handleError = useCallback(
-    (errorMessage: string) => {
-      setError(errorMessage);
-      onError?.(errorMessage);
-    },
-    [onError],
-  );
+  const handleError = useCallback((errorMessage: string) => {
+    setError(errorMessage);
+    onErrorRef.current?.(errorMessage);
+  }, []);
 
   const { lastMessage, readyState } = useWebSocket(
     socketUrl || '',
     {
       shouldReconnect: (closeEvent) => {
-        return false;
+        return closeEvent.code !== 1000; // 正常关闭时不重连
       },
+      retryOnError: true,
+      reconnectAttempts: 3, // 最大重连次数
+      reconnectInterval: 3000, // 重连间隔时间
       onOpen: () => {
         setError(null);
       },
@@ -84,8 +92,10 @@ export function useTaskWebSocket({
     if (lastMessage !== null) {
       try {
         const data = JSON.parse(lastMessage.data) as TaskOutput;
-        onMessage?.(data);
+        // 先处理消息事件
+        onMessageRef.current?.(data);
 
+        // 再处理消息内容
         if (data.message?.trim()) {
           let { message } = data;
           if (!preserveFormat) {
@@ -94,13 +104,14 @@ export function useTaskWebSocket({
           const formattedMessage = withTimestamp
             ? `[${new Date().toLocaleTimeString()}] ${message}`
             : message;
+
           setMessages((prev) => [...prev, formattedMessage]);
         }
       } catch (error) {
-        // 忽略消息处理错误
+        console.debug('Invalid message format:', error);
       }
     }
-  }, [lastMessage, withTimestamp, preserveFormat, onMessage]);
+  }, [lastMessage, withTimestamp, preserveFormat]);
 
   return {
     messages,

@@ -13,7 +13,7 @@ export function StatusDisplay({ event, duration }: StatusDisplayProps) {
   const renderStatus = () => {
     const statusMap = {
       running: <span className="text-blue-500">{t('quick-command.status.running')}</span>,
-      end: <span className="text-green-500">{t('quick-command.status.ended')}</span>,
+      end: <span>{t('quick-command.status.pending')}</span>,
       null: <span>{t('quick-command.status.pending')}</span>,
     } as const;
     return statusMap[event || 'null'];
