@@ -10,8 +10,8 @@ import (
 func (router RouterGroup) HostRouter(hostRouterGroup *gin.RouterGroup) {
 	app := api.ApiGroupApp.HostsApi
 
-	hostRouterGroup.GET("host_web_shell/:id", app.HandleWebSocket)
 	hostRouterGroup.Use(middleware.JwtUser())
+	hostRouterGroup.GET("host_web_shell/:id", app.HandleWebSocket)
 	hostRouterGroup.GET("host_list", app.HostListView)
 	hostRouterGroup.GET("host/:id/", app.HostInfoView)
 	hostRouterGroup.DELETE("host", app.HostRemoveView)
@@ -24,4 +24,6 @@ func (router RouterGroup) HostRouter(hostRouterGroup *gin.RouterGroup) {
 	hostRouterGroup.PUT("host_label_update/:id/", app.HostLabelUpdateView)
 	hostRouterGroup.DELETE("host_label/:id/", app.HostLabelRemoveView)
 	hostRouterGroup.PUT("host_label_disassociate/:id/", app.LabelDisassociateView)
+	hostRouterGroup.GET("host_permission_list", app.PermissionHostList)
+	hostRouterGroup.GET("host_search", app.HostSearch)
 }
