@@ -19,5 +19,5 @@ logger:
 jwt:
   secret: xxx     # JWT 密钥
   issuer: xx     # JWT 发行者
-  accessExpires: 168      # 访问令牌过期时间（小时）
+  accessExpires: 720      # 访问令牌过期时间（小时）
   refreshExpires: 720     # 刷新令牌过期时间（小时）
