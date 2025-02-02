@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"ccops/models/res"
 	"ccops/utils/jwts"
 	"github.com/gin-gonic/gin"
 	"strings"
@@ -8,27 +9,37 @@ import (
 
 func JwtUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := extractToken(c)
+		var token string
+
+		if c.IsWebsocket() {
+			token = c.Query("token")
+		} else {
+			token = extractToken(c)
+		}
+
 		if token == "" {
-			c.JSON(401, gin.H{"code": 401, "data": map[string]any{}, "msg": "token为空"})
-			c.Abort()
+			handleHandshakeError(c, "token为空")
 			return
 		}
 
 		claims, err := jwts.ParseToken(token)
-		if err == jwts.ErrTokenExpired {
-			c.JSON(401, gin.H{"code": 401, "data": map[string]any{}, "msg": "token已过期"})
-			c.Abort()
-			return
-		} else if err != nil {
-
-			c.JSON(401, gin.H{"code": 401, "data": map[string]any{}, "msg": "token错误"})
-			c.Abort()
+		if err != nil {
+			if err == jwts.ErrTokenExpired {
+				handleHandshakeError(c, "token已过期")
+			} else {
+				handleHandshakeError(c, "token错误")
+			}
 			return
 		}
 
 		c.Set("claims", claims)
 	}
+}
+
+func handleHandshakeError(c *gin.Context, message string) {
+	// 在WebSocket握手阶段返回HTTP错误响应
+	c.JSON(400, gin.H{"code": res.Error, "data": map[string]any{}, "msg": message})
+	c.Abort()
 }
 
 // extractToken 从请求头中提取token
