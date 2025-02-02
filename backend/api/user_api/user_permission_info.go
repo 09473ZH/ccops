@@ -9,8 +9,9 @@ import (
 )
 
 type PermissionStruct struct {
-	HostId uint   `json:"hostID"`
-	HostIp string `json:"hostIP"`
+	HostId   uint   `json:"hostID"`
+	HostIp   string `json:"hostIP"`
+	HostName string `json:"hostName"`
 }
 
 func (UserApi) UserPermissionInfoView(c *gin.Context) {
@@ -21,7 +22,7 @@ func (UserApi) UserPermissionInfoView(c *gin.Context) {
 
 	// 查询用户的主机权限
 	var hostPermissions []models.HostPermission
-	if err := global.DB.Where("user_id = ?", userID).Find(&hostPermissions).Error; err != nil {
+	if err := global.DB.Debug().Model(&models.HostPermission{}).Where("user_id = ?", userID).Find(&hostPermissions).Error; err != nil {
 		res.FailWithMessage("获取用户权限失败", c)
 		return
 	}
@@ -42,8 +43,9 @@ func (UserApi) UserPermissionInfoView(c *gin.Context) {
 	// 组装权限列表
 	for _, host := range hosts {
 		permissionList = append(permissionList, PermissionStruct{
-			HostId: host.ID,
-			HostIp: host.HostServerUrl,
+			HostId:   host.ID,
+			HostIp:   host.HostServerUrl,
+			HostName: host.Name,
 		})
 	}
 
