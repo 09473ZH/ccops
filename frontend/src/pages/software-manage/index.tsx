@@ -1,4 +1,4 @@
-import { Form, Input, Typography, Button, Modal, Select } from 'antd';
+import { Form, Input, Button, Modal, Select } from 'antd';
 
 import { RoleItem } from '@/api/services/softwareService';
 import { useModalsControl } from '@/hooks/useModalsControl';
@@ -31,15 +31,12 @@ function SoftwareManage() {
   };
 
   return (
-    <div>
-      <Typography.Title level={2} className="mt-4">
-        软件管理
-      </Typography.Title>
-
-      <Button type="primary" onClick={() => open('addSoftware')} className="float-right mb-4">
-        添加软件
-      </Button>
-
+    <div className="flex h-full flex-col p-5">
+      <div>
+        <Button type="primary" onClick={() => open('addSoftware')} className="float-right mb-4">
+          添加软件
+        </Button>
+      </div>
       <SoftwareTable onAssignLabel={handleAssignLabel} />
 
       <Modal

@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import taskService, { RoleVarsConfig } from '@/api/services/taskService';
 import { useMutationWithMessage } from '@/hooks/useMutationWithMessage';
 import { useRoleList } from '@/pages/software-manage/use-software';
-import batchProcessTasks from '@/utils/batchProcessTasks';
+import batchProcessTasks from '@/utils/batch-process-tasks';
 
 import type { TablePaginationConfig } from 'antd/es/table';
 

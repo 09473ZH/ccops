@@ -1,4 +1,4 @@
-import { Button, Typography, Space, Form } from 'antd';
+import { Button, Space, Form } from 'antd';
 import { useState } from 'react';
 
 import { TaskInfo } from '@/api/services/taskService';
@@ -114,11 +114,8 @@ function TaskManagePage() {
   };
 
   return (
-    <div>
-      <Typography.Title className="mt-4" level={2}>
-        任务列表
-      </Typography.Title>
-      <div className="mb-4 flex justify-between">
+    <div className="flex h-full flex-col p-5">
+      <div className="mb-4 flex justify-end">
         <Space>
           <Button type="primary" onClick={handleOpenCreateModal}>
             新建任务

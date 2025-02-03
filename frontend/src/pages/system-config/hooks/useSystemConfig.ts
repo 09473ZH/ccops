@@ -5,7 +5,7 @@ import type { ConfigListResponse } from '@/api/services/configService';
 import configService from '@/api/services/configService';
 import { useMutationWithMessage } from '@/hooks/useMutationWithMessage';
 import type { ConfigGroup } from '@/types/config';
-import { transformConfig } from '@/utils/configTransform';
+import { transformConfig } from '@/utils/config-transform';
 
 import useSystemConfigStore from './useSystemConfigStore';
 

@@ -19,7 +19,7 @@ const systemSettings: AppRouteObject[] = [
     ),
     meta: {
       label: 'sys.menu.system_settings',
-      icon: <Iconify icon="solar:settings-outline" size={24} />,
+      icon: <Iconify icon="solar:settings-minimalistic-bold-duotone" size={24} />,
       key: '/system_settings',
     },
   },

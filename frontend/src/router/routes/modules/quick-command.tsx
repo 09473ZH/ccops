@@ -19,7 +19,7 @@ const quickCommand: AppRouteObject[] = [
     ),
     meta: {
       label: 'sys.menu.quick_command',
-      icon: <Iconify icon="solar:bolt-circle-outline" size={24} />,
+      icon: <Iconify icon="solar:bolt-circle-bold-duotone" size={24} />,
       key: '/quick_command',
     },
   },

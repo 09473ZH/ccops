@@ -49,10 +49,7 @@ function FileManager() {
   };
 
   return (
-    <div>
-      <Typography.Title className="mt-4" level={2}>
-        文件管理
-      </Typography.Title>
+    <div className="flex h-full flex-col p-5">
       <div className="mb-4 flex justify-end gap-4">
         <Button
           icon={<Iconify icon="flowbite:trash-bin-outline" />}

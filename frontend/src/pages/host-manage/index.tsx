@@ -1,4 +1,4 @@
-import { Typography, Table, Space, Button, Popconfirm, Dropdown, Input } from 'antd';
+import { Table, Button, Popconfirm, Input } from 'antd';
 import { Suspense, useMemo } from 'react';
 
 import type { HostInfo } from '@/api/services/hostService';
@@ -113,18 +113,15 @@ function HostManage() {
   );
 
   return (
-    <>
-      <Typography.Title className="mt-4" level={2}>
-        主机管理
-      </Typography.Title>
-
-      {/* 工具栏 */}
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+    <div className="flex h-full flex-col p-5">
+      {/* 顶部操作栏 */}
+      <div className="mb-5 flex items-center justify-between">
+        <div className="flex items-center gap-5">
           <div className="relative w-64">
             <Input
               placeholder="搜索主机名称/操作系统"
               allowClear
+              className="transition-all"
               prefix={<Iconify icon="solar:magnifer-linear" className="text-gray-400" />}
               onChange={(e) => handleSearch(e.target.value)}
             />
@@ -136,32 +133,57 @@ function HostManage() {
             columnGroups={columnGroups}
           />
         </div>
-        <Space size="middle">
-          <Button
-            icon={<Iconify icon="flowbite:label-outline" />}
-            onClick={() => open(ModalName.LabelManage)}
-            className="flex items-center space-x-1"
-          >
-            <span>标签管理</span>
-          </Button>
-          <Dropdown menu={menu} disabled={!hasSelected}>
+        <div className="flex items-center gap-3">
+          {hasSelected && (
+            <div className="flex items-center gap-4 border-r border-gray-200 pr-4">
+              <span className="text-sm text-gray-500">已选择 {table.selectedRows.length} 项</span>
+              <Button
+                type="text"
+                size="middle"
+                className="transition-all"
+                icon={<Iconify icon="flowbite:terminal-outline" />}
+                onClick={() => open(ModalName.SshConfig)}
+              >
+                SSH配置
+              </Button>
+              <Popconfirm
+                title="确认删除"
+                description={`确定要删除选中的 ${table.selectedRows.length} 个主机吗？`}
+                onConfirm={() => actions.deleteHosts(table.selectedRows as number[])}
+                okText="确认"
+                cancelText="取消"
+                okButtonProps={{ danger: true }}
+              >
+                <Button
+                  type="text"
+                  danger
+                  size="middle"
+                  className="transition-all"
+                  icon={<Iconify icon="flowbite:trash-bin-outline" />}
+                >
+                  批量删除
+                </Button>
+              </Popconfirm>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
             <Button
-              className="flex items-center space-x-1"
-              icon={<Iconify icon="flowbite:dots-vertical-outline" />}
-              disabled={!hasSelected}
+              type="primary"
+              className="flex items-center transition-all"
+              icon={<Iconify icon="flowbite:plus-outline" />}
+              onClick={() => open(ModalName.Create)}
             >
-              <span>批量操作</span>
+              添加主机
             </Button>
-          </Dropdown>
-          <Button
-            type="primary"
-            className="flex items-center space-x-1"
-            icon={<Iconify icon="flowbite:plus-outline" />}
-            onClick={() => open(ModalName.Create)}
-          >
-            <span>添加主机</span>
-          </Button>
-        </Space>
+            <Button
+              className="transition-all"
+              icon={<Iconify icon="flowbite:tag-outline" />}
+              onClick={() => open(ModalName.LabelManage)}
+            >
+              标签管理
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* 主机列表表格 */}
@@ -205,7 +227,7 @@ function HostManage() {
           selectedRows={table.selectedRows}
         />
       </Suspense>
-    </>
+    </div>
   );
 }
 

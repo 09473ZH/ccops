@@ -270,22 +270,17 @@ export default function SystemSettingsPage() {
   );
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col p-5">
       <div
         className={cn(
-          'flex items-center justify-between border-b border-[#f0f0f0] transition-all duration-300 ease-in-out',
+          'flex items-center border-b border-[#f0f0f0] transition-all duration-300 ease-in-out',
           {
             'shadow-b from-transparent via-transparent border-b-0 bg-gradient-to-b to-[rgba(227,167,167,0.05)] dark:to-[rgba(0,0,0,0.1)]':
               isScrolled,
           },
         )}
       >
-        <div className="flex items-center gap-3 py-5">
-          <Title level={2} className="m-0">
-            {t('config.title')}
-          </Title>
-        </div>
-        <div className="px-2">
+        <div className="mb-5 flex w-full justify-end">
           <Space>
             <Button onClick={() => form.resetFields()}>{t('config.resetAll')}</Button>
             <Button
