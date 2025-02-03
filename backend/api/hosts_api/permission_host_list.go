@@ -21,7 +21,7 @@ type PermissionHostList struct {
 	Hosts     []Host `json:"hosts"`
 }
 
-func (HostsApi) PermissionHostList(c *gin.Context) {
+func (HostsApi) PermissionHosts(c *gin.Context) {
 
 	_claims, _ := c.Get("claims")
 	claims := _claims.(*jwts.CustomClaims)

@@ -24,6 +24,6 @@ func (router RouterGroup) HostRouter(hostRouterGroup *gin.RouterGroup) {
 	hostRouterGroup.PUT("host_label_update/:id/", app.HostLabelUpdateView)
 	hostRouterGroup.DELETE("host_label/:id/", app.HostLabelRemoveView)
 	hostRouterGroup.PUT("host_label_disassociate/:id/", app.LabelDisassociateView)
-	hostRouterGroup.GET("host_permission_list", app.PermissionHostList)
+	hostRouterGroup.GET("host/my", app.PermissionHosts)
 	hostRouterGroup.GET("host_search", app.HostSearch)
 }
