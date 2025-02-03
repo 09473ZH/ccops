@@ -30,7 +30,7 @@ func InitRouter() *gin.Engine {
 	apiRouterGroup := router.Group("api")
 
 	// 为每个路由组创建单独的 RouterGroup，前缀为空字符串
-	userRouterGroup := apiRouterGroup.Group("auth")
+	userRouterGroup := apiRouterGroup.Group("")
 	coreRouterGroup := apiRouterGroup.Group("")
 	fileRouterGroup := apiRouterGroup.Group("")
 	hostRouterGroup := apiRouterGroup.Group("")
