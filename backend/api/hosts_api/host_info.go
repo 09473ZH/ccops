@@ -21,7 +21,7 @@ func (HostsApi) HostInfoView(c *gin.Context) {
 		First(&hostInfo).Error
 
 	if errHost != nil {
-		res.FailWithMessage("用户不存在: "+errHost.Error(), c)
+		res.FailWithMessage("主机不存在: "+errHost.Error(), c)
 		return
 	}
 
