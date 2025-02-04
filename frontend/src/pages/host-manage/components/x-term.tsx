@@ -54,6 +54,8 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
         if (isReconnect) {
           term.write('\x1b[2J\x1b[H');
         }
+        const dims = `${term.rows},${term.cols}`;
+        ws.send(`\x1b[8;${dims}`);
         heartbeatInterval = setInterval(sendHeartbeat, 30000);
       };
 
@@ -122,6 +124,27 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
       term.open(terminalRef.current);
       fitAddon.fit();
+
+      // 处理终端大小调整
+      const handleResize = () => {
+        if (fitAddonRef.current) {
+          fitAddonRef.current.fit();
+          if (wsRef.current?.readyState === WebSocket.OPEN) {
+            const dims = `${term.rows},${term.cols}`;
+            wsRef.current.send(`\x1b[8;${dims}`);
+          }
+        }
+      };
+
+      const resizeObserver = new ResizeObserver(() => {
+        handleResize();
+      });
+
+      if (terminalRef.current) {
+        resizeObserver.observe(terminalRef.current);
+      }
+
+      window.addEventListener('resize', handleResize);
 
       // 初始化 WebSocket 连接
       const { ws, cleanup } = setupWebSocket(term, hostId, onConnectionChange);
