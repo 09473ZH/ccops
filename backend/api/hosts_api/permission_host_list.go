@@ -18,6 +18,7 @@ type Host struct {
 
 type PermissionHostList struct {
 	LabelName string `json:"labelName"`
+	LabelId   uint   `json:"labelId"`
 	Hosts     []Host `json:"hosts"`
 }
 
@@ -37,22 +38,38 @@ func (HostsApi) PermissionHosts(c *gin.Context) {
 		global.DB.Model(&models.HostModel{}).Where("id IN ?", hostIds).Preload("Label").Find(&hosts)
 	}
 
-	labelMap := make(map[string][]Host)
+	labelMap := make(map[string]struct {
+		Hosts   []Host
+		LabelId uint
+	})
 	for _, host := range hosts {
 		if len(host.Label) == 0 {
-			labelMap["无标签"] = append(labelMap["无标签"], Host{HostId: host.ID, HostName: host.Name, HostIp: host.HostServerUrl})
+			labelMap["无标签"] = struct {
+				Hosts   []Host
+				LabelId uint
+			}{
+				Hosts:   append(labelMap["无标签"].Hosts, Host{HostId: host.ID, HostName: host.Name, HostIp: host.HostServerUrl}),
+				LabelId: 0,
+			}
 		} else {
 			for _, label := range host.Label {
-				labelMap[label.Name] = append(labelMap[label.Name], Host{HostId: host.ID, HostName: host.Name, HostIp: host.HostServerUrl})
+				labelMap[label.Name] = struct {
+					Hosts   []Host
+					LabelId uint
+				}{
+					Hosts:   append(labelMap[label.Name].Hosts, Host{HostId: host.ID, HostName: host.Name, HostIp: host.HostServerUrl}),
+					LabelId: label.ID,
+				}
 			}
 		}
 	}
 
 	var permissionHostLists []PermissionHostList
-	for labelName, hosts := range labelMap {
+	for labelName, data := range labelMap {
 		permissionHostLists = append(permissionHostLists, PermissionHostList{
 			LabelName: labelName,
-			Hosts:     hosts,
+			LabelId:   data.LabelId,
+			Hosts:     data.Hosts,
 		})
 	}
 
