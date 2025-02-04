@@ -27,9 +27,9 @@ func (UserApi) UserDisable(c *gin.Context) {
 	}
 
 	// 切换用户状态
-	newStatus := 1
-	if user.IsEnabled == 1 {
-		newStatus = 0
+	newStatus := true
+	if user.IsEnabled == true {
+		newStatus = false
 	}
 
 	if err := global.DB.Model(&models.UserModel{}).
@@ -40,7 +40,7 @@ func (UserApi) UserDisable(c *gin.Context) {
 	}
 
 	statusMessage := "用户已启用"
-	if newStatus == 0 {
+	if newStatus == false {
 		statusMessage = "用户已禁用"
 	}
 
