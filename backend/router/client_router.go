@@ -8,6 +8,6 @@ import (
 
 func (router RouterGroup) ClientRouter(clientRouterGroup *gin.RouterGroup) {
 	app := api.ApiGroupApp.ClientApi
-	clientRouterGroup.POST("client/receive", app.ClientInfoReceive)
-	clientRouterGroup.GET("client/public_key", app.GetPublicKey)
+	clientRouterGroup.POST("receive", app.ClientInfoReceive)
+	clientRouterGroup.GET("public_key", app.GetPublicKey)
 }

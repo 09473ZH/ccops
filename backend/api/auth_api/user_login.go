@@ -1,4 +1,4 @@
-package user_api
+package auth_api
 
 import (
 	"ccops/global"
@@ -15,7 +15,7 @@ type EmailLoginRequest struct {
 	Password string `json:"password" binding:"required" msg:"请输入密码"`
 }
 
-func (UserApi) UserLoginView(c *gin.Context) {
+func (AuthApi) UserLoginView(c *gin.Context) {
 	var cr EmailLoginRequest
 	err := c.ShouldBindJSON(&cr)
 	if err != nil {
@@ -66,7 +66,7 @@ func (UserApi) UserLoginView(c *gin.Context) {
 			"username": userModel.UserName,
 			"role":     userModel.Role,
 		},
-		ExpireAt: time.Now().Add(30 * time.Minute).Unix(), // 30分钟后过期
+		ExpireAt: time.Now().Add(time.Duration(global.Config.Jwt.AccessExpires) * time.Hour).Unix(),
 	}
 
 	res.OkWithData(loginResponse, c)

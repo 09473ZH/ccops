@@ -1,6 +1,7 @@
 package api
 
 import (
+	"ccops/api/auth_api"
 	"ccops/api/client_api"
 	"ccops/api/configuration_api"
 	"ccops/api/file_api"
@@ -12,6 +13,7 @@ import (
 )
 
 type ApiGroup struct {
+	AuthApi          auth_api.AuthApi
 	UserApi          user_api.UserApi
 	FileApi          file_api.FileApi
 	HostsApi         hosts_api.HostsApi
