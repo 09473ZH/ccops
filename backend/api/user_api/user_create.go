@@ -27,6 +27,7 @@ func (UserApi) UserCreate(c *gin.Context) {
 		UserName        string `json:"username"`
 		Email           string `json:"email"`
 		PermissionHosts []uint `json:"permissionHosts"`
+		Labels          []uint `json:"labels"` // 新增标签ID列表
 		Role            string `json:"role"`
 	}
 
@@ -83,6 +84,9 @@ func (UserApi) UserCreate(c *gin.Context) {
 	password := string(b)
 	hashedPassword := pwd.HashPwd(password)
 
+	// 开启事务
+	tx := global.DB.Begin()
+
 	// 保存到数据库
 	newUser := models.UserModel{
 		UserName: username,
@@ -90,8 +94,8 @@ func (UserApi) UserCreate(c *gin.Context) {
 		Password: hashedPassword,
 		Role:     req.Role,
 	}
-	err := global.DB.Create(&newUser).Error
-	if err != nil {
+	if err := tx.Create(&newUser).Error; err != nil {
+		tx.Rollback()
 		res.FailWithMessage("用户创建失败", c)
 		return
 	}
@@ -105,10 +109,34 @@ func (UserApi) UserCreate(c *gin.Context) {
 				HostId: hostId,
 			})
 		}
-		if err := global.DB.Create(&toAdd).Error; err != nil {
+		if err := tx.Create(&toAdd).Error; err != nil {
+			tx.Rollback()
 			res.FailWithMessage("分配主机权限失败", c)
 			return
 		}
+	}
+
+	// 分配标签权限
+	if len(req.Labels) > 0 {
+		var toAddLabels []models.UserLabels
+		for _, labelId := range req.Labels {
+			toAddLabels = append(toAddLabels, models.UserLabels{
+				UserID:  newUser.ID,
+				LabelID: labelId,
+			})
+		}
+		if err := tx.Create(&toAddLabels).Error; err != nil {
+			tx.Rollback()
+			res.FailWithMessage("分配标签权限失败", c)
+			return
+		}
+	}
+
+	// 提交事务
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		res.FailWithMessage("用户创建失败", c)
+		return
 	}
 
 	// 返回创建成功信息

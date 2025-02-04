@@ -31,22 +31,17 @@ func (UserApi) UserLoginView(c *gin.Context) {
 		res.FailWithMessage("用户名或密码错误", c)
 		return
 	}
-	//检验是否启用
-	if userModel.IsEnabled == 0 {
-		global.Log.Warn("用户未启用")
-		res.FailWithMessage("用户未启用", c)
-	}
+	////检验是否启用
+	//if userModel.IsEnabled == false {
+	//	global.Log.Warn("用户未启用")
+	//	res.FailWithMessage("用户未启用", c)
+	//}
 
 	// 校验密码
 	isCheck := pwd.CheckPwd(userModel.Password, cr.Password)
 	if !isCheck {
 		global.Log.Warn("用户名密码错误")
 		res.FailWithMessage("用户名或密码错误", c)
-		return
-	}
-	//检查是否首次登录
-	if userModel.IsInit == 0 {
-		res.Ok(userModel.ID, "首次登录", c)
 		return
 	}
 
