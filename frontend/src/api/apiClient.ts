@@ -12,6 +12,8 @@
 
 import useUserStore from '@/store/userStore';
 
+import { AuthApi } from './constants';
+
 import { ResultEnum } from '#/enum';
 
 type RequestConfig = RequestInit & {
@@ -23,8 +25,8 @@ type RequestConfig = RequestInit & {
 
 const BASE_URL = import.meta.env.VITE_APP_BASE_API;
 
-// 不需要token的白名单接口
-const whiteList = ['/api/login', '/api/refresh'];
+// 白名单接口列表
+const whiteList: string[] = [AuthApi.Login, AuthApi.Refresh];
 
 // 用于存储刷新 token 的 Promise
 let refreshTokenPromise: Promise<void> | null = null;

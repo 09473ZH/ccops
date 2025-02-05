@@ -144,7 +144,7 @@ function HostManage() {
                 icon={<Iconify icon="flowbite:terminal-outline" />}
                 onClick={() => open(ModalName.SshConfig)}
               >
-                SSH配置
+                SSH 配置
               </Button>
               <Popconfirm
                 title="确认删除"

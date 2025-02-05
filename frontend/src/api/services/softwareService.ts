@@ -1,4 +1,5 @@
 import { get, post, put, del } from '../apiClient';
+import { SoftwareApi, SoftwareRevisionApi } from '../constants';
 
 import { FileInfo } from './fileService';
 
@@ -44,27 +45,27 @@ export interface RoleListResponse {
 const softwareService = {
   /** 创建软件配置 */
   createRole(role: Omit<RoleItem, 'id' | 'createdAt' | 'revision' | 'updatedAt'>) {
-    return post<RoleItem>('/api/role', role);
+    return post<RoleItem>(SoftwareApi.Create, role);
   },
 
   /** 更新软件配置 */
   updateRole(id: number, data: { name?: string; description?: string; tags?: string[] }) {
-    return put<RoleItem>(`/api/role/${id}`, data);
+    return put<RoleItem>(SoftwareApi.Update.replace(':id', id.toString()), data);
   },
 
   /** 删除软件配置 */
   deleteRole(id: number) {
-    return del(`/api/role/${id}`);
+    return del(SoftwareApi.Delete.replace(':id', id.toString()));
   },
 
   /** 获取软件配置列表 */
   getRoleList() {
-    return get<RoleListResponse>('/api/role_list');
+    return get<RoleListResponse>(SoftwareApi.List);
   },
 
   /** 更新软件版本 */
   reviseRole(task: TaskInfo) {
-    return put<RevisionItem>(`/api/role_revision/${task.id}`, task);
+    return put<RevisionItem>(SoftwareRevisionApi.Update.replace(':id', task.id.toString()), task);
   },
 
   /**
@@ -73,42 +74,44 @@ const softwareService = {
    * 该接口对已激活版本使用是关闭,对其他非激活版本用是先关闭激活版本,再激活该版本
    */
   activeRevision(id: number) {
-    return post<RevisionItem>(`/api/role_revision/${id}/active`);
+    return post<RevisionItem>(SoftwareRevisionApi.SetActive.replace(':id', id.toString()));
   },
 
   /** 获取版本列表 */
   getRoleRevisions(roleId: number) {
-    return get<RevisionListResponse>(`/api/role/${roleId}/revision`);
+    return get<RevisionListResponse>(SoftwareApi.GetRevisions.replace(':id', roleId.toString()));
   },
 
   /** 锁定版本 */
   releaseRoleRevision(roleId: number, changeLog: string) {
-    return post<RevisionItem>(`/api/role_revision/${roleId}/release`, { changeLog });
+    return post<RevisionItem>(SoftwareRevisionApi.Release.replace(':id', roleId.toString()), {
+      changeLog,
+    });
   },
 
   /** 获取草稿版本 */
   getDraftRoleRevision(roleId: number) {
-    return get<RevisionItem>(`/api/role/${roleId}/draft_revision`);
+    return get<RevisionItem>(SoftwareApi.GetDraftRevision.replace(':id', roleId.toString()));
   },
 
   /** 获取激活版本 */
   getActiveRoleRevision(id: number) {
-    return get<RevisionItem>(`/api/role/${id}/active_revision`);
+    return get<RevisionItem>(SoftwareApi.GetActiveRevision.replace(':id', id.toString()));
   },
 
   /** 获取版本详情 */
   getRoleRevision(revisionId: number) {
-    return get<RevisionItem>(`/api/role_revision/${revisionId}`);
+    return get<RevisionItem>(SoftwareRevisionApi.ById.replace(':id', revisionId.toString()));
   },
 
   /** 删除版本 */
   deleteRoleRevision(revisionId: number) {
-    return del(`/api/role_revision/${revisionId}`);
+    return del(SoftwareRevisionApi.Delete.replace(':id', revisionId.toString()));
   },
 
   /** 获取AI配置 */
   getAiConfig(requirement: string) {
-    return post<{ task_content: string; description: string }>(`/api/role_revision/ai`, {
+    return post<{ task_content: string; description: string }>(SoftwareRevisionApi.AiAssist, {
       requirement,
     });
   },

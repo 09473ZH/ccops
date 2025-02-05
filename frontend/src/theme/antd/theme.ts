@@ -20,7 +20,7 @@ const customThemeTokenConfig: ThemeConfig['token'] = {
 
 const customComponentConfig: ThemeConfig['components'] = {
   Breadcrumb: {
-    fontSize: 12,
+    fontSize: 16,
     separatorMargin: 4,
   },
   Menu: {

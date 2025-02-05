@@ -3,6 +3,8 @@ import { Terminal as XTerm, ITheme } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 
+import { HostApi } from '@/api/constants';
+
 export interface TerminalRef {
   clear: () => void;
   reconnect: () => void;
@@ -33,7 +35,9 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
       term.clear();
       term.reset();
 
-      const ws = new WebSocket(`${import.meta.env.VITE_APP_WS_API}/api/host_web_shell/${hostId}`);
+      const ws = new WebSocket(
+        `${import.meta.env.VITE_APP_WS_API}${HostApi.Terminal.replace(':id', hostId)}`,
+      );
       let heartbeatInterval: NodeJS.Timeout;
       let missedHeartbeats = 0;
 

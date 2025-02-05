@@ -1,4 +1,5 @@
 import { get, post, put, del } from '../apiClient';
+import { LabelApi } from '../constants';
 
 export interface LabelInfo {
   id: number;
@@ -19,27 +20,27 @@ export interface LabelListResponse {
 const labelService = {
   /** 获取标签列表 */
   getLabelList() {
-    return get<LabelListResponse>('/api/host_label_list');
+    return get<LabelListResponse>(LabelApi.List);
   },
 
   /** 分配标签 */
   assignLabel(params: { hostId: number; labelIds: number[] }) {
-    return post<void>('/api/host_assign_labels', params);
+    return post<void>(LabelApi.AssignToHost, params);
   },
 
   /** 删除标签 */
   deleteLabel(labelId: number) {
-    return del<void>(`/api/host_label/${labelId}/`, { labelId });
+    return del<void>(LabelApi.ById.replace(':id', labelId.toString()));
   },
 
   /** 创建标签 */
   createLabel(params: { name: string }) {
-    return post<void>('/api/host_label_create', params);
+    return post<void>(LabelApi.Create, params);
   },
 
   /** 解绑主机标签 */
   unbindHostsLabel(labelId: number) {
-    return put<void>(`/api/host_label_disassociate/${labelId}/`, { labelId });
+    return put<void>(LabelApi.UnlabelFromHost.replace(':id', labelId.toString()));
   },
 };
 

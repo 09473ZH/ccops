@@ -1,4 +1,5 @@
 import { get, post } from '../apiClient';
+import { AuthApi, UserApi } from '../constants';
 
 import { UserInfo, UserToken } from '#/entity';
 
@@ -12,22 +13,26 @@ export interface SignUpReq extends SignInReq {
 }
 export type SignInRes = UserToken & { userInfo: UserInfo };
 
-export enum UserApi {
-  SignIn = '/api/login',
-  SignUp = '/auth/signup',
-  Logout = '/auth/logout',
-  Refresh = '/auth/refresh',
-  User = '/user',
-}
+const userService = {
+  /** 登录 */
+  signin: (data: SignInReq) => post<SignInRes>(AuthApi.Login, data),
 
-const signin = (data: SignInReq) => post<SignInRes>('/api/login', data);
-const signup = (data: SignUpReq) => post<SignInRes>(UserApi.SignUp, data);
-const logout = () => get(UserApi.Logout);
-const findById = (id: string) => get<UserInfo[]>(`${UserApi.User}/${id}`);
+  /** 获取当前用户信息 */
+  getCurrentUser: () => get<UserInfo>(UserApi.GetMe),
 
-export default {
-  signin,
-  signup,
-  findById,
-  logout,
+  /** 获取用户权限 */
+  getPermissions: (id: string) => get<string[]>(UserApi.GetPermissions.replace(':id', id)),
+
+  /** 初始化用户密码 */
+  initializePassword: (data: { password: string }) => post(UserApi.Initialize, data),
+
+  /** 重置用户密码 */
+  resetPassword: (id: string, data: { password: string }) =>
+    post(UserApi.ResetPassword.replace(':id', id), data),
+
+  /** 重置自己的密码 */
+  resetMyPassword: (data: { oldPassword: string; newPassword: string }) =>
+    post(UserApi.ResetPassword.replace(':id', 'me'), data),
 };
+
+export default userService;

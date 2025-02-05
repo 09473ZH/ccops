@@ -1,4 +1,5 @@
 import { get, put } from '../apiClient';
+import { SystemConfigApi } from '../constants';
 
 export interface ConfigItem {
   id: number;
@@ -32,7 +33,7 @@ export interface ConfigStructure {
 }
 
 const configService = {
-  getConfigList: () => get<ConfigListResponse>('/api/configuration'),
+  getConfigList: () => get<ConfigListResponse>(SystemConfigApi.List),
 
   getGroupedConfigList: async (): Promise<GroupedConfig> => {
     const response = await configService.getConfigList();
@@ -52,7 +53,7 @@ const configService = {
   },
 
   getConfigValueByType: (type: string) =>
-    get<ConfigListResponse>(`/api/configuration?type=${type}`),
+    get<ConfigListResponse>(`${SystemConfigApi.List}?type=${type}`),
 
   getConfigStructure: async (): Promise<ConfigStructure> => {
     const groupedConfig = await configService.getGroupedConfigList();
@@ -71,7 +72,9 @@ const configService = {
     }, {});
   },
 
-  updateConfig: (params: UpdateConfigParams) => put(`/api/configuration`, params),
+  updateConfig: (params: UpdateConfigParams) => put(SystemConfigApi.Update, params),
+
+  getAuthorizedKeys: () => get<string>(SystemConfigApi.GetAuthorizedKeys),
 };
 
 export default configService;

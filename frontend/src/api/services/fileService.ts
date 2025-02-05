@@ -1,4 +1,5 @@
 import { get, del, put, post } from '@/api/apiClient';
+import { FileApi } from '@/api/constants';
 
 export interface FileInfo {
   id: number;
@@ -16,20 +17,18 @@ export interface FileListResponse {
   list: FileInfo[];
 }
 
-const BASE_URL = import.meta.env.VITE_APP_BASE_API;
-
 /**
- * 文件管理服务
+ * 文件管理
  */
 const fileService = {
   /** 获取文件列表 */
   getFileList() {
-    return get<FileListResponse>('/api/files');
+    return get<FileListResponse>(FileApi.List);
   },
 
   /** 删除文件 */
   deleteFiles(idList: number[]) {
-    return del<void>('/api/files', { idList });
+    return del<void>(FileApi.Delete, { idList });
   },
 
   /** 上传文件 */
@@ -38,12 +37,12 @@ const fileService = {
     files.forEach((file) => {
       formData.append('files', file);
     });
-    return post<void>('/api/uploads', formData);
+    return post<void>(FileApi.Upload, formData);
   },
 
   /** 下载文件 */
   async downloadFile(fileId: number, fileName: string) {
-    const response = await get<Blob>(`/api/file_download/${fileId}`, {
+    const response = await get<Blob>(FileApi.Download.replace(':id', fileId.toString()), {
       responseType: 'blob',
     });
 
@@ -59,12 +58,12 @@ const fileService = {
 
   /** 更新文件内容 */
   updateFileContent(fileId: number, content: string) {
-    return put<void>('/api/file', { fileId, content });
+    return put<void>(FileApi.Update, { fileId, content });
   },
 
   /** 预览文件 */
   previewFile(fileId: number) {
-    return get(`/api/file_preview?fileId=${fileId}`);
+    return get(`${FileApi.Preview}?fileId=${fileId}`);
   },
 };
 
