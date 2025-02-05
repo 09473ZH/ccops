@@ -1,4 +1,4 @@
-import { Button, Modal, Typography, UploadFile, App } from 'antd';
+import { Button, Modal, UploadFile, App } from 'antd';
 import { useState } from 'react';
 
 import { Iconify } from '@/components/icon';

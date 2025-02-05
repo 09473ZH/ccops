@@ -1,5 +1,5 @@
 import { Table, Button, Popconfirm, Input } from 'antd';
-import { Suspense, useMemo } from 'react';
+import { Suspense } from 'react';
 
 import type { HostInfo } from '@/api/services/hostService';
 import { Iconify } from '@/components/icon';
@@ -12,36 +12,6 @@ import { ColumnSelector } from './components/table/column-selector';
 import { getColumns, getColumnGroups } from './components/table/columns';
 import { HOST_TABLE_CONFIG } from './config/columns';
 import { useHostActions, useHostState } from './hooks';
-
-const createMenuItems = (
-  selectedRowsCount: number,
-  onDelete: (ids: number[]) => void,
-  onOpenSshConfig: () => void,
-) => [
-  {
-    key: 'sshConfig',
-    label: 'SSH 配置',
-    icon: <Iconify icon="flowbite:terminal-outline" />,
-    onClick: onOpenSshConfig,
-  },
-  {
-    key: 'batchDelete',
-    icon: <Iconify icon="flowbite:trash-bin-outline" />,
-    label: (
-      <Popconfirm
-        title="确认删除"
-        description={`确定要删除选中的 ${selectedRowsCount} 个主机吗？`}
-        onConfirm={() => onDelete([selectedRowsCount])}
-        okText="确认"
-        cancelText="取消"
-        okButtonProps={{ danger: true }}
-      >
-        <span className="text-red-500">批量删除</span>
-      </Popconfirm>
-    ),
-    danger: true,
-  },
-];
 
 function HostManage() {
   const { open, isOpen, close } = useModalsControl({
@@ -67,15 +37,6 @@ function HostManage() {
 
   const columnGroups = getColumnGroups();
   const hasSelected = table.selectedRows.length > 0;
-
-  const menu = useMemo(
-    () => ({
-      items: createMenuItems(table.selectedRows.length, actions.deleteHosts, () =>
-        open(ModalName.SshConfig),
-      ),
-    }),
-    [actions.deleteHosts, table.selectedRows, open],
-  );
 
   const handleEditName = (record: HostInfo) => {
     setEditing({
