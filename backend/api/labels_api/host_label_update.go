@@ -1,4 +1,4 @@
-package hosts_api
+package labels_api
 
 import (
 	"ccops/global"
@@ -14,7 +14,7 @@ type HostLabelUpdate struct {
 }
 
 // 更某个标签的名称
-func (HostsApi) HostLabelUpdateView(c *gin.Context) {
+func (LabelApi) HostLabelUpdateView(c *gin.Context) {
 	_claims, _ := c.Get("claims")
 	claims := _claims.(*jwts.CustomClaims)
 	if !permission.IsAdmin(claims.UserID) {

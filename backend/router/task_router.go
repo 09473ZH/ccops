@@ -10,8 +10,9 @@ import (
 func (router RouterGroup) TaskRouter(taskRouterGroup *gin.RouterGroup) {
 	app := api.ApiGroupApp.TaskApi
 	taskRouterGroup.Use(middleware.JwtUser())
-	taskRouterGroup.POST("task", app.TaskCreateView)
-	taskRouterGroup.GET("task", app.TaskListView)
-	taskRouterGroup.GET("task/:id", app.TaskInfoView)
-	taskRouterGroup.DELETE("task/:id", app.TaskRemove)
+	taskRouterGroup.POST("", app.TaskCreateView)
+	taskRouterGroup.GET("", app.TaskListView)
+	taskRouterGroup.GET("/:id", app.TaskInfoView)
+	taskRouterGroup.DELETE("/:id", app.TaskRemove)
+	taskRouterGroup.GET("/:id/message", app.WebSocketHandler)
 }

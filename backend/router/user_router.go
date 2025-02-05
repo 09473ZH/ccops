@@ -9,10 +9,16 @@ import (
 
 func (router RouterGroup) UserRouter(userRouterGroup *gin.RouterGroup) {
 	app := api.ApiGroupApp.UserApi
-
-	userRouterGroup.POST("login", app.UserLoginView)
-	userRouterGroup.POST("refresh", app.RefreshTokenView)
 	userRouterGroup.Use(middleware.JwtUser())
-	userRouterGroup.GET("permission_info/:id", app.UserPermissionInfoView)
-	userRouterGroup.PUT("assign_permission", app.AssignPermission)
+	userRouterGroup.POST("me/initialize", app.InitUserPassword)
+	userRouterGroup.POST("/:id/reset_password", app.ResetUserPasswordByAdmin)
+	userRouterGroup.POST("me/reset_password", app.ResetUserPassword)
+	userRouterGroup.GET("/:id/permissions", app.UserPermissionInfoView)
+	userRouterGroup.POST("/:id/permissions", app.AssignPermission)
+	userRouterGroup.POST("", app.UserCreate)
+	userRouterGroup.PUT("/:id/status", app.UserDisable)
+	userRouterGroup.DELETE("/:id", app.UserDelete)
+	userRouterGroup.GET("", app.UserList)
+	userRouterGroup.GET("me", app.UserMY)
+
 }

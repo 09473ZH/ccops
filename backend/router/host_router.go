@@ -10,18 +10,16 @@ import (
 func (router RouterGroup) HostRouter(hostRouterGroup *gin.RouterGroup) {
 	app := api.ApiGroupApp.HostsApi
 
-	hostRouterGroup.GET("host_web_shell/:id", app.HandleWebSocket)
 	hostRouterGroup.Use(middleware.JwtUser())
-	hostRouterGroup.GET("host_list", app.HostListView)
-	hostRouterGroup.GET("host/:id/", app.HostInfoView)
-	hostRouterGroup.DELETE("host", app.HostRemoveView)
+	hostRouterGroup.GET("/:id/terminal", app.HandleWebSocket)
+	hostRouterGroup.GET("", app.HostListView)
+	hostRouterGroup.GET("/:id", app.HostInfoView)
+	hostRouterGroup.DELETE("", app.HostRemoveView)
 	hostRouterGroup.GET("install", app.HostInstall)
-	hostRouterGroup.POST("host_flush", app.HostFlushInfoView)
-	hostRouterGroup.POST("host_rename", app.HostRename)
-	hostRouterGroup.POST("host_label_create", app.HostLabelCreate)
-	hostRouterGroup.POST("host_assign_labels", app.AssignLabelsToHost)
-	hostRouterGroup.GET("host_label_list", app.HostLabelList)
-	hostRouterGroup.PUT("host_label_update/:id/", app.HostLabelUpdateView)
-	hostRouterGroup.DELETE("host_label/:id/", app.HostLabelRemoveView)
-	hostRouterGroup.PUT("host_label_disassociate/:id/", app.LabelDisassociateView)
+	hostRouterGroup.POST("refresh", app.HostFlushInfoView)
+	hostRouterGroup.POST("rename", app.HostRename)
+	hostRouterGroup.POST("assign_labels", app.AssignLabelsToHost)
+	hostRouterGroup.POST("/:id/unlabel", app.LabelDisassociateView)
+	hostRouterGroup.GET("me", app.PermissionHosts)
+	hostRouterGroup.GET("search", app.HostSearch)
 }

@@ -10,10 +10,10 @@ import (
 func (router RouterGroup) FileRouter(fileRouterGroup *gin.RouterGroup) {
 	app := api.ApiGroupApp.FileApi
 	fileRouterGroup.Use(middleware.JwtUser())
-	fileRouterGroup.POST("uploads", app.FilesUploadView)
-	fileRouterGroup.GET("files", app.FileListView)
-	fileRouterGroup.DELETE("files", app.FileRemoveView)
-	fileRouterGroup.GET("file_download/:id", app.FilesDownloadView)
-	fileRouterGroup.GET("file_preview", app.GetFileContent)
-	fileRouterGroup.PUT("file", app.UpdateFileContent)
+	fileRouterGroup.POST("upload", app.FilesUploadView)
+	fileRouterGroup.GET("", app.FileListView)
+	fileRouterGroup.DELETE("", app.FileRemoveView)
+	fileRouterGroup.GET("/:id/download", app.FilesDownloadView)
+	fileRouterGroup.GET("preview", app.GetFileContent)
+	fileRouterGroup.PUT("", app.UpdateFileContent)
 }

@@ -9,26 +9,37 @@ import (
 
 func JwtUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := extractToken(c)
+		var token string
+
+		if c.IsWebsocket() {
+			token = c.Query("token")
+		} else {
+			token = extractToken(c)
+		}
+
 		if token == "" {
-			res.FailWithMessage("未携带token", c)
-			c.Abort()
+			handleHandshakeError(c, "token为空")
 			return
 		}
 
 		claims, err := jwts.ParseToken(token)
-		if err == jwts.ErrTokenExpired {
-			res.FailWithMessage("token已过期", c)
-			c.Abort()
-			return
-		} else if err != nil {
-			res.FailWithMessage("token错误", c)
-			c.Abort()
+		if err != nil {
+			if err == jwts.ErrTokenExpired {
+				handleHandshakeError(c, "token已过期")
+			} else {
+				handleHandshakeError(c, "token错误")
+			}
 			return
 		}
 
 		c.Set("claims", claims)
 	}
+}
+
+func handleHandshakeError(c *gin.Context, message string) {
+	// 在WebSocket握手阶段返回HTTP错误响应
+	c.JSON(400, gin.H{"code": res.Error, "data": map[string]any{}, "msg": message})
+	c.Abort()
 }
 
 // extractToken 从请求头中提取token

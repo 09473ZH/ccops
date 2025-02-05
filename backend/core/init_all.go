@@ -1,6 +1,7 @@
 package core
 
 func InitAll() error {
+	InitUser()
 	InitAIConfiguration()
 	InitSystemConfiguration()
 	err := InitKeysConfiguration()

@@ -1,4 +1,4 @@
-package hosts_api
+package labels_api
 
 import (
 	"ccops/global"
@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (HostsApi) HostLabelList(c *gin.Context) {
+func (LabelApi) HostLabelList(c *gin.Context) {
 	var labelList []models.LabelModel
 	global.DB.Find(&labelList)
 

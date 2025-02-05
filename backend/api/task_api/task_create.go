@@ -70,7 +70,7 @@ var upgrader = websocket.Upgrader{
 // 连接管理
 
 // WebSocket 处理函数
-func WebSocketHandler(c *gin.Context) {
+func (TaskApi) WebSocketHandler(c *gin.Context) {
 	// 升级到 WebSocket
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
