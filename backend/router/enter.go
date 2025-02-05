@@ -32,21 +32,21 @@ func InitRouter() *gin.Engine {
 	// 为每个路由组创建单独的 RouterGroup，前缀为空字符串
 
 	authRouterGroup := apiRouterGroup.Group("auth")
-	userRouterGroup := apiRouterGroup.Group("user")
-
-	fileRouterGroup := apiRouterGroup.Group("file")
-	hostRouterGroup := apiRouterGroup.Group("host")
+	userRouterGroup := apiRouterGroup.Group("users")
+	LabelRouterGroup := apiRouterGroup.Group("labels")
+	fileRouterGroup := apiRouterGroup.Group("files")
+	hostRouterGroup := apiRouterGroup.Group("hosts")
 	clientRouterGroup := apiRouterGroup.Group("client")
-	roleRouterGroup := apiRouterGroup.Group("role")
-	taskRouterGroup := apiRouterGroup.Group("task")
-	revisionRouterGroup := apiRouterGroup.Group("role_revision")
-	configurationRouterGroup := apiRouterGroup.Group("configuration")
+	roleRouterGroup := apiRouterGroup.Group("roles")
+	taskRouterGroup := apiRouterGroup.Group("tasks")
+	revisionRouterGroup := apiRouterGroup.Group("role_revisions")
+	configurationRouterGroup := apiRouterGroup.Group("configurations")
 
 	routerGroupApp := RouterGroup{apiRouterGroup}
 
 	// 使用不同的路由组
 	routerGroupApp.UserRouter(userRouterGroup)
-
+	routerGroupApp.LabelRouter(LabelRouterGroup)
 	routerGroupApp.FileRouter(fileRouterGroup)
 	routerGroupApp.HostRouter(hostRouterGroup)
 	routerGroupApp.ClientRouter(clientRouterGroup)

@@ -13,7 +13,7 @@ func (router RouterGroup) FileRouter(fileRouterGroup *gin.RouterGroup) {
 	fileRouterGroup.POST("upload", app.FilesUploadView)
 	fileRouterGroup.GET("", app.FileListView)
 	fileRouterGroup.DELETE("", app.FileRemoveView)
-	fileRouterGroup.GET("download/:id", app.FilesDownloadView)
+	fileRouterGroup.GET("/:id/download", app.FilesDownloadView)
 	fileRouterGroup.GET("preview", app.GetFileContent)
 	fileRouterGroup.PUT("", app.UpdateFileContent)
 }
