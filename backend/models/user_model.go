@@ -3,7 +3,7 @@ package models
 type UserModel struct {
 	MODEL
 
-	UserName  string       `gorm:"column:username;size:36;comment:用户名" json:"username"`                                 // 用户名
+	Username  string       `gorm:"column:username;size:36;comment:用户名" json:"username"`                                 // 用户名
 	Password  string       `gorm:"size:128;comment:密码" json:"-"`                                                        // 密码
 	Role      string       `gorm:"size:128;default:用户;comment:权限，1系统管理员，用户" json:"role"`                                // 权限
 	IsInit    bool         `gorm:"size:4;default:0;comment:是否初始化，0未初始化，1已初始化" json:"isInit"`                            // 是否初始化  0 未初始化  1 已初始化

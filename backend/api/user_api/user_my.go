@@ -16,7 +16,7 @@ func (UserApi) UserMY(c *gin.Context) {
 	global.DB.Model(&models.UserModel{}).First(&my, claims.UserID)
 	type MYInfo struct {
 		Id        uint   `json:"id"`
-		UserName  string `json:"username"`
+		Username  string `json:"username"`
 		Role      string `json:"role"`
 		Email     string `json:"email"`
 		IsInit    bool   `json:"isInit"`
@@ -24,7 +24,7 @@ func (UserApi) UserMY(c *gin.Context) {
 	}
 	myInfo := MYInfo{
 		Id:        my.ID,
-		UserName:  my.UserName,
+		Username:  my.Username,
 		Role:      my.Role,
 		Email:     my.Email,
 		IsInit:    my.IsInit,

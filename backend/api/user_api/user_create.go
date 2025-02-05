@@ -24,11 +24,11 @@ func (UserApi) UserCreate(c *gin.Context) {
 
 	// 定义请求结构体
 	type CreateUserReq struct {
-		UserName        string `json:"username"`
-		Email           string `json:"email"`
-		PermissionHosts []uint `json:"permissionHosts"`
-		Labels          []uint `json:"labels"` // 新增标签ID列表
-		Role            string `json:"role"`
+		UserName string `json:"username"`
+		Email    string `json:"email"`
+		HostIds  []uint `json:"hostIds"`
+		Labels   []uint `json:"labels"` // 新增标签ID列表
+		Role     string `json:"role"`
 	}
 
 	// 解析请求体
@@ -89,7 +89,7 @@ func (UserApi) UserCreate(c *gin.Context) {
 
 	// 保存到数据库
 	newUser := models.UserModel{
-		UserName: username,
+		Username: username,
 		Email:    req.Email,
 		Password: hashedPassword,
 		Role:     req.Role,
@@ -101,9 +101,9 @@ func (UserApi) UserCreate(c *gin.Context) {
 	}
 
 	// 分配主机权限
-	if len(req.PermissionHosts) > 0 {
+	if len(req.HostIds) > 0 {
 		var toAdd []models.HostPermission
-		for _, hostId := range req.PermissionHosts {
+		for _, hostId := range req.HostIds {
 			toAdd = append(toAdd, models.HostPermission{
 				UserId: newUser.ID,
 				HostId: hostId,

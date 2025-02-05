@@ -12,10 +12,10 @@ import (
 )
 
 type AssignPermissionReq struct {
-	UserId          uint   `json:"userId"`
-	Role            string `json:"role"`
-	PermissionHosts []uint `json:"permissionHosts"`
-	Labels          []uint `json:"labels"`
+	UserId   uint   `json:"userId"`
+	Role     string `json:"role"`
+	HostIds  []uint `json:"HostIds"`
+	LabelIds []uint `json:"LabelIds"`
 }
 
 func (UserApi) AssignPermission(c *gin.Context) {
@@ -51,7 +51,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 
 		// 将新权限转换为map
 		newMap := make(map[uint]bool)
-		for _, hostId := range cr.PermissionHosts {
+		for _, hostId := range cr.HostIds {
 			newMap[hostId] = true
 		}
 
@@ -106,7 +106,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 
 		// 将新标签转换为map
 		newLabelMap := make(map[uint]bool)
-		for _, labelId := range cr.Labels {
+		for _, labelId := range cr.LabelIds {
 			newLabelMap[labelId] = true
 		}
 
