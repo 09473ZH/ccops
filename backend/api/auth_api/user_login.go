@@ -49,7 +49,7 @@ func (AuthApi) UserLoginView(c *gin.Context) {
 	tokenPair, err := jwts.GenToken(jwts.JwtPayLoad{
 		Role:     userModel.Role,
 		UserID:   userModel.ID,
-		Username: userModel.UserName,
+		Username: userModel.Username,
 	})
 	if err != nil {
 		global.Log.Error(err)
@@ -63,7 +63,7 @@ func (AuthApi) UserLoginView(c *gin.Context) {
 		RefreshToken: tokenPair.RefreshToken,
 		UserInfo: map[string]interface{}{
 			"id":       userModel.ID,
-			"username": userModel.UserName,
+			"username": userModel.Username,
 			"role":     userModel.Role,
 		},
 		ExpireAt: time.Now().Add(time.Duration(global.Config.Jwt.AccessExpires) * time.Hour).Unix(),

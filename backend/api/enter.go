@@ -6,6 +6,7 @@ import (
 	"ccops/api/configuration_api"
 	"ccops/api/file_api"
 	"ccops/api/hosts_api"
+	"ccops/api/labels_api"
 	"ccops/api/role_api"
 	"ccops/api/role_revision_api"
 	"ccops/api/task_api"
@@ -22,6 +23,7 @@ type ApiGroup struct {
 	RoleRevisionApi  role_revision_api.RoleRevisionApi
 	TaskApi          task_api.TaskApi
 	ConfigurationApi configuration_api.ConfigurationApi
+	LabelApi         labels_api.LabelApi
 }
 
 var ApiGroupApp = new(ApiGroup)
