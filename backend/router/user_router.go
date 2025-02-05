@@ -19,6 +19,6 @@ func (router RouterGroup) UserRouter(userRouterGroup *gin.RouterGroup) {
 	userRouterGroup.PUT("/:id/status", app.UserDisable)
 	userRouterGroup.DELETE("/:id", app.UserDelete)
 	userRouterGroup.GET("", app.UserList)
-	userRouterGroup.GET("my", app.UserMY)
+	userRouterGroup.GET("me", app.UserMY)
 
 }
