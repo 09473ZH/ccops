@@ -5,7 +5,7 @@ import LoginBgImg from '@/assets/images/logo.ico';
 interface Props {
   size?: number | string;
 }
-function Logo({ size = 50 }: Props) {
+function Logo({ size = 40 }: Props) {
   return (
     <NavLink to="/">
       <img src={LoginBgImg} alt="" style={{ width: size, height: size }} />

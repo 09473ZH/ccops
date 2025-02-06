@@ -129,19 +129,19 @@ function HostManage() {
           )}
           <div className="flex items-center gap-2">
             <Button
+              className="transition-all"
+              icon={<Iconify icon="flowbite:tag-outline" />}
+              onClick={() => open(ModalName.LabelManage)}
+            >
+              标签管理
+            </Button>
+            <Button
               type="primary"
               className="flex items-center transition-all"
               icon={<Iconify icon="flowbite:plus-outline" />}
               onClick={() => open(ModalName.Create)}
             >
               添加主机
-            </Button>
-            <Button
-              className="transition-all"
-              icon={<Iconify icon="flowbite:tag-outline" />}
-              onClick={() => open(ModalName.LabelManage)}
-            >
-              标签管理
             </Button>
           </div>
         </div>

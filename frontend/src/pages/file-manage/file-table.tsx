@@ -175,6 +175,8 @@ function FileTable({
     },
     {
       title: '操作',
+      width: 150,
+      fixed: 'right' as const,
       render: (_: unknown, record: FileInfo) => (
         <Space>
           {showPreview && (

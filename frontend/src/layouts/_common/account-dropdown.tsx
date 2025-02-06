@@ -44,7 +44,7 @@ function AccountDropdownContent() {
 
   const items: MenuProps['items'] = [
     {
-      label: <button className="font-bold text-warning">{t('sys.login.logout')}</button>,
+      label: <button className="text-warning font-bold">{t('sys.login.logout')}</button>,
       key: '0',
       onClick: logout,
     },

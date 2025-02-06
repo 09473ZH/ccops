@@ -1,6 +1,7 @@
 import { Form, Input, Button, Modal, Select } from 'antd';
 
 import { RoleItem } from '@/api/services/softwareService';
+import { Iconify } from '@/components/icon';
 import { useModalsControl } from '@/hooks/useModalsControl';
 
 import { SoftwareTable } from './software-table';
@@ -33,7 +34,12 @@ function SoftwareManage() {
   return (
     <div className="flex h-full flex-col p-5">
       <div>
-        <Button type="primary" onClick={() => open('addSoftware')} className="float-right mb-4">
+        <Button
+          type="primary"
+          icon={<Iconify icon="flowbite:plus-outline" />}
+          onClick={() => open('addSoftware')}
+          className="float-right mb-4"
+        >
           添加软件
         </Button>
       </div>

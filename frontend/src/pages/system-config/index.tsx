@@ -20,6 +20,7 @@ import debounce from 'lodash/debounce';
 import { useRef, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Iconify } from '@/components/icon';
 import type { ConfigItem, ConfigGroup } from '@/types/config';
 import { cn } from '@/utils';
 
@@ -282,9 +283,15 @@ export default function SystemSettingsPage() {
       >
         <div className="mb-5 flex w-full justify-end">
           <Space>
-            <Button onClick={() => form.resetFields()}>{t('config.resetAll')}</Button>
+            <Button
+              icon={<Iconify icon="flowbite:trash-bin-outline" />}
+              onClick={() => form.resetFields()}
+            >
+              {t('config.resetAll')}
+            </Button>
             <Button
               type="primary"
+              icon={<Iconify icon="flowbite:floppy-disk-alt-outline" />}
               onClick={saveOperations.handleSaveAll}
               loading={loadingState.saveAll}
             >
@@ -296,7 +303,7 @@ export default function SystemSettingsPage() {
 
       <div className="relative flex flex-1 overflow-hidden">
         <div ref={contentRef} id="config-content" className="flex-1 overflow-y-auto scroll-smooth">
-          <Form form={form} layout="vertical" className="max-w-3xl">
+          <Form form={form} layout="vertical" className="w-full">
             {isConfigLoading ? (
               <div className="flex h-32 items-center justify-center">
                 <LoadingOutlined className="text-primary text-2xl" />
@@ -317,7 +324,7 @@ export default function SystemSettingsPage() {
           </Form>
         </div>
 
-        <div className="w-60 border-l border-[#f0f0f0] dark:border-gray-700">
+        <div className="w-80 border-l border-[#f0f0f0] dark:border-gray-700">
           <div className="sticky top-0 p-4">
             <div className="mb-6 space-y-4">
               <Input
@@ -327,7 +334,7 @@ export default function SystemSettingsPage() {
                 prefix={<SearchOutlined className="text-gray-400" />}
                 className="hover:border-primary"
               />
-              <div className="flex items-center justify-between text-sm text-gray-500">
+              <div className="flex items-center justify-between text-sm text-gray-600">
                 <span>{t('config.collapseMode')}</span>
                 <Tooltip
                   title={isAccordion ? t('config.accordionModeDesc') : t('config.multipleModeDesc')}
