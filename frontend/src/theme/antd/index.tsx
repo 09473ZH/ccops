@@ -18,12 +18,12 @@ type Props = {
   children: React.ReactNode;
 };
 export default function AntdConfig({ children }: Props) {
-  const { themeMode, themeColorPresets } = useSettings();
+  const { themeMode } = useSettings();
 
   const { language } = useLocale();
 
   const algorithm = themeMode === ThemeMode.Light ? theme.defaultAlgorithm : theme.darkAlgorithm;
-  const colorPrimary = colorPrimarys[themeColorPresets];
+  const colorPrimary = colorPrimarys.default;
 
   return (
     <ConfigProvider

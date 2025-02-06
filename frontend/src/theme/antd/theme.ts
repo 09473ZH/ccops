@@ -1,6 +1,4 @@
 import { ThemeConfig } from 'antd';
-
-import { ThemeColorPresets } from '#/enum';
 /**
  * Antd theme editor: https://ant.design/theme-editor-cn
  */
@@ -33,14 +31,9 @@ const customComponentConfig: ThemeConfig['components'] = {
 };
 
 const colorPrimarys: {
-  [k in ThemeColorPresets]: string;
+  default: string;
 } = {
   default: '#FF9800',
-  cyan: '#078DEE',
-  purple: '#7635DC',
-  blue: '#2065D1',
-  orange: '#FDA92D',
-  red: '#FF3030',
 };
 
 const themeModeToken: Record<'dark' | 'light', ThemeConfig> = {
