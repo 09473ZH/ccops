@@ -23,7 +23,7 @@ export default function SettingButton() {
     useThemeToken();
 
   const settings = useSettings();
-  const { themeMode, themeLayout, breadCrumb, darkSidebar } = settings;
+  const { themeMode, themeLayout, darkSidebar } = settings;
   const { setSettings } = useSettingActions();
 
   const setThemeMode = (themeMode: ThemeMode) => {
@@ -37,13 +37,6 @@ export default function SettingButton() {
     setSettings({
       ...settings,
       themeLayout,
-    });
-  };
-
-  const setBreadCrumn = (checked: boolean) => {
-    setSettings({
-      ...settings,
-      breadCrumb: checked,
     });
   };
 
@@ -252,17 +245,6 @@ export default function SettingButton() {
               Page
             </div>
             <div className="flex flex-col gap-2">
-              <div
-                className="flex items-center justify-between"
-                style={{ color: colorTextTertiary }}
-              >
-                <div>BreadCrumb</div>
-                <Switch
-                  size="small"
-                  checked={breadCrumb}
-                  onChange={(checked) => setBreadCrumn(checked)}
-                />
-              </div>
               <div
                 className="flex items-center justify-between"
                 style={{ color: colorTextTertiary }}
