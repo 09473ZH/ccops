@@ -1,4 +1,4 @@
-package hosts_api
+package labels_api
 
 import (
 	"ccops/global"
@@ -13,7 +13,7 @@ type HostLabelCreate struct {
 	Name string `json:"name"`
 }
 
-func (HostsApi) HostLabelCreate(c *gin.Context) {
+func (LabelApi) HostLabelCreate(c *gin.Context) {
 	_claims, _ := c.Get("claims")
 	claims := _claims.(*jwts.CustomClaims)
 	if !permission.IsAdmin(claims.UserID) {

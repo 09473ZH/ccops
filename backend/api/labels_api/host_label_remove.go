@@ -1,4 +1,4 @@
-package hosts_api
+package labels_api
 
 import (
 	"ccops/global"
@@ -11,7 +11,7 @@ import (
 )
 
 // 删之前查标签下有没有标签，有的话不给删
-func (HostsApi) HostLabelRemoveView(c *gin.Context) {
+func (LabelApi) HostLabelRemoveView(c *gin.Context) {
 	_claims, _ := c.Get("claims")
 	claims := _claims.(*jwts.CustomClaims)
 	if !permission.IsAdmin(claims.UserID) {

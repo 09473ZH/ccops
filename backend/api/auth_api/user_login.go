@@ -1,4 +1,4 @@
-package user_api
+package auth_api
 
 import (
 	"ccops/global"
@@ -11,11 +11,11 @@ import (
 )
 
 type EmailLoginRequest struct {
-	UserName string `json:"username" binding:"required" msg:"请输入用户名"`
+	UserName string `json:"username" binding:"required" msg:"请输入用户名或邮箱"`
 	Password string `json:"password" binding:"required" msg:"请输入密码"`
 }
 
-func (UserApi) UserLoginView(c *gin.Context) {
+func (AuthApi) UserLoginView(c *gin.Context) {
 	var cr EmailLoginRequest
 	err := c.ShouldBindJSON(&cr)
 	if err != nil {
@@ -24,13 +24,18 @@ func (UserApi) UserLoginView(c *gin.Context) {
 	}
 
 	var userModel models.UserModel
-	err = global.DB.Take(&userModel, "username = ?", cr.UserName).Error
+	err = global.DB.Take(&userModel, "username = ? or email = ? ", cr.UserName, cr.UserName).Error
 	if err != nil {
 		// 用户名不存在
-		global.Log.Warn("用户名不存在")
+		global.Log.Warn("用户不存在")
 		res.FailWithMessage("用户名或密码错误", c)
 		return
 	}
+	////检验是否启用
+	//if userModel.IsEnabled == false {
+	//	global.Log.Warn("用户未启用")
+	//	res.FailWithMessage("用户未启用", c)
+	//}
 
 	// 校验密码
 	isCheck := pwd.CheckPwd(userModel.Password, cr.Password)
@@ -42,9 +47,9 @@ func (UserApi) UserLoginView(c *gin.Context) {
 
 	// 登录成功，生成token对
 	tokenPair, err := jwts.GenToken(jwts.JwtPayLoad{
-
+		Role:     userModel.Role,
 		UserID:   userModel.ID,
-		Username: userModel.UserName,
+		Username: userModel.Username,
 	})
 	if err != nil {
 		global.Log.Error(err)
@@ -58,10 +63,10 @@ func (UserApi) UserLoginView(c *gin.Context) {
 		RefreshToken: tokenPair.RefreshToken,
 		UserInfo: map[string]interface{}{
 			"id":       userModel.ID,
-			"username": userModel.UserName,
+			"username": userModel.Username,
 			"role":     userModel.Role,
 		},
-		ExpireAt: time.Now().Add(30 * time.Minute).Unix(), // 30分钟后过期
+		ExpireAt: time.Now().Add(time.Duration(global.Config.Jwt.AccessExpires) * time.Hour).Unix(),
 	}
 
 	res.OkWithData(loginResponse, c)

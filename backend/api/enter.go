@@ -1,10 +1,12 @@
 package api
 
 import (
+	"ccops/api/auth_api"
 	"ccops/api/client_api"
 	"ccops/api/configuration_api"
 	"ccops/api/file_api"
 	"ccops/api/hosts_api"
+	"ccops/api/labels_api"
 	"ccops/api/role_api"
 	"ccops/api/role_revision_api"
 	"ccops/api/task_api"
@@ -12,6 +14,7 @@ import (
 )
 
 type ApiGroup struct {
+	AuthApi          auth_api.AuthApi
 	UserApi          user_api.UserApi
 	FileApi          file_api.FileApi
 	HostsApi         hosts_api.HostsApi
@@ -20,6 +23,7 @@ type ApiGroup struct {
 	RoleRevisionApi  role_revision_api.RoleRevisionApi
 	TaskApi          task_api.TaskApi
 	ConfigurationApi configuration_api.ConfigurationApi
+	LabelApi         labels_api.LabelApi
 }
 
 var ApiGroupApp = new(ApiGroup)

@@ -10,11 +10,11 @@ import (
 func (router RouterGroup) RoleRouter(roleRouterGroup *gin.RouterGroup) {
 	app := api.ApiGroupApp.RoleApi
 	roleRouterGroup.Use(middleware.JwtUser())
-	roleRouterGroup.POST("role", app.CreateRoleView)
-	roleRouterGroup.GET("role_list", app.RoleList)
-	roleRouterGroup.GET("role/:id/revision", app.RoleRevisionListView) //某配置下所有版本
-	roleRouterGroup.GET("role/:id/draft_revision", app.RoleDraftRevisionInfoView)
-	roleRouterGroup.GET("role/:id/active_revision", app.RoleActiveRevisionInfoView)
-	roleRouterGroup.PUT("role/:id", app.RoleUpdateView)
-	roleRouterGroup.DELETE("role/:id", app.RoleRemove)
+	roleRouterGroup.POST("", app.CreateRoleView)
+	roleRouterGroup.GET("", app.RoleList)
+	roleRouterGroup.GET("/:id/revision", app.RoleRevisionListView) //某配置下所有版本
+	roleRouterGroup.GET("/:id/draft_revision", app.RoleDraftRevisionInfoView)
+	roleRouterGroup.GET("/:id/active_revision", app.RoleActiveRevisionInfoView)
+	roleRouterGroup.PUT("/:id", app.RoleUpdateView)
+	roleRouterGroup.DELETE("/:id", app.RoleRemove)
 }

@@ -1,4 +1,4 @@
-package user_api
+package auth_api
 
 import (
 	"ccops/global"
@@ -13,7 +13,7 @@ type RefreshTokenRequest struct {
 }
 
 // RefreshTokenView 刷新访问令牌
-func (UserApi) RefreshTokenView(c *gin.Context) {
+func (AuthApi) RefreshTokenView(c *gin.Context) {
 	var req RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		res.FailWithError(err, &req, c)

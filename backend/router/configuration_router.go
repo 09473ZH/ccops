@@ -10,7 +10,7 @@ import (
 func (router RouterGroup) ConfigurationRouter(configurationRouterGroup *gin.RouterGroup) {
 	app := api.ApiGroupApp.ConfigurationApi
 	configurationRouterGroup.GET("/authorized_keys", app.UserKeyInfo)
-	configurationRouterGroup.GET("/configuration", app.ConfigurationListView)
+	configurationRouterGroup.GET("", app.ConfigurationListView)
 	configurationRouterGroup.Use(middleware.JwtUser())
-	configurationRouterGroup.PUT("/configuration", app.ConfigurationUpdateView)
+	configurationRouterGroup.PUT("", app.ConfigurationUpdateView)
 }

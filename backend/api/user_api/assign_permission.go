@@ -12,9 +12,10 @@ import (
 )
 
 type AssignPermissionReq struct {
-	UserId          uint   `json:"userId"`
-	Role            string `json:"role"`
-	PermissionHosts []uint `json:"permissionHosts"`
+	UserId   uint   `json:"userId"`
+	Role     string `json:"role"`
+	HostIds  []uint `json:"HostIds"`
+	LabelIds []uint `json:"LabelIds"`
 }
 
 func (UserApi) AssignPermission(c *gin.Context) {
@@ -37,6 +38,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 		// 开启事务
 		tx := global.DB.Begin()
 
+		// 处理主机权限
 		// 获取用户当前的权限列表
 		var currentPermissions []models.HostPermission
 		tx.Where("user_id = ?", cr.UserId).Find(&currentPermissions)
@@ -49,7 +51,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 
 		// 将新权限转换为map
 		newMap := make(map[uint]bool)
-		for _, hostId := range cr.PermissionHosts {
+		for _, hostId := range cr.HostIds {
 			newMap[hostId] = true
 		}
 
@@ -77,7 +79,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 			if err := tx.Where("user_id = ? AND host_id IN ?", cr.UserId, toDelete).
 				Delete(&models.HostPermission{}).Error; err != nil {
 				tx.Rollback()
-				res.FailWithMessage("更新权限失败", c)
+				res.FailWithMessage("更新主机权限失败", c)
 				return
 			}
 		}
@@ -86,7 +88,62 @@ func (UserApi) AssignPermission(c *gin.Context) {
 		if len(toAdd) > 0 {
 			if err := tx.Create(&toAdd).Error; err != nil {
 				tx.Rollback()
-				res.FailWithMessage("更新权限失败", c)
+				res.FailWithMessage("更新主机权限失败", c)
+				return
+			}
+		}
+
+		// 处理标签权限
+		// 获取用户当前的标签列表
+		var currentLabels []models.UserLabels
+		tx.Where("user_id = ?", cr.UserId).Find(&currentLabels)
+
+		// 将当前标签转换为map
+		currentLabelMap := make(map[uint]bool)
+		for _, l := range currentLabels {
+			currentLabelMap[l.LabelID] = true
+		}
+
+		// 将新标签转换为map
+		newLabelMap := make(map[uint]bool)
+		for _, labelId := range cr.LabelIds {
+			newLabelMap[labelId] = true
+		}
+
+		// 找出需要删除的标签
+		var toDeleteLabels []uint
+		for _, l := range currentLabels {
+			if !newLabelMap[l.LabelID] {
+				toDeleteLabels = append(toDeleteLabels, l.LabelID)
+			}
+		}
+
+		// 找出需要新增的标签
+		var toAddLabels []models.UserLabels
+		for labelId := range newLabelMap {
+			if !currentLabelMap[labelId] {
+				toAddLabels = append(toAddLabels, models.UserLabels{
+					UserID:  cr.UserId,
+					LabelID: labelId,
+				})
+			}
+		}
+
+		// 执行标签删除操作
+		if len(toDeleteLabels) > 0 {
+			if err := tx.Where("user_id = ? AND label_id IN ?", cr.UserId, toDeleteLabels).
+				Delete(&models.UserLabels{}).Error; err != nil {
+				tx.Rollback()
+				res.FailWithMessage("更新标签权限失败", c)
+				return
+			}
+		}
+
+		// 执行标签新增操作
+		if len(toAddLabels) > 0 {
+			if err := tx.Create(&toAddLabels).Error; err != nil {
+				tx.Rollback()
+				res.FailWithMessage("更新标签权限失败", c)
 				return
 			}
 		}
@@ -106,4 +163,5 @@ func (UserApi) AssignPermission(c *gin.Context) {
 		res.OkWithMessage("分配权限成功", c)
 		return
 	}
+	res.FailWithMessage("未知用户类型", c)
 }

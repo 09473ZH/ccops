@@ -10,6 +10,7 @@ var MySecret []byte
 type JwtPayLoad struct {
 	UserID   uint   `json:"userId"`
 	Username string `json:"username"`
+	Role     string `json:"role"`
 }
 
 // CustomClaims 自定义声明
