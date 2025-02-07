@@ -4,8 +4,11 @@ import (
 	"ccops/global"
 	"ccops/models"
 	"ccops/models/res"
-	"github.com/gin-gonic/gin"
+	"ccops/utils/jwts"
+	"ccops/utils/permission"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type HostListRequest struct {
@@ -33,6 +36,8 @@ type HostListResponse struct {
 }
 
 func (HostsApi) HostListView(c *gin.Context) {
+	_claims, _ := c.Get("claims")
+	claims := _claims.(*jwts.CustomClaims)
 	var cr HostListRequest
 	if err := c.ShouldBindQuery(&cr); err != nil {
 		res.FailWithMessage("参数错误", c)
@@ -47,12 +52,22 @@ func (HostsApi) HostListView(c *gin.Context) {
 		cr.Limit = 0 // 0 表示不限制数量
 	}
 
-	var hosts []HostListResponse // 使用 HostListResponse 结构体
+	var hosts []HostListResponse
 	var count int64
 
 	// 基础查询
 	query := global.DB.Model(&models.HostModel{}).
 		Select("id, created_at,updated_at,name,host_server_url,operating_system, status, cpu_brand, fetch_time, start_time, physical_memory, kernel_version")
+
+	// 如果不是管理员，只能查看有权限的主机
+	if !permission.IsAdmin(claims.UserID) {
+		permissionHostIds := permission.GetUserPermissionHostIds(claims.UserID)
+		if len(permissionHostIds) == 0 {
+			res.OkWithList([]HostListResponse{}, 0, c)
+			return
+		}
+		query = query.Where("id IN ?", permissionHostIds)
+	}
 
 	// 模糊匹配
 	if cr.Key != "" {
@@ -80,7 +95,6 @@ func (HostsApi) HostListView(c *gin.Context) {
 
 	// 分页查询
 	offset := (cr.Page - 1) * cr.Limit
-
 	if cr.Limit > 0 {
 		query = query.Offset(offset).Limit(cr.Limit)
 	}
