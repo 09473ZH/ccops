@@ -1,10 +1,10 @@
 import { Form, Input, Button, Modal, Select } from 'antd';
 
-import { RoleItem } from '@/api/services/softwareService';
-import { Iconify } from '@/components/icon';
-import { useModalsControl } from '@/hooks/useModalsControl';
+import { RoleItem } from '@/api/services/software';
+import { Iconify } from '@/components/Icon';
+import { useModalsControl } from '@/hooks/use-modals-control';
 
-import { SoftwareTable } from './software-table';
+import { SoftwareTable } from './Table';
 import { useRoleOperations, useSoftwareStore } from './use-software';
 
 function SoftwareManage() {

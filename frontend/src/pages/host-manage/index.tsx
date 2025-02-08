@@ -1,15 +1,15 @@
 import { Table, Button, Popconfirm, Input } from 'antd';
 import { Suspense } from 'react';
 
-import type { HostInfo } from '@/api/services/hostService';
-import { Iconify } from '@/components/icon';
-import { useHostList } from '@/hooks/useHostList';
-import { useModalsControl } from '@/hooks/useModalsControl';
-import { useTable } from '@/hooks/useTable';
+import type { HostInfo } from '@/api/services/host';
+import { Iconify } from '@/components/Icon';
+import { useHostList } from '@/hooks/use-host-list';
+import { useModalsControl } from '@/hooks/use-modals-control';
+import { useTable } from '@/hooks/use-table';
 
-import { ModalName, Modals } from './components/modals';
-import { ColumnSelector } from './components/table/column-selector';
-import { getColumns, getColumnGroups } from './components/table/columns';
+import { ModalName, Modals } from './components/Modals';
+import { ColumnSelector } from './components/Table/ColumnSelector';
+import { getColumns, getColumnGroups } from './components/Table/get-columns';
 import { HOST_TABLE_CONFIG } from './config/columns';
 import { useHostActions, useHostState } from './hooks';
 

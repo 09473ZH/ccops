@@ -1,3 +1,3 @@
-export * from './upload';
-export * from './upload-avatar';
-export * from './upload-box';
+export * from './Upload';
+export * from './UploadAvatar';
+export * from './UploadBox';

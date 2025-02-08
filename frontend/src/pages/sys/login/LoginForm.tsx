@@ -3,8 +3,8 @@ import { Button, Checkbox, Col, Form, Input, Row } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { SignInReq } from '@/api/services/userService';
-import { useSignIn } from '@/store/userStore';
+import { SignInReq } from '@/api/services/user';
+import { useSignIn } from '@/store/user';
 
 // TODO 使用手机号登录
 const { useLoginStateContext, LoginStateEnum } = await import('./providers/LoginStateProvider');

@@ -3,7 +3,6 @@ import { m } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 
 import Character5 from '@/assets/images/characters/character_5.png';
-import MotionContainer from '@/components/animate/motion-container';
 import { varBounce } from '@/components/animate/variants/bounce';
 import { useRouter } from '@/router/hooks';
 import { useThemeToken } from '@/theme/hooks';
@@ -28,7 +27,7 @@ export default function PageError({ error, resetErrorBoundary }: FallbackProps) 
       </Helmet>
 
       <div className="m-auto flex h-screen max-w-[400px] items-center justify-center">
-        <MotionContainer className="flex flex-col items-center justify-center px-2">
+        <div className="flex flex-col items-center justify-center px-2">
           <m.div variants={varBounce().in}>
             <Typography.Title level={3} className="text-center">
               Sorry, Page error occurred!
@@ -224,7 +223,7 @@ export default function PageError({ error, resetErrorBoundary }: FallbackProps) 
           >
             Go to Home
           </button>
-        </MotionContainer>
+        </div>
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, RouteObject, RouterProvider, createBrowserRouter } from 'react-router-dom';
 
-import DashboardLayout from '@/layouts/dashboard';
-import TerminalLayout from '@/layouts/terminal';
+import Layout from '@/layouts';
+import TerminalLayout from '@/layouts/TerminalLayout';
 import { usePermissionRoutes } from '@/router/hooks';
 import { ErrorRoutes } from '@/router/routes/error-routes';
 
@@ -10,7 +10,7 @@ import { AppRouteObject } from '#/router';
 
 const { VITE_APP_HOMEPAGE: HOMEPAGE } = import.meta.env;
 
-const JumpServer = lazy(() => import('@/pages/host-manage/jump-server'));
+const JumpServer = lazy(() => import('@/pages/host-manage/jump-server/index'));
 
 const LoginRoute: AppRouteObject = {
   path: '/login',
@@ -27,7 +27,7 @@ export default function Router() {
 
   const asyncRoutes: AppRouteObject = {
     path: '/',
-    element: <DashboardLayout />,
+    element: <Layout />,
     children: [{ index: true, element: <Navigate to={HOMEPAGE} replace /> }, ...permissionRoutes],
   };
 

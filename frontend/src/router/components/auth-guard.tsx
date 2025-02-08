@@ -1,7 +1,7 @@
 import { lazy, useCallback, useEffect } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
-import { useUserToken } from '@/store/userStore';
+import { useUserToken } from '@/store/user';
 
 import { useRouter } from '../hooks';
 

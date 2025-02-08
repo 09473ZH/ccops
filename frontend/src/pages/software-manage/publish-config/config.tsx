@@ -1,10 +1,10 @@
 import { Button, Spin, App, Input, Alert, Select, Drawer } from 'antd';
 import { useEffect } from 'react';
 
-import SparkWandIcon from '@/components/icons/SparkWandIcon';
-import MonacoEditor from '@/components/monaco-editor';
-import { useFileList } from '@/hooks/useFileList';
-import FileTable from '@/pages/file-manage/file-table';
+import SparkWandIcon from '@/components/Icon/SparkWandIcon';
+import MonacoEditor from '@/components/MonacoEditor';
+import { useFileList } from '@/hooks/use-file-list';
+import FileTable from '@/pages/file-manage/FileTable';
 import { parseRole } from '@/utils/ansible';
 
 import {

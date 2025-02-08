@@ -20,11 +20,11 @@ import debounce from 'lodash/debounce';
 import { useRef, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Iconify } from '@/components/icon';
+import { Iconify } from '@/components/Icon';
 import type { ConfigItem, ConfigGroup } from '@/types/config';
 import { cn } from '@/utils';
 
-import { useSystemConfig, useSystemConfigStore } from './hooks/useSystemConfig';
+import { useSystemConfig, useSystemConfigStore } from './hooks/use-system-config';
 
 import type { CollapseProps } from 'antd';
 

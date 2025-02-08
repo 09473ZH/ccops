@@ -1,4 +1,4 @@
-import type { HostInfo } from '@/api/services/hostService';
+import type { HostInfo } from '@/api/services/host';
 
 /**
  * 主机列表表格配置

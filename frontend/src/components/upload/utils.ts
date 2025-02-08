@@ -60,56 +60,6 @@ export function getFileFormat(fileName: string | undefined) {
   return format;
 }
 
-/**
- * 获取文件缩略图
- * @param fileName
- */
-export function getFileThumb(fileName: string | undefined) {
-  let thumb;
-  const format = getFileFormat(fileName);
-  switch (format) {
-    case 'txt':
-      thumb = 'ic_file_txt';
-      break;
-    case 'zip':
-      thumb = 'ic_file_zip';
-      break;
-    case 'audio':
-      thumb = 'ic_file_audio';
-      break;
-    case 'video':
-      thumb = 'ic_file_video';
-      break;
-    case 'word':
-      thumb = 'ic_file_word';
-      break;
-    case 'excel':
-      thumb = 'ic_file_excel';
-      break;
-    case 'ppt':
-      thumb = 'ic_file_ppt';
-      break;
-    case 'pdf':
-      thumb = 'ic_file_pdf';
-      break;
-    case 'psd':
-      thumb = 'ic_file_psd';
-      break;
-    case 'ai':
-      thumb = 'ic_file_ai';
-      break;
-    case 'img':
-      thumb = 'ic_file_img';
-      break;
-    case 'folder':
-      thumb = 'ic_folder';
-      break;
-    default:
-      thumb = 'ic_file';
-  }
-  return thumb;
-}
-
 export function fileTypeByName(fileName = '') {
   return (fileName && fileName.split('.').pop()) || 'folder';
 }

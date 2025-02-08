@@ -1,7 +1,7 @@
-import IconButton from './icon-button';
-import FileIcon from './icon-file';
-import OsIcon from './icon-os';
-import Iconify from './iconify-icon';
-import SvgIcon from './svg-icon';
+import FileIcon from './FileIcon';
+import IconButton from './IconButton';
+import Iconify from './Iconify';
+import OsIcon from './OsIcon';
+import SvgIcon from './SvgIcon';
 
 export { Iconify, SvgIcon, IconButton, FileIcon, OsIcon };

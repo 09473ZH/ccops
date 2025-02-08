@@ -4,8 +4,8 @@ import { ItemRender } from 'antd/es/upload/interface';
 import { useThemeToken } from '@/theme/hooks';
 
 import { StyledUpload } from './styles';
-import UploadIllustration from './upload-illustration';
-import UploadListItem from './upload-list-item';
+import UploadIllustration from './UploadIllustration';
+import UploadListItem from './UploadListItem';
 
 import type { UploadProps } from 'antd';
 
