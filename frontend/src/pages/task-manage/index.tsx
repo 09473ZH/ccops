@@ -1,15 +1,15 @@
 import { Button, Space, Form } from 'antd';
 import { useState } from 'react';
 
-import { TaskInfo } from '@/api/services/taskService';
-import { useModalsControl } from '@/hooks/useModalsControl';
-import { useSettings } from '@/store/settingStore';
+import { TaskInfo } from '@/api/services/task';
+import { Iconify } from '@/components/Icon';
+import { useModalsControl } from '@/hooks/use-modals-control';
+import { useSettings } from '@/store/setting'
 
-import { CreateTaskModal } from './components/create-task-modal';
-import { TaskOutputModal } from './components/task-output-modal';
-import { TaskTable } from './components/task-table';
+import { CreateTaskModal } from './components/CreateTaskModal';
+import { TaskOutputModal } from './components/TaskOutputModal';
+import { TaskTable } from './components/TaskTable';
 import { useTaskManage } from './hooks/use-task-manage';
-import { Iconify } from '@/components/icon';
 
 function TaskManagePage() {
   const [form] = Form.useForm();

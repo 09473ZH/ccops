@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Iconify, SvgIcon } from '@/components/icon';
+import { Iconify, SvgIcon } from '@/components/Icon';
 
 import { AppRouteObject } from '#/router';
 import type { GetProp, MenuProps } from 'antd';

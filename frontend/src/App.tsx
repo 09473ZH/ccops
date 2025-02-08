@@ -1,12 +1,11 @@
 import { App as AntdApp } from 'antd';
 import { Suspense, useEffect } from 'react';
 
-import { CircleLoading } from '@/components/loading';
+import { CircleLoading } from '@/components/Loading';
 import Router from '@/router/index';
 import AntdConfig from '@/theme/antd';
 
-import { MotionLazy } from './components/animate/motion-lazy';
-import { useSettings } from './store/settingStore';
+import { useSettings } from './store/setting';
 
 function App() {
   const { themeMode } = useSettings();
@@ -22,9 +21,7 @@ function App() {
     <AntdConfig>
       <AntdApp>
         <Suspense fallback={<CircleLoading />}>
-          <MotionLazy>
-            <Router />
-          </MotionLazy>
+          <Router />
         </Suspense>
       </AntdApp>
     </AntdConfig>

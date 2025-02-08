@@ -3,19 +3,19 @@ import * as monaco from 'monaco-editor';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { TaskOutput } from '@/api/services/taskService';
-import { HostSelector } from '@/components/host/host-selector';
-import IconifyIcon from '@/components/icon/iconify-icon';
-import MonacoEditor from '@/components/monaco-editor';
-import { useHostList } from '@/hooks/useHostList';
-import { useTaskWebSocket } from '@/hooks/useTaskWebSocket';
-import { useSettings } from '@/store/settingStore';
+import type { TaskOutput } from '@/api/services/task';
+import HostSelector from '@/components/HostSelector';
+import { Iconify } from '@/components/Icon';
+import MonacoEditor from '@/components/MonacoEditor';
+import { useHostList } from '@/hooks/use-host-list';
+import { useTaskWebSocket } from '@/hooks/use-task-websocket';
+import { useSettings } from '@/store/setting';
 
 import { useTaskOperations } from '../task-manage/hooks/use-task-manage';
 
-import { OutputPanel } from './components/output-panel';
-import { StatusDisplay } from './components/status-display';
-import { useQuickCommand } from './hooks/useQuickCommand';
+import { OutputPanel } from './components/OutputPanel';
+import { StatusDisplay } from './components/StatusDisplay';
+import { useQuickCommand } from './hooks/use-quick-command';
 
 const EDITOR_KEYBINDINGS = [
   {
@@ -182,7 +182,7 @@ function QuickCommand() {
           onClick={handleExecute}
         >
           <div className="flex items-center gap-1.5 text-sm">
-            <IconifyIcon
+            <Iconify
               icon={
                 navigator.userAgent.includes('Mac')
                   ? 'material-symbols:keyboard-command-key'
@@ -191,7 +191,7 @@ function QuickCommand() {
               size={13}
             />
             <span className="opacity-75">+</span>
-            <IconifyIcon icon="material-symbols:keyboard-return" size={13} />
+            <Iconify icon="material-symbols:keyboard-return" size={13} />
             <span>{t('quick-command.execute.title')}</span>
           </div>
         </Button>

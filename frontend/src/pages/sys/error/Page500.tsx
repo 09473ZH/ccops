@@ -4,7 +4,6 @@ import { Helmet } from 'react-helmet-async';
 import { NavLink } from 'react-router-dom';
 
 import Character8 from '@/assets/images/characters/character_8.png';
-import MotionContainer from '@/components/animate/motion-container';
 import { varBounce } from '@/components/animate/variants/bounce';
 import { useThemeToken } from '@/theme/hooks';
 
@@ -19,7 +18,7 @@ export default function Page() {
       </Helmet>
 
       <div className="m-auto max-w-[400px]">
-        <MotionContainer className="flex flex-col items-center justify-center px-2">
+        <div className="flex flex-col items-center justify-center px-2">
           <m.div variants={varBounce().in}>
             <Typography.Title level={3} className="text-center">
               500 Internal Server Error
@@ -154,7 +153,7 @@ export default function Page() {
           >
             Go to Home
           </NavLink>
-        </MotionContainer>
+        </div>
       </div>
     </>
   );

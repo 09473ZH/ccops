@@ -1,12 +1,12 @@
 import { Button, Modal, UploadFile, App } from 'antd';
 import { useState } from 'react';
 
-import { Iconify } from '@/components/icon';
-import { Upload } from '@/components/upload';
-import { useModalsControl } from '@/hooks/useModalsControl';
+import { Iconify } from '@/components/Icon';
+import { Upload } from '@/components/Upload';
+import { useModalsControl } from '@/hooks/use-modals-control';
 
-import FileTable from './file-table';
-import { useFile } from './useFile';
+import FileTable from './FileTable';
+import { useFile } from './use-file';
 
 import type { UploadChangeParam } from 'antd/lib/upload';
 

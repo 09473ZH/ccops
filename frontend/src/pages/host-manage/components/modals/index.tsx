@@ -2,22 +2,22 @@ import { lazy } from 'react';
 
 export const Modals = {
   Create: lazy(() =>
-    import('./create-host-modal').then((module) => ({
+    import('./CreateHostModal').then((module) => ({
       default: module.CreateHostModal,
     })),
   ),
   AssignLabel: lazy(() =>
-    import('./assign-label-modal').then((module) => ({
+    import('./AssignLabelModal').then((module) => ({
       default: module.AssignLabelModal,
     })),
   ),
   LabelManage: lazy(() =>
-    import('./label-manage-modal').then((module) => ({
+    import('./LabelManageModal').then((module) => ({
       default: module.LabelManageModal,
     })),
   ),
   SshConfig: lazy(() =>
-    import('./ssh-config-modal').then((module) => ({
+    import('./SshConfigModal').then((module) => ({
       default: module.SshConfigModal,
     })),
   ),

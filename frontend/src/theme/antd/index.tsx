@@ -2,8 +2,8 @@ import { StyleProvider } from '@ant-design/cssinjs';
 import { ConfigProvider, theme } from 'antd';
 import 'antd/dist/reset.css';
 
-import useLocale from '@/locales/useLocale';
-import { useSettings } from '@/store/settingStore';
+import useLocale from '@/locales/use-locale';
+import { useSettings } from '@/store/setting';
 
 import {
   customThemeTokenConfig,

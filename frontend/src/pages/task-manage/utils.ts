@@ -1,4 +1,4 @@
-import { TaskInfo } from '@/api/services/taskService';
+import { TaskInfo } from '@/api/services/task';
 
 export function generateTaskName(roleIdList: number[], roleList: any[]) {
   if (!roleIdList?.length) return '';

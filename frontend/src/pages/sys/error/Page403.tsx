@@ -4,7 +4,6 @@ import { Helmet } from 'react-helmet-async';
 import { NavLink } from 'react-router-dom';
 
 import Character4 from '@/assets/images/characters/character_4.png';
-import MotionContainer from '@/components/animate/motion-container';
 import { varBounce } from '@/components/animate/variants/bounce';
 import { useThemeToken } from '@/theme/hooks';
 
@@ -26,7 +25,7 @@ export default function Page403() {
       </Helmet>
 
       <div className="m-auto max-w-[400px]">
-        <MotionContainer className="flex flex-col items-center justify-center px-2">
+        <div className="flex flex-col items-center justify-center px-2">
           <m.div variants={varBounce().in}>
             <Typography.Title level={3} className="text-center">
               No permission
@@ -122,7 +121,7 @@ export default function Page403() {
           >
             Go to Home
           </NavLink>
-        </MotionContainer>
+        </div>
       </div>
     </>
   );

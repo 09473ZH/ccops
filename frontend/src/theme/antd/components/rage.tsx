@@ -1,7 +1,7 @@
 import { Rate, RateProps } from 'antd';
 import styled from 'styled-components';
 
-import { Iconify } from '@/components/icon';
+import { Iconify } from '@/components/Icon';
 
 export default function ProRate(props: RateProps) {
   return (

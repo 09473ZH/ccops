@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { App, Form } from 'antd';
 import { useState, useEffect } from 'react';
 
-import taskService, { RoleVarsConfig } from '@/api/services/taskService';
-import { useMutationWithMessage } from '@/hooks/useMutationWithMessage';
+import taskService, { RoleVarsConfig } from '@/api/services/task';
+import useMutationWithMessage from '@/hooks/use-mutation-with-message';
 import { useRoleList } from '@/pages/software-manage/use-software';
 import batchProcessTasks from '@/utils/batch-process-tasks';
 

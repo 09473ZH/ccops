@@ -1,4 +1,4 @@
-import ActionButton from './action-button';
-import CopyButton from './copy-button';
+import ActionButton from './ActionButton';
+import CopyButton from './CopyButton';
 
 export { ActionButton, CopyButton };

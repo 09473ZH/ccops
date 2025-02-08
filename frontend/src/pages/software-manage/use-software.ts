@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { create } from 'zustand';
 
-import softwareService, { RoleItem, RevisionItem, TaskInfo } from '@/api/services/softwareService';
-import { useMutationWithMessage } from '@/hooks/useMutationWithMessage';
+import softwareService, { RoleItem, RevisionItem, TaskInfo } from '@/api/services/software';
+import useMutationWithMessage from '@/hooks/use-mutation-with-message';
 
 // 软件基础信息状态
 interface SoftwareState {
