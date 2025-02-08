@@ -12,5 +12,6 @@ func (router RouterGroup) ConfigurationRouter(configurationRouterGroup *gin.Rout
 	configurationRouterGroup.GET("/authorized_keys", app.UserKeyInfo)
 	configurationRouterGroup.GET("", app.ConfigurationListView)
 	configurationRouterGroup.Use(middleware.JwtUser())
-	configurationRouterGroup.PUT("", app.ConfigurationUpdateView)
+	configurationRouterGroup.POST("batch_update", app.ConfigurationUpdateView)
+
 }

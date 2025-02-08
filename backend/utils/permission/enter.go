@@ -15,8 +15,9 @@ func IsAdmin(id uint) bool {
 	return false
 }
 
-// getUserPermissionHostIds 获取用户所有有权限的主机ID（包括直接权限和标签权限）
-func getUserPermissionHostIds(userId uint) []uint {
+// GetUserPermissionHostIds 获取用户所有有权限的主机ID（包括直接权限和标签权限）
+func GetUserPermissionHostIds(userId uint) []uint {
+
 	// 获取直接分配的主机权限
 	var directHostIds []uint
 	global.DB.Model(&models.HostPermission{}).
@@ -66,7 +67,8 @@ func IsPermission(userId uint, hostId uint) bool {
 	}
 
 	// 获取用户所有有权限的主机ID
-	permissionHostIds := getUserPermissionHostIds(userId)
+
+	permissionHostIds := GetUserPermissionHostIds(userId)
 
 	// 检查目标主机是否在权限列表中
 	for _, id := range permissionHostIds {
@@ -86,7 +88,8 @@ func IsPermissionForHosts(userId uint, hostIds []uint) bool {
 	}
 
 	// 获取用户所有有权限的主机ID
-	permissionHostIds := getUserPermissionHostIds(userId)
+
+	permissionHostIds := GetUserPermissionHostIds(userId)
 
 	// 将权限主机ID转换为map，方便查找
 	permissionMap := make(map[uint]bool)

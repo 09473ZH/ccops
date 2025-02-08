@@ -1,4 +1,4 @@
-package hosts_api
+package labels_api
 
 import (
 	"ccops/global"
@@ -10,7 +10,9 @@ import (
 )
 
 // 删除某标签关联的所有主机
-func (HostsApi)LabelDisassociateView(c *gin.Context) {
+
+func (LabelApi) LabelDisassociateView(c *gin.Context) {
+
 	_claims, _ := c.Get("claims")
 	claims := _claims.(*jwts.CustomClaims)
 	if !permission.IsAdmin(claims.UserID) {

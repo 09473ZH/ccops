@@ -19,7 +19,7 @@ func (router RouterGroup) HostRouter(hostRouterGroup *gin.RouterGroup) {
 	hostRouterGroup.POST("refresh", app.HostFlushInfoView)
 	hostRouterGroup.POST("rename", app.HostRename)
 	hostRouterGroup.POST("assign_labels", app.AssignLabelsToHost)
-	hostRouterGroup.POST("/:id/unlabel", app.LabelDisassociateView)
+
 	hostRouterGroup.GET("me", app.PermissionHosts)
 	hostRouterGroup.GET("search", app.HostSearch)
 }
