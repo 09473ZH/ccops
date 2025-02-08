@@ -1,14 +1,11 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-import { StorageEnum, ThemeColorPresets, ThemeLayout, ThemeMode } from '#/enum';
+import { StorageEnum, ThemeLayout, ThemeMode } from '#/enum';
 
 type SettingsType = {
-  themeColorPresets: ThemeColorPresets;
   themeMode: ThemeMode;
   themeLayout: ThemeLayout;
-  themeStretch: boolean;
-  breadCrumb: boolean;
   darkSidebar: boolean;
 };
 
@@ -24,11 +21,8 @@ const useSettingStore = create<SettingStore>()(
   persist(
     (set) => ({
       settings: {
-        themeColorPresets: ThemeColorPresets.Default,
         themeMode: ThemeMode.Light,
         themeLayout: ThemeLayout.Vertical,
-        themeStretch: false,
-        breadCrumb: true,
         darkSidebar: false,
       },
       actions: {

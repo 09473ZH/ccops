@@ -7,6 +7,7 @@ import { Iconify } from '@/components/icon';
 import { useFlattenedRoutes, usePermissionRoutes } from '@/router/hooks';
 import { menuFilter } from '@/router/utils';
 import { useBreadcrumbStore } from '@/store/breadcrumbStore';
+import { useThemeToken } from '@/theme/hooks';
 
 type MenuItem = GetProp<BreadcrumbProps, 'items'>[number];
 
@@ -16,6 +17,7 @@ export default function BreadCrumb() {
   const flattenedRoutes = useFlattenedRoutes();
   const permissionRoutes = usePermissionRoutes();
   const { customBreadcrumbs } = useBreadcrumbStore();
+  const { colorPrimary } = useThemeToken();
 
   const breadCrumbs = useMemo(() => {
     // 如果有自定义面包屑，优先使用
@@ -31,8 +33,9 @@ export default function BreadCrumb() {
 
     let currentMenuItems = [...menuRoutes];
 
-    return pathRouteMetas.map((routeMeta): MenuItem => {
+    return pathRouteMetas.map((routeMeta, index): MenuItem => {
       const { key, label } = routeMeta;
+      const isLast = index === pathRouteMetas.length - 1;
 
       // Find current level menu items
       const currentRoute = currentMenuItems.find((item) => item.meta?.key === key);
@@ -42,7 +45,17 @@ export default function BreadCrumb() {
 
       return {
         key,
-        title: t(label),
+        title: (
+          <span
+            style={{
+              fontSize: isLast ? 16 : 14,
+              fontWeight: isLast ? 600 : 'normal',
+              color: isLast ? colorPrimary : undefined,
+            }}
+          >
+            {t(label)}
+          </span>
+        ),
         ...(currentMenuItems.length > 0 && {
           menu: {
             items: currentMenuItems.map((item) => ({
@@ -53,13 +66,12 @@ export default function BreadCrumb() {
         }),
       };
     });
-  }, [matches, flattenedRoutes, t, permissionRoutes, customBreadcrumbs]);
+  }, [matches, flattenedRoutes, t, permissionRoutes, customBreadcrumbs, colorPrimary]);
 
   return (
     <Breadcrumb
       items={breadCrumbs}
-      className="!text-sm"
-      separator={<Iconify icon="ph:dot-duotone" />}
+      separator={<Iconify icon="ph:dot-duotone" className="mx-2" />}
     />
   );
 }

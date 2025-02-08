@@ -13,4 +13,5 @@ func (router RouterGroup) ConfigurationRouter(configurationRouterGroup *gin.Rout
 	configurationRouterGroup.GET("", app.ConfigurationListView)
 	configurationRouterGroup.Use(middleware.JwtUser())
 	configurationRouterGroup.POST("batch_update", app.ConfigurationUpdateView)
+
 }

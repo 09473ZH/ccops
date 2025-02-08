@@ -4,14 +4,13 @@ import { Outlet } from 'react-router-dom';
 
 import { useSettings } from '@/store/settingStore';
 import { useResponsive, useThemeToken } from '@/theme/hooks';
-import { cn } from '@/utils';
 
 import { NAV_WIDTH, NAV_COLLAPSED_WIDTH, HEADER_HEIGHT } from './config';
 
 import { ThemeLayout } from '#/enum';
 
 function Main() {
-  const { themeStretch, themeLayout } = useSettings();
+  const { themeLayout } = useSettings();
   const { colorBgElevated } = useThemeToken();
   const { screenMap } = useResponsive();
 
@@ -32,12 +31,7 @@ function Main() {
 
   return (
     <Content style={mainStyle} className="flex overflow-auto">
-      <div
-        className={cn(
-          'm-auto h-full w-full flex-grow sm:p-2',
-          themeStretch ? '' : 'xl:max-w-screen-xl',
-        )}
-      >
+      <div className="m-auto h-full w-full flex-grow sm:p-2">
         <Outlet />
       </div>
     </Content>

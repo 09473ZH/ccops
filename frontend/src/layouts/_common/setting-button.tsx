@@ -1,14 +1,8 @@
-import {
-  CloseOutlined,
-  LeftOutlined,
-  QuestionCircleOutlined,
-  RightOutlined,
-} from '@ant-design/icons';
-import { Button, Card, Drawer, Switch, Tooltip } from 'antd';
+import { CloseOutlined } from '@ant-design/icons';
+import { Button, Card, Drawer, Switch } from 'antd';
 import Color from 'color';
 import { m } from 'framer-motion';
 import { CSSProperties, useState } from 'react';
-import { MdCircle } from 'react-icons/md';
 import screenfull from 'screenfull';
 
 import CyanBlur from '@/assets/images/background/cyan-blur.png';
@@ -16,10 +10,9 @@ import RedBlur from '@/assets/images/background/red-blur.png';
 import { varHover } from '@/components/animate/variants/action';
 import { IconButton, SvgIcon } from '@/components/icon';
 import { useSettingActions, useSettings } from '@/store/settingStore';
-import { colorPrimarys } from '@/theme/antd/theme';
 import { useThemeToken } from '@/theme/hooks';
 
-import { ThemeColorPresets, ThemeLayout, ThemeMode } from '#/enum';
+import { ThemeLayout, ThemeMode } from '#/enum';
 
 /**
  * App Setting
@@ -30,8 +23,7 @@ export default function SettingButton() {
     useThemeToken();
 
   const settings = useSettings();
-  const { themeMode, themeColorPresets, themeLayout, themeStretch, breadCrumb, darkSidebar } =
-    settings;
+  const { themeMode, themeLayout, darkSidebar } = settings;
   const { setSettings } = useSettingActions();
 
   const setThemeMode = (themeMode: ThemeMode) => {
@@ -41,31 +33,10 @@ export default function SettingButton() {
     });
   };
 
-  const setThemeColorPresets = (themeColorPresets: ThemeColorPresets) => {
-    setSettings({
-      ...settings,
-      themeColorPresets,
-    });
-  };
-
   const setThemeLayout = (themeLayout: ThemeLayout) => {
     setSettings({
       ...settings,
       themeLayout,
-    });
-  };
-
-  const setThemeStretch = (themeStretch: boolean) => {
-    setSettings({
-      ...settings,
-      themeStretch,
-    });
-  };
-
-  const setBreadCrumn = (checked: boolean) => {
-    setSettings({
-      ...settings,
-      breadCrumb: checked,
     });
   };
 
@@ -268,93 +239,12 @@ export default function SettingButton() {
             </div>
           </div>
 
-          {/* theme stretch */}
-          <div>
-            <div className=" mb-3 text-base font-semibold" style={{ color: colorTextSecondary }}>
-              <span className="mr-2">Stretch</span>
-              <Tooltip title="Only available at large resolutions > 1600px (xl)">
-                <QuestionCircleOutlined />
-              </Tooltip>
-            </div>
-
-            <Card
-              onClick={() => setThemeStretch(!themeStretch)}
-              className="flex h-20 w-full cursor-pointer items-center justify-center"
-              styles={{
-                body: {
-                  width: '50%',
-                  padding: 0,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                },
-              }}
-            >
-              {themeStretch ? (
-                <div
-                  className="flex w-full items-center justify-between"
-                  style={{
-                    color: colorPrimary,
-                    transition: 'width 300ms 0ms',
-                  }}
-                >
-                  <LeftOutlined />
-                  <div className="flex flex-grow border-b border-dashed" />
-                  <RightOutlined />
-                </div>
-              ) : (
-                <div
-                  className="flex w-1/2 items-center justify-between"
-                  style={{
-                    transition: 'width 300ms 0ms',
-                  }}
-                >
-                  <RightOutlined />
-                  <div className="flex-grow border-b border-dashed" />
-                  <LeftOutlined />
-                </div>
-              )}
-            </Card>
-          </div>
-
-          {/* theme presets */}
-          <div>
-            <div className="mb-3 text-base font-semibold" style={{ color: colorTextSecondary }}>
-              Presets
-            </div>
-            <div className="grid grid-cols-3 gap-x-4 gap-y-3">
-              {Object.entries(colorPrimarys).map(([preset, color]) => (
-                <Card
-                  key={preset}
-                  className="flex h-14 w-full cursor-pointer items-center justify-center"
-                  style={{ backgroundColor: themeColorPresets === preset ? `${color}14` : '' }}
-                  onClick={() => setThemeColorPresets(preset as ThemeColorPresets)}
-                >
-                  <div style={{ color }}>
-                    <MdCircle style={{ fontSize: themeColorPresets === preset ? 24 : 12 }} />
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-
           {/* Page config */}
           <div>
             <div className="mb-3 text-base font-semibold" style={{ color: colorTextSecondary }}>
               Page
             </div>
             <div className="flex flex-col gap-2">
-              <div
-                className="flex items-center justify-between"
-                style={{ color: colorTextTertiary }}
-              >
-                <div>BreadCrumb</div>
-                <Switch
-                  size="small"
-                  checked={breadCrumb}
-                  onChange={(checked) => setBreadCrumn(checked)}
-                />
-              </div>
               <div
                 className="flex items-center justify-between"
                 style={{ color: colorTextTertiary }}

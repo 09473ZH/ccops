@@ -27,7 +27,7 @@ const hostManage: AppRouteObject[] = [
     element: <HostManageWrapper />,
     meta: {
       label: 'sys.menu.host_manage',
-      icon: <Iconify icon="solar:rocket-broken" size={24} />,
+      icon: <Iconify icon="solar:server-minimalistic-bold-duotone" size={24} />,
       key: '/host_manage',
     },
   },

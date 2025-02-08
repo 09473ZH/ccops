@@ -19,7 +19,7 @@ const taskManage: AppRouteObject[] = [
     ),
     meta: {
       label: 'sys.menu.task_manage',
-      icon: <Iconify icon="solar:checklist-minimalistic-outline" size={24} />,
+      icon: <Iconify icon="solar:checklist-minimalistic-bold-duotone" size={24} />,
       key: '/task_manage',
     },
   },

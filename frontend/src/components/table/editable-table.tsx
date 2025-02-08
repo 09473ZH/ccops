@@ -86,6 +86,8 @@ function EditableTable<T extends { id: number }>({
     {
       title: '操作',
       key: 'action',
+      width: 150,
+      fixed: 'right',
       render: (_, record) => renderActions(record, isEditing(record)),
     },
   ];

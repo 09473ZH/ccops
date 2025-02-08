@@ -9,7 +9,6 @@ import { useResponsive, useThemeToken } from '@/theme/hooks';
 
 import AccountDropdown from '../_common/account-dropdown';
 import BreadCrumb from '../_common/bread-crumb';
-import NoticeButton from '../_common/notice';
 import SearchBar from '../_common/search-bar';
 import SettingButton from '../_common/setting-button';
 
@@ -18,7 +17,7 @@ import NavVertical from './nav/nav-vertical';
 
 export default function Header({ className = '' }: { className?: string }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { breadCrumb } = useSettings();
+  const { themeLayout } = useSettings();
   const { colorBgElevated, colorBorder } = useThemeToken();
   const { screenMap } = useResponsive();
 
@@ -31,7 +30,7 @@ export default function Header({ className = '' }: { className?: string }) {
   if (screenMap.md) {
     headerStyle.right = '0px';
     headerStyle.left = 'auto';
-    headerStyle.width = `calc(100% - ${NAV_WIDTH}px)`;
+    headerStyle.width = `calc(100% - ${themeLayout === 'mini' ? NAV_WIDTH / 2 : NAV_WIDTH}px)`;
   } else {
     headerStyle.width = '100vw';
   }
@@ -50,7 +49,9 @@ export default function Header({ className = '' }: { className?: string }) {
             <IconButton onClick={() => setDrawerOpen(true)} className="h-10 w-10 md:hidden">
               <SvgIcon icon="ic-menu" size="24" />
             </IconButton>
-            <div className="ml-4 hidden md:block">{breadCrumb ? <BreadCrumb /> : null}</div>
+            <div className="ml-4 hidden md:block">
+              <BreadCrumb />
+            </div>
           </div>
 
           <div className="flex">

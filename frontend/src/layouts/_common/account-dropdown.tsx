@@ -2,28 +2,19 @@ import { Divider, MenuProps } from 'antd';
 import Dropdown, { DropdownProps } from 'antd/es/dropdown/dropdown';
 import React, { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavLink } from 'react-router-dom';
 
 import { IconButton } from '@/components/icon';
-import { useRouter } from '@/router/hooks';
-import { useUserInfo, useUserActions, useSignOut } from '@/store/userStore';
+import { useUserInfo, useSignOut } from '@/store/userStore';
 import { useThemeToken } from '@/theme/hooks';
-
-const { VITE_APP_HOMEPAGE: HOMEPAGE } = import.meta.env;
 
 // 导入 LoginStateProvider 和类型
 const LoginStateProvider = lazy(() => import('@/pages/sys/login/providers/LoginStateProvider'));
-const { useLoginStateContext } = await import('@/pages/sys/login/providers/LoginStateProvider');
-
 // 导入默认头像
 const DEFAULT_AVATAR = 'https://api.dicebear.com/9.x/bottts/svg?seed=Riley';
 
 // 把使用 context 的部分抽出来作为子组件
 function AccountDropdownContent() {
-  const { replace } = useRouter();
   const { username } = useUserInfo();
-  const { clearUserInfoAndToken } = useUserActions();
-  const { backToLogin } = useLoginStateContext();
   const signOut = useSignOut();
   const { t } = useTranslation();
   const logout = () => {
@@ -53,7 +44,7 @@ function AccountDropdownContent() {
 
   const items: MenuProps['items'] = [
     {
-      label: <button className="font-bold text-warning">{t('sys.login.logout')}</button>,
+      label: <button className="text-warning font-bold">{t('sys.login.logout')}</button>,
       key: '0',
       onClick: logout,
     },

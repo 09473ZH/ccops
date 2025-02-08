@@ -1,4 +1,5 @@
 import { get, post, del } from '../apiClient';
+import { TaskApi } from '../constants';
 
 /** 任务类型：playbook - 软件部署任务, ad-hoc - 快捷命令任务 */
 export type TaskType = 'playbook' | 'ad-hoc';
@@ -126,33 +127,38 @@ export interface TaskOutput {
 const taskService = {
   /** 获取任务列表 */
   getTaskList(limit: number, page: number) {
-    return get<TaskListResponse>(`/api/task?limit=${limit}&page=${page}`);
+    return get<TaskListResponse>(`${TaskApi.List}?limit=${limit}&page=${page}`);
   },
 
   /** 创建任务 */
   createTask(task: TaskReq) {
-    return post<number>('/api/task', task);
+    return post<number>(TaskApi.Create, task);
   },
 
   /** 删除任务 */
   deleteTask(taskId: number) {
-    return del(`/api/task/${taskId}`);
+    return del(TaskApi.Delete.replace(':id', taskId.toString()));
+  },
+
+  /** 获取任务详情 */
+  getTaskDetail(taskId: number) {
+    return get<TaskInfo>(TaskApi.ById.replace(':id', taskId.toString()));
   },
 
   /** 创建Playbook类型任务（软件部署） */
   createPlaybookTask(task: Omit<PlaybookTaskReq, 'type'>) {
-    return post<number>('/api/task', { ...task, type: 'playbook' });
+    return post<number>(TaskApi.Create, { ...task, type: 'playbook' });
   },
 
   /** 创建Ad-hoc类型任务（快捷命令） */
   createAdHocTask(task: Omit<AdHocTaskReq, 'type'>) {
-    return post<number>('/api/task', { ...task, type: 'ad-hoc' });
+    return post<number>(TaskApi.Create, { ...task, type: 'ad-hoc' });
   },
 
   /** 获取任务WebSocket输出 */
   getTaskWebSocketUrl(taskId: number) {
     const wsUrl = import.meta.env.VITE_APP_WS_API;
-    return `${wsUrl}/api/task/${taskId}/message`;
+    return `${wsUrl}${TaskApi.Message.replace(':id', taskId.toString())}`;
   },
 };
 

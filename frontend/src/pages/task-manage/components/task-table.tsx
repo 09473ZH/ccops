@@ -80,6 +80,7 @@ export function TaskTable({
     {
       title: '操作',
       key: 'action',
+      width: 150,
       fixed: 'right',
       render: (_, record: TaskInfo) => (
         <Space>

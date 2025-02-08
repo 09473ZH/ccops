@@ -1,4 +1,4 @@
-import { Button, Typography, Space, Form } from 'antd';
+import { Button, Space, Form } from 'antd';
 import { useState } from 'react';
 
 import { TaskInfo } from '@/api/services/taskService';
@@ -9,6 +9,7 @@ import { CreateTaskModal } from './components/create-task-modal';
 import { TaskOutputModal } from './components/task-output-modal';
 import { TaskTable } from './components/task-table';
 import { useTaskManage } from './hooks/use-task-manage';
+import { Iconify } from '@/components/icon';
 
 function TaskManagePage() {
   const [form] = Form.useForm();
@@ -114,17 +115,23 @@ function TaskManagePage() {
   };
 
   return (
-    <div>
-      <Typography.Title className="mt-4" level={2}>
-        任务列表
-      </Typography.Title>
-      <div className="mb-4 flex justify-between">
+    <div className="flex h-full flex-col p-5">
+      <div className="mb-4 flex justify-end">
         <Space>
-          <Button type="primary" onClick={handleOpenCreateModal}>
-            新建任务
-          </Button>
-          <Button danger disabled={!selectedRowKeys.length} onClick={handleBatchDelete}>
+          <Button
+            danger
+            disabled={!selectedRowKeys.length}
+            icon={<Iconify icon="flowbite:trash-bin-outline" />}
+            onClick={handleBatchDelete}
+          >
             批量删除
+          </Button>
+          <Button
+            type="primary"
+            icon={<Iconify icon="flowbite:plus-outline" />}
+            onClick={handleOpenCreateModal}
+          >
+            新建任务
           </Button>
         </Space>
       </div>

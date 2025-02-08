@@ -19,7 +19,13 @@ const fileManage: AppRouteObject[] = [
     ),
     meta: {
       label: 'sys.menu.file_manage',
-      icon: <Iconify icon="solar:folder-with-files-broken" size={24} />,
+      icon: (
+        <Iconify
+          className="ant-menu-item-icon"
+          icon="solar:folder-with-files-bold-duotone"
+          size={24}
+        />
+      ),
       key: '/file_manage',
     },
   },

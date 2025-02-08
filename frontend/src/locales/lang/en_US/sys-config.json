@@ -14,7 +14,7 @@
     "privateKeyDesc": "Private key for decryption",
     "publicKey": "Public Key",
     "publicKeyDesc": "Public key for encryption",
-    "resetAll": "Clear Input",
+    "resetAll": "Clear All",
     "saveAll": "Save All",
     "saveAllSuccess": "All settings saved",
     "saveFailed": "Save failed, please check input",

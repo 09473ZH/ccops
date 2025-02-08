@@ -3,6 +3,8 @@ import { Terminal as XTerm, ITheme } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 
+import { HostApi } from '@/api/constants';
+
 export interface TerminalRef {
   clear: () => void;
   reconnect: () => void;
@@ -33,7 +35,9 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
       term.clear();
       term.reset();
 
-      const ws = new WebSocket(`${import.meta.env.VITE_APP_WS_API}/api/host_web_shell/${hostId}`);
+      const ws = new WebSocket(
+        `${import.meta.env.VITE_APP_WS_API}${HostApi.Terminal.replace(':id', hostId)}`,
+      );
       let heartbeatInterval: NodeJS.Timeout;
       let missedHeartbeats = 0;
 
@@ -54,6 +58,8 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
         if (isReconnect) {
           term.write('\x1b[2J\x1b[H');
         }
+        const dims = `${term.rows},${term.cols}`;
+        ws.send(`\x1b[8;${dims}`);
         heartbeatInterval = setInterval(sendHeartbeat, 30000);
       };
 
@@ -122,6 +128,27 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
       term.open(terminalRef.current);
       fitAddon.fit();
+
+      // 处理终端大小调整
+      const handleResize = () => {
+        if (fitAddonRef.current) {
+          fitAddonRef.current.fit();
+          if (wsRef.current?.readyState === WebSocket.OPEN) {
+            const dims = `${term.rows},${term.cols}`;
+            wsRef.current.send(`\x1b[8;${dims}`);
+          }
+        }
+      };
+
+      const resizeObserver = new ResizeObserver(() => {
+        handleResize();
+      });
+
+      if (terminalRef.current) {
+        resizeObserver.observe(terminalRef.current);
+      }
+
+      window.addEventListener('resize', handleResize);
 
       // 初始化 WebSocket 连接
       const { ws, cleanup } = setupWebSocket(term, hostId, onConnectionChange);

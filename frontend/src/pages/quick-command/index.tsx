@@ -147,11 +147,7 @@ function QuickCommand() {
   }, [handleExecute]);
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <Typography.Title className="mt-4" level={2}>
-        {t('quick-command.title')}
-      </Typography.Title>
-
+    <div className="flex h-full flex-col gap-4 p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Typography.Text strong className="whitespace-nowrap">

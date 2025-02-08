@@ -50,7 +50,8 @@ export function SoftwareTable({ onAssignLabel }: SoftwareTableProps) {
       title: '描述',
       dataIndex: 'description',
       editable: true,
-      render: (text: string) => <ShowTooltip content={text} maxWidth={120} />,
+      width: 150,
+      render: (text: string) => <ShowTooltip content={text} maxWidth={150} />,
     },
     {
       title: '存在激活版本',
