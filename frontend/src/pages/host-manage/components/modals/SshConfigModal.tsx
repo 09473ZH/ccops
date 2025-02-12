@@ -3,7 +3,7 @@ import { Key, useEffect, useMemo, useState } from 'react';
 
 import type { HostInfo } from '@/api/services/host';
 
-import { TextAreaWithCopy } from '../TextAreaWithCopy';
+import { TextAreaWithCopy } from '../../../../components/TextAreaWithCopy';
 
 interface SshConfigModalProps {
   hostList: HostInfo[];

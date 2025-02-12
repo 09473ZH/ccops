@@ -1,6 +1,7 @@
-import { App } from 'antd'; // 假设使用 Ant Design
+// 假设使用 Ant Design
 import React from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
+import { toast } from 'sonner';
 
 import { IconButton, Iconify } from '../Icon';
 
@@ -11,9 +12,8 @@ interface CopyButtonProps {
 }
 
 export default function CopyButton({ onCopy, text, className }: CopyButtonProps) {
-  const { message } = App.useApp();
   const onCopyHandler = () => {
-    message.success('Copied!');
+    toast.success('Copied!');
   };
   return (
     <CopyToClipboard onCopy={onCopy || onCopyHandler} text={text}>

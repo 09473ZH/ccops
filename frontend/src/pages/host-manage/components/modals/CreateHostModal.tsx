@@ -1,11 +1,15 @@
 import { Modal, Button, Tabs, Typography, Space } from 'antd';
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import configService from '@/api/services/config';
 import useSystemConfigStore from '@/pages/system-config/hooks/use-system-config-store';
 
-import { TextAreaWithCopy } from '../TextAreaWithCopy';
+import { TextAreaWithCopy } from '../../../../components/TextAreaWithCopy';
+import { useServerUrl } from '../../hooks';
+
+interface CreateHostModalProps {
+  open: boolean;
+  onClose: () => void;
+}
 
 interface OsOption {
   key: string;
@@ -14,37 +18,20 @@ interface OsOption {
   getCommand: (baseApi: string) => string;
 }
 
-const osOptions: OsOption[] = [
+const HOST_COMMANDS: OsOption[] = [
   {
-    key: '1',
+    key: 'linux',
     label: 'Linux',
     osFamily: 'linux',
     getCommand: (baseApi: string) => `curl -L ${baseApi}/api/install | bash`,
   },
 ];
 
-interface CreateHostModalProps {
-  open: boolean;
-  onClose: () => void;
-}
-
 export function CreateHostModal({ open, onClose }: CreateHostModalProps) {
-  const [baseApi, setBaseApi] = useState<string>('');
   const navigate = useNavigate();
   const { setActiveKeys, setIsAccordion } = useSystemConfigStore();
 
-  useEffect(() => {
-    const checkBaseApi = async () => {
-      const value = await configService.getConfigValue('system', 'ServerUrl');
-      if (value) {
-        setBaseApi(value);
-      }
-    };
-
-    if (open) {
-      checkBaseApi();
-    }
-  }, [open]);
+  const { data: baseApi } = useServerUrl();
 
   const handleConfigClick = () => {
     onClose();
@@ -53,26 +40,30 @@ export function CreateHostModal({ open, onClose }: CreateHostModalProps) {
     navigate('/system_settings#system-config');
   };
 
-  const items = osOptions.map(({ key, label, getCommand }) => ({
+  const renderCommandContent = (command: string) => (
+    <div>
+      <Typography.Text type="secondary" className="mb-2 block">
+        在终端中运行:
+      </Typography.Text>
+      <TextAreaWithCopy content={command} />
+    </div>
+  );
+
+  const renderConfigPrompt = () => (
+    <div className="py-4 text-center">
+      <Space direction="vertical">
+        <Typography.Text type="warning">未配置系统基础API地址</Typography.Text>
+        <Button type="primary" onClick={handleConfigClick}>
+          前往系统配置
+        </Button>
+      </Space>
+    </div>
+  );
+
+  const items = HOST_COMMANDS.map(({ key, label, getCommand }) => ({
     key,
     label,
-    children: baseApi ? (
-      <div>
-        <Typography.Text type="secondary" className="mb-2 block">
-          在终端中运行:
-        </Typography.Text>
-        <TextAreaWithCopy content={getCommand(baseApi)} />
-      </div>
-    ) : (
-      <div className="py-4 text-center">
-        <Space direction="vertical">
-          <Typography.Text type="warning">未配置系统基础API地址</Typography.Text>
-          <Button type="primary" onClick={handleConfigClick}>
-            前往系统配置
-          </Button>
-        </Space>
-      </div>
-    ),
+    children: baseApi ? renderCommandContent(getCommand(baseApi)) : renderConfigPrompt(),
   }));
 
   return (
@@ -88,7 +79,7 @@ export function CreateHostModal({ open, onClose }: CreateHostModalProps) {
       width={800}
     >
       <div className="my-4">
-        <Tabs defaultActiveKey="1" items={items} />
+        <Tabs defaultActiveKey={HOST_COMMANDS[0].key} items={items} />
       </div>
     </Modal>
   );

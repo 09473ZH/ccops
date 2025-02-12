@@ -22,12 +22,11 @@ function SoftwareManage() {
 
   const handleSubmitAssignLabel = () => {
     if (editingSoftwareId) {
-      updateRole({
+      updateRole.mutate({
         id: editingSoftwareId,
         data: { tags: selectedLabels },
-      }).then(() => {
-        close('assignLabel');
       });
+      close('assignLabel');
     }
   };
 
@@ -50,7 +49,7 @@ function SoftwareManage() {
         open={isOpen('addSoftware')}
         onOk={() => {
           addForm.validateFields().then((values) => {
-            createRole(values).then(() => {
+            createRole.mutateAsync(values).then(() => {
               close('addSoftware');
               addForm.resetFields();
             });

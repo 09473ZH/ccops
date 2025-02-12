@@ -4,27 +4,18 @@ import {
   SearchOutlined,
   CaretRightOutlined,
 } from '@ant-design/icons';
-import {
-  Form,
-  Input,
-  Typography,
-  Button,
-  Space,
-  Tooltip,
-  Collapse,
-  Anchor,
-  Switch,
-  App,
-} from 'antd';
+import { Form, Input, Typography, Button, Space, Tooltip, Collapse, Anchor, Switch } from 'antd';
 import debounce from 'lodash/debounce';
 import { useRef, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 
 import { Iconify } from '@/components/Icon';
 import type { ConfigItem, ConfigGroup } from '@/types/config';
 import { cn } from '@/utils';
 
-import { useSystemConfig, useSystemConfigStore } from './hooks/use-system-config';
+import { useSystemConfig } from './hooks/use-system-config';
+import useSystemConfigStore from './hooks/use-system-config-store';
 
 import type { CollapseProps } from 'antd';
 
@@ -38,7 +29,6 @@ export default function SystemSettingsPage() {
   const [form] = Form.useForm();
   const contentRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
-  const { message } = App.useApp();
 
   const {
     isScrolled,
@@ -96,16 +86,12 @@ export default function SystemSettingsPage() {
     () => ({
       handleSaveAll: async () => {
         if (!configList?.length) {
-          message.error('配置列表为空');
+          toast.error('配置列表为空');
           return;
         }
 
-        try {
-          const allFieldNames = configList.flatMap(getFieldNames);
-          await saveConfig(allFieldNames, 'saveAll');
-        } catch (error) {
-          message.error(error instanceof Error ? error.message : '保存配置失败');
-        }
+        const allFieldNames = configList.flatMap(getFieldNames);
+        await saveConfig(allFieldNames, 'saveAll');
       },
 
       handleSaveGroup: async (section: ConfigGroup) => {
@@ -113,20 +99,18 @@ export default function SystemSettingsPage() {
         await saveConfig(fieldNames, 'saveGroup');
       },
 
-      handleSaveField: async (fieldName: string) => {
+      handleSaveField: (fieldName: string) => {
         setSavingFields((prev) => new Set(prev).add(fieldName));
-        try {
-          await saveConfig([fieldName], 'saveAll');
-        } finally {
+        saveConfig([fieldName], 'saveField').finally(() => {
           setSavingFields((prev) => {
             const next = new Set(prev);
             next.delete(fieldName);
             return next;
           });
-        }
+        });
       },
     }),
-    [configList, getFieldNames, saveConfig, setSavingFields, message],
+    [configList, getFieldNames, saveConfig, setSavingFields],
   );
 
   const renderFormInput = useCallback(

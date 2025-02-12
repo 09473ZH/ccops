@@ -74,7 +74,7 @@ export function AssignLabelModal({ open, onClose }: { open: boolean; onClose: ()
       onClose();
       return;
     }
-    await assignLabel({
+    assignLabel.mutate({
       hostId: labelAssign.hostId,
       labelIds: labelAssign.selectedLabels,
     });
@@ -83,7 +83,7 @@ export function AssignLabelModal({ open, onClose }: { open: boolean; onClose: ()
 
   const handleCreateLabel = useCallback(async () => {
     if (!newLabelName) return;
-    await createLabel(newLabelName);
+    createLabel.mutate(newLabelName);
     setNewLabelName('');
     setTimeout(() => {
       inputRef.current?.focus();

@@ -10,9 +10,9 @@ import { parseRole } from '@/utils/ansible';
 import {
   useConfigEditStore,
   useRevisionOperations,
-  useDraftRoleRevision,
-  useActiveRoleRevision,
   useAiConfig,
+  useDraftRevision,
+  useActiveRevision,
 } from '../use-software';
 
 interface ConfigProps {
@@ -51,35 +51,35 @@ function Config({ id, onConfigRelease }: ConfigProps) {
   } = useConfigEditStore();
 
   const { list: fileList, isLoading: fileListLoading } = useFileList();
-  const { data: draftRevision, isLoading: isDraftLoading } = useDraftRoleRevision(id);
-  const { data: activeRevision, isLoading: isActiveLoading } = useActiveRoleRevision(id);
+  const { data: draftRevision, isLoading: isDraftLoading } = useDraftRevision(id);
+  const { data: activeRevision, isLoading: isActiveLoading } = useActiveRevision(id);
   const { releaseRevision, reviseRole } = useRevisionOperations();
-  const { isLoading: isAiConfigLoading, mutateAsync: generateConfig } = useAiConfig();
+  const { isPending: isAiConfigPending, mutateAsync: generateConfig } = useAiConfig();
   const { modal } = App.useApp();
 
   useEffect(() => {
-    if (draftRevision) {
-      actions.setCode(draftRevision.taskContent || '');
+    if (draftRevision?.taskContent) {
+      actions.setCode(draftRevision.taskContent);
       actions.setFileIds(draftRevision.files?.map((file) => file.id) || []);
-    } else if (activeRevision) {
-      actions.setCode(activeRevision.taskContent || '');
+    } else if (activeRevision?.taskContent) {
+      actions.setCode(activeRevision.taskContent);
       actions.setFileIds(activeRevision.files?.map((file) => file.id) || []);
     }
   }, [draftRevision, activeRevision, actions]);
 
   const handleSaveConfig = () => {
-    if (!draftRevision) return;
+    if (!draftRevision?.id) return;
 
     try {
       const parsedContent = parseRole(code);
       const isAllCopyTasks = parsedContent.every((task: any) => task.module === 'copy');
 
       if (!isAllCopyTasks) {
-        reviseRole({
+        reviseRole.mutate({
           id: draftRevision.id,
           taskContent: code,
           filesList: fileIds,
-        }).catch(() => {});
+        });
         return;
       }
 
@@ -112,22 +112,22 @@ function Config({ id, onConfigRelease }: ConfigProps) {
         return;
       }
 
-      reviseRole({
+      reviseRole.mutate({
         id: draftRevision.id,
         taskContent: code,
         filesList: fileIds,
-      }).catch(() => {});
+      });
     } catch (error) {
-      reviseRole({
+      reviseRole.mutate({
         id: draftRevision.id,
         taskContent: code,
         filesList: fileIds,
-      }).catch(() => {});
+      });
     }
   };
 
   const handleRelease = (versionId: number, changeInfo: string) => {
-    releaseRevision({ id: versionId, changeLog: changeInfo }).then(() => {
+    releaseRevision.mutateAsync({ id: versionId, changeLog: changeInfo }).then(() => {
       onConfigRelease(versionId);
     });
   };
@@ -269,7 +269,7 @@ function Config({ id, onConfigRelease }: ConfigProps) {
               <Button
                 type="primary"
                 onClick={handleGenerate}
-                loading={isAiConfigLoading}
+                loading={isAiConfigPending}
                 disabled={!userPrompt.trim()}
               >
                 生成配置
@@ -300,7 +300,7 @@ function Config({ id, onConfigRelease }: ConfigProps) {
               </div>
             </div>
             <div className="rounded border border-gray-200">
-              {!generatedConfig && <EmptyConfig loading={isAiConfigLoading} />}
+              {!generatedConfig && <EmptyConfig loading={isAiConfigPending} />}
               {generatedConfig && (
                 <div className="opacity-100 transition-opacity duration-300">
                   <MonacoEditor
@@ -350,7 +350,7 @@ function Config({ id, onConfigRelease }: ConfigProps) {
                 </div>
               ),
               onOk: () => {
-                if (draftRevision?.id) {
+                if (draftRevision && !Array.isArray(draftRevision) && draftRevision.id) {
                   handleRelease(draftRevision.id, changeInfo);
                 }
               },

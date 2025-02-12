@@ -1,39 +1,55 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 import fileService from '@/api/services/file';
-import useMutationWithMessage from '@/hooks/use-mutation-with-message';
 
 /**
  * 文件管理 CRUD
  */
 export function useFile() {
+  const queryClient = useQueryClient();
+
   const operations = {
-    deleteFiles: useMutationWithMessage({
+    deleteFiles: useMutation({
       mutationFn: (idList: number[]) => fileService.deleteFiles(idList),
-      invalidateKeys: ['fileList'],
-      successMsg: '文件删除成功',
-      errMsg: '文件删除失败',
+      onSuccess: () => {
+        toast.success('文件删除成功');
+        queryClient.invalidateQueries({ queryKey: ['fileList'] });
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : '文件删除失败');
+      },
     }),
 
-    uploadFiles: useMutationWithMessage({
+    uploadFiles: useMutation({
       mutationFn: fileService.uploadFiles,
-      invalidateKeys: ['fileList'],
-      successMsg: '文件上传成功',
-      errMsg: '文件上传失败',
+      onSuccess: () => {
+        toast.success('文件上传成功');
+        queryClient.invalidateQueries({ queryKey: ['fileList'] });
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : '文件上传失败');
+      },
     }),
 
-    editFile: useMutationWithMessage({
+    editFile: useMutation({
       mutationFn: ({ id, content }: { id: number; content: string }) =>
         fileService.updateFileContent(id, content),
-      invalidateKeys: ['fileList'],
-      successMsg: '文件编辑成功',
-      errMsg: '文件编辑失败',
+      onSuccess: () => {
+        toast.success('文件编辑成功');
+        queryClient.invalidateQueries({ queryKey: ['fileList'] });
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : '文件编辑失败');
+      },
     }),
 
-    downloadFile: useMutationWithMessage({
+    downloadFile: useMutation({
       mutationFn: ({ fileId, fileName }: { fileId: number; fileName: string }) =>
         fileService.downloadFile(fileId, fileName),
-      errMsg: '文件下载失败',
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : '文件下载失败');
+      },
     }),
   };
 

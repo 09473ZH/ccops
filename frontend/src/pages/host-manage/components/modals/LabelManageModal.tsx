@@ -112,12 +112,12 @@ export function LabelManageModal({ open, onClose }: { open: boolean; onClose: ()
     [labelList, labelTerm],
   );
 
-  const handleCreateLabel = async () => {
+  const handleCreateLabel = () => {
     if (
       createLabelValue &&
       !labelList.some((label: LabelInfo) => label.name === createLabelValue)
     ) {
-      await createLabel(createLabelValue);
+      createLabel.mutate(createLabelValue);
       setCreateLabelValue('');
     }
   };
@@ -181,8 +181,10 @@ export function LabelManageModal({ open, onClose }: { open: boolean; onClose: ()
                     label={label}
                     hostCount={hostCounts[label.id] || 0}
                     hosts={hostsByLabel[label.id] || []}
-                    onDelete={deleteLabel}
-                    onUnbind={unbindHostsLabel}
+                    onDelete={deleteLabel.mutate}
+                    onUnbind={() =>
+                      unbindHostsLabel.mutate({ hostId: label.id, labelIds: [label.id] })
+                    }
                   />
                 ))}
               </div>

@@ -1,26 +1,29 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FormInstance } from 'antd';
+import { toast } from 'sonner';
 
 import type { ConfigListResponse } from '@/api/services/config';
 import configService from '@/api/services/config';
-import useMutationWithMessage from '@/hooks/use-mutation-with-message';
 import type { ConfigGroup } from '@/types/config';
 import { transformConfig } from '@/utils/config-transform';
 
 import useSystemConfigStore from './use-system-config-store';
 
 export function useSystemConfig(form: FormInstance<any>) {
+  const queryClient = useQueryClient();
+
   const { data, isLoading } = useQuery<ConfigListResponse, Error, ConfigGroup[]>({
     queryKey: ['configList'],
     queryFn: () => configService.getConfigList(),
     select: (data) => transformConfig(data.list),
   });
 
-  const updateConfig = useMutationWithMessage({
+  const updateConfig = useMutation({
     mutationFn: configService.updateConfig,
-    successMsg: '更新配置成功',
-    errMsg: '更新配置失败',
-    invalidateKeys: ['configList'],
+    onSuccess: () => {
+      toast.success('更新配置成功');
+      queryClient.invalidateQueries({ queryKey: ['configList'] });
+    },
   });
 
   const transformFormValues = (values: Record<string, string>): Record<string, string> => {
@@ -32,17 +35,30 @@ export function useSystemConfig(form: FormInstance<any>) {
   };
 
   const handleSave = async (values: Record<string, string>) => {
-    return updateConfig(transformFormValues(values));
+    return updateConfig.mutateAsync(transformFormValues(values));
   };
 
-  const saveConfig = async (fieldNames: string[], loadingKey: 'saveAll' | 'saveGroup') => {
+  const saveConfig = async (
+    fieldNames: string[],
+    loadingKey: 'saveAll' | 'saveGroup' | 'saveField',
+  ) => {
     const { setLoadingState } = useSystemConfigStore.getState();
-    setLoadingState(loadingKey, true);
+    if (loadingKey !== 'saveField') {
+      setLoadingState(loadingKey, true);
+    }
     try {
       const values = await form.validateFields(fieldNames);
       await handleSave(values);
+    } catch (error) {
+      if (error?.name === 'ValidationError') {
+        toast.error('请检查表单填写是否正确');
+      } else {
+        toast.error(error instanceof Error ? error.message : '更新配置失败');
+      }
     } finally {
-      setLoadingState(loadingKey, false);
+      if (loadingKey !== 'saveField') {
+        setLoadingState(loadingKey, false);
+      }
     }
   };
 
@@ -54,5 +70,3 @@ export function useSystemConfig(form: FormInstance<any>) {
     },
   };
 }
-
-export { default as useSystemConfigStore } from './use-system-config-store';

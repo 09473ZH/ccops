@@ -1,8 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { create } from 'zustand';
 
+import configService from '@/api/services/config';
 import hostService from '@/api/services/host';
-import useMutationWithMessage from '@/hooks/use-mutation-with-message';
 
 // Types
 export interface EditingState {
@@ -63,24 +64,38 @@ export const useHostState = create<HostStore>((set) => ({
 
   resetLabelAssign: () => set({ labelAssign: initialState.labelAssign }),
 }));
+
 /**
  * 主机操作相关的 Hook
  */
 export function useHostActions() {
-  return {
-    updateHostName: useMutationWithMessage({
-      mutationFn: hostService.updateHostName,
-      successMsg: '更新主机名称成功',
-      errMsg: '更新主机名称失败',
-      invalidateKeys: ['hostList'],
-    }),
+  const queryClient = useQueryClient();
 
-    deleteHosts: useMutationWithMessage({
-      mutationFn: hostService.deleteHosts,
-      successMsg: '删除主机成功',
-      errMsg: '删除主机失败',
-      invalidateKeys: ['hostList'],
-    }),
+  const updateHostName = useMutation({
+    mutationFn: hostService.updateHostName,
+    onSuccess: () => {
+      toast.success('更新主机名称成功');
+      queryClient.invalidateQueries({ queryKey: ['hostList'] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : '更新主机名称失败');
+    },
+  });
+
+  const deleteHosts = useMutation({
+    mutationFn: hostService.deleteHosts,
+    onSuccess: () => {
+      toast.success('删除主机成功');
+      queryClient.invalidateQueries({ queryKey: ['hostList'] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : '删除主机失败');
+    },
+  });
+
+  return {
+    updateHostName,
+    deleteHosts,
   };
 }
 
@@ -101,5 +116,12 @@ export function useCreateHostCommand(osFamily: string) {
   return useQuery({
     queryKey: ['createHostCommand', osFamily],
     queryFn: () => hostService.getCreateHostCommand(osFamily),
+  });
+}
+
+export function useServerUrl() {
+  return useQuery({
+    queryKey: ['system-config', 'ServerUrl'],
+    queryFn: () => configService.getConfigValue('system', 'ServerUrl'),
   });
 }

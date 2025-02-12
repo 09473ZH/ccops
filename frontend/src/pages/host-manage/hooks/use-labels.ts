@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { toast } from 'sonner';
 
 import type { HostInfo } from '@/api/services/host';
 import labelService from '@/api/services/label';
 import { useHostList } from '@/hooks/use-host-list';
-import useMutationWithMessage from '@/hooks/use-mutation-with-message';
 
 /**
  * 获取标签列表的 hook
@@ -26,34 +26,58 @@ export function useLabelList() {
  * 标签操作相关的 hook
  */
 export function useLabelActions() {
+  const queryClient = useQueryClient();
+
+  const createLabel = useMutation({
+    mutationFn: (name: string) => labelService.createLabel({ name }),
+    onSuccess: () => {
+      toast.success('创建标签成功');
+      queryClient.invalidateQueries({ queryKey: ['labels'] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : '创建标签失败');
+    },
+  });
+
+  const deleteLabel = useMutation({
+    mutationFn: labelService.deleteLabel,
+    onSuccess: () => {
+      toast.success('删除标签成功');
+      queryClient.invalidateQueries({ queryKey: ['labels'] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : '删除标签失败');
+    },
+  });
+
+  const unbindHostsLabel = useMutation({
+    mutationFn: (params: { hostId: number; labelIds: number[] }) =>
+      labelService.unbindHostsLabel(params),
+    onSuccess: () => {
+      toast.success('解除标签绑定成功');
+      queryClient.invalidateQueries({ queryKey: ['labels', 'hostList'] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : '解除标签绑定失败');
+    },
+  });
+
+  const assignLabel = useMutation({
+    mutationFn: labelService.assignLabel,
+    onSuccess: () => {
+      toast.success('分配标签成功');
+      queryClient.invalidateQueries({ queryKey: ['labels', 'hostList'] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : '分配标签失败');
+    },
+  });
+
   return {
-    createLabel: useMutationWithMessage({
-      mutationFn: (name: string) => labelService.createLabel({ name }),
-      successMsg: '创建标签成功',
-      errMsg: '创建标签失败',
-      invalidateKeys: ['labels'],
-    }),
-
-    deleteLabel: useMutationWithMessage({
-      mutationFn: labelService.deleteLabel,
-      successMsg: '删除标签成功',
-      errMsg: '删除标签失败',
-      invalidateKeys: ['labels'],
-    }),
-
-    unbindHostsLabel: useMutationWithMessage({
-      mutationFn: labelService.unbindHostsLabel,
-      successMsg: '解除标签绑定成功',
-      errMsg: '解除标签绑定失败',
-      invalidateKeys: ['labels', 'hostList'],
-    }),
-
-    assignLabel: useMutationWithMessage({
-      mutationFn: labelService.assignLabel,
-      successMsg: '分配标签成功',
-      errMsg: '分配标签失败',
-      invalidateKeys: ['labels', 'hostList'],
-    }),
+    createLabel,
+    deleteLabel,
+    unbindHostsLabel,
+    assignLabel,
   };
 }
 
