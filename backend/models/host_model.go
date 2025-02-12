@@ -56,7 +56,11 @@ type HostModel struct {
 	HostUser []HostUserModel `gorm:"type:json;comment:主机用户列表" json:"hostUser"` // 关联的 HostUser 列表
 	Software []SoftwareModel `gorm:"type:json;comment:主机软件列表" json:"software"` // 关联的 Software 列表
 
-	Disk  []DiskModel  `gorm:"type:json;comment:主机磁盘列表" json:"disk"` // 关联的 Disk 列表
-	Label []LabelModel `gorm:"many2many:host_labels" json:"label"`   // 关联的 Label 列表
+	Disk     []DiskModel  `gorm:"type:json;comment:主机磁盘列表" json:"disk"` // 关联的 Disk 列表
+	Label    []LabelModel `gorm:"many2many:host_labels" json:"label"`   // 关联的 Label 列表
+	PublicIP string       `gorm:"size:64;comment:公网ip" json:"publicIp"` // 公网ip
+	Country  string       `gorm:"size:64;comment:国家" json:"country"`    // 国家
+	City     string       `gorm:"size:64;comment:城市" json:"city"`       // 公网ip
+	Org      string       `gorm:"size:64;comment:组织" json:"org"`        // 组织
 
 }
