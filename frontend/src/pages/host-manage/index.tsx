@@ -49,7 +49,7 @@ function HostManage() {
 
   const handleSaveName = async () => {
     if (!editing.id || !editing.hostServerUrl) return;
-    await actions.updateHostName({
+    await actions.updateHostName.mutate({
       hostname: editing.name,
       hostServerUrl: editing.hostServerUrl,
     });
@@ -69,7 +69,7 @@ function HostManage() {
     handleEditName,
     handleSaveName,
     handleAssignLabels,
-    actions.deleteHosts,
+    actions.deleteHosts.mutate,
     setEditing,
   );
 
@@ -110,7 +110,7 @@ function HostManage() {
               <Popconfirm
                 title="确认删除"
                 description={`确定要删除选中的 ${table.selectedRows.length} 个主机吗？`}
-                onConfirm={() => actions.deleteHosts(table.selectedRows as number[])}
+                onConfirm={() => actions.deleteHosts.mutate(table.selectedRows as number[])}
                 okText="确认"
                 cancelText="取消"
                 okButtonProps={{ danger: true }}
