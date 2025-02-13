@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 import type { TaskOutput } from '@/api/services/task';
-import useUserStore from '@/store/user';
+import useUserStore, { useUserToken } from '@/store/user';
 
 interface UseTaskWebSocketOptions {
   taskId: number | null;
@@ -23,7 +23,7 @@ export function useTaskWebSocket({
 }: UseTaskWebSocketOptions) {
   const [messages, setMessages] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const { userToken } = useUserStore();
+  const { accessToken } = useUserToken();
   const onMessageRef = useRef(onMessage);
   const onErrorRef = useRef(onError);
 
@@ -34,10 +34,8 @@ export function useTaskWebSocket({
   }, [onMessage, onError]);
 
   const socketUrl =
-    taskId && userToken.accessToken
-      ? `${import.meta.env.VITE_APP_WS_API}/api/task/${taskId}/message?token=${encodeURIComponent(
-          userToken.accessToken,
-        )}`
+    taskId && accessToken
+      ? `${import.meta.env.VITE_APP_WS_API}/api/task/${taskId}/message?token=${accessToken}`
       : null;
 
   const handleError = useCallback((errorMessage: string) => {

@@ -1,6 +1,6 @@
 import { Allotment } from 'allotment';
 import 'allotment/dist/style.css';
-import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useState, useRef, forwardRef, useImperativeHandle, useEffect, useCallback } from 'react';
 import { ITheme } from 'xterm';
 
 import { cn } from '@/utils';
@@ -45,6 +45,9 @@ export const SplitTerminal = forwardRef<TerminalRef, SplitTerminalProps>(
     });
     const mainTerminalRef = useRef<TerminalRef>(null);
     const [activePane, setActivePane] = useState<string>('1');
+
+    // 创建一个 Map 来存储终端引用
+    const terminalRefs = useRef<Map<string, TerminalRef>>(new Map());
 
     const handleSplitVertical = (paneId: string) => {
       setRootPane((current) => {
@@ -150,6 +153,26 @@ export const SplitTerminal = forwardRef<TerminalRef, SplitTerminalProps>(
       setActivePane('1');
     };
 
+    const handleResize = useCallback(() => {
+      // 遍历所有终端引用并触发 resize
+      terminalRefs.current.forEach((terminal) => {
+        if (terminal) {
+          setTimeout(() => {
+            // 这里假设我们在 TerminalRef 中添加了 fit 方法
+            terminal.fit?.();
+          }, 0);
+        }
+      });
+    }, []);
+
+    useEffect(() => {
+      window.addEventListener('resize', handleResize);
+
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }, [handleResize]);
+
     const renderPane = (pane: TerminalPane): JSX.Element => {
       if (pane.children) {
         return (
@@ -207,7 +230,16 @@ export const SplitTerminal = forwardRef<TerminalRef, SplitTerminalProps>(
             )}
           </div>
           <Terminal
-            ref={pane.id === '1' ? mainTerminalRef : undefined}
+            ref={(terminalInstance) => {
+              if (terminalInstance) {
+                terminalRefs.current.set(pane.id, terminalInstance);
+              } else {
+                terminalRefs.current.delete(pane.id);
+              }
+              if (pane.id === '1') {
+                mainTerminalRef.current = terminalInstance;
+              }
+            }}
             className="h-[calc(100vh-220px)]"
             hostId={pane.hostId}
             fontSize={fontSize}

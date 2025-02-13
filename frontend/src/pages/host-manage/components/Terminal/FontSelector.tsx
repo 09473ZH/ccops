@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 
 import { cn } from '@/utils';
 import { preloadFonts } from '@/utils/fonts';
-import { getStyles, getCurrentTheme } from '@/utils/jump-server-theme';
+
+import { getStyles, getCurrentTheme } from '../../jump-server/theme';
 
 interface Props {
   value: string;

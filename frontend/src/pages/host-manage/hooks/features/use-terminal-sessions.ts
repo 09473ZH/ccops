@@ -2,7 +2,7 @@ import { createRef, useState, useCallback } from 'react';
 
 import type { HostInfo } from '@/api/services/host';
 
-import type { TerminalRef } from '../components/Terminal/Terminal';
+import type { TerminalRef } from '../../components/Terminal/Terminal';
 
 export interface TerminalSession {
   id: string;

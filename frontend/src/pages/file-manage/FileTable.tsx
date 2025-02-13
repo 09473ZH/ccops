@@ -16,13 +16,12 @@ import { ActionButton } from '@/components/Button';
 import { FileIcon } from '@/components/Icon';
 import CodeEditor from '@/components/MonacoEditor';
 import ShowTooltip from '@/components/ShowTooltip';
-import { useFileList } from '@/hooks/use-file-list';
 import { useModalsControl } from '@/hooks/use-modals-control';
 import { useTable } from '@/hooks/use-table';
 import { formatBytes } from '@/utils/format-number';
 import { formatDateTime, formatTimeAgo } from '@/utils/format-time';
 
-import { useFile, useFilePreview } from './use-file';
+import { useFile, useFileList, useFilePreview } from './use-file';
 
 interface EditorState {
   isPreview: boolean;

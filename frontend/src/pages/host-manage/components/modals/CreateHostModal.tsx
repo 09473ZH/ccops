@@ -1,9 +1,9 @@
 import { Modal, Button, Tabs, Typography, Space } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
+import { TextAreaWithCopy } from '@/components/TextAreaWithCopy';
 import useSystemConfigStore from '@/pages/system-config/hooks/use-system-config-store';
 
-import { TextAreaWithCopy } from '../../../../components/TextAreaWithCopy';
 import { useServerUrl } from '../../hooks';
 
 interface CreateHostModalProps {

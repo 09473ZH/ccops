@@ -10,8 +10,9 @@ import { useTable } from '@/hooks/use-table';
 import { ModalName, Modals } from './components/Modals';
 import { ColumnSelector } from './components/Table/ColumnSelector';
 import { getColumns, getColumnGroups } from './components/Table/get-columns';
-import { HOST_TABLE_CONFIG } from './config/columns';
-import { useHostActions, useHostState } from './hooks';
+import { HOST_TABLE_CONFIG } from './constants/columns';
+import { useHostActions } from './hooks/state/use-host';
+import { useHostStore } from './hooks/state/use-host-store';
 
 function HostManage() {
   const { open, isOpen, close } = useModalsControl({
@@ -33,7 +34,7 @@ function HostManage() {
   });
 
   const actions = useHostActions();
-  const { editing, setEditing, resetEditing, setLabelAssign, resetLabelAssign } = useHostState();
+  const { editing, setEditing, resetEditing, setLabelAssign, resetLabelAssign } = useHostStore();
 
   const columnGroups = getColumnGroups();
   const hasSelected = table.selectedRows.length > 0;
@@ -47,9 +48,9 @@ function HostManage() {
     });
   };
 
-  const handleSaveName = async () => {
+  const handleSaveName = () => {
     if (!editing.id || !editing.hostServerUrl) return;
-    await actions.updateHostName.mutate({
+    actions.updateHostName.mutate({
       hostname: editing.name,
       hostServerUrl: editing.hostServerUrl,
     });

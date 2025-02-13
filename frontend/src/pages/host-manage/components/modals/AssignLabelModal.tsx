@@ -1,62 +1,13 @@
-import { Modal, Select, Input, Divider, Button } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import { Modal, Select, Input, Space, Button } from 'antd';
 import isEqual from 'lodash/isEqual';
-import { useState, useCallback, useRef, memo } from 'react';
+import { useState, useCallback } from 'react';
 
-import { useHostState, useLabelManagement } from '@/pages/host-manage/hooks';
-
-import type { InputRef } from 'antd';
-
-interface DropdownContentProps {
-  menu: React.ReactElement;
-  newLabelName: string;
-  inputRef: React.RefObject<InputRef>;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onKeyDown: (e: React.KeyboardEvent) => void;
-  onCreateLabel: (e: React.MouseEvent) => void;
-}
-
-const DropdownContent = memo(function DropdownContent({
-  menu,
-  newLabelName,
-  inputRef,
-  onInputChange,
-  onKeyDown,
-  onCreateLabel,
-}: DropdownContentProps) {
-  return (
-    <div className="w-full" onClick={(e) => e.stopPropagation()}>
-      {menu}
-      <Divider className="my-2" />
-      <div className="px-2 pb-1">
-        <div className="flex w-full gap-2">
-          <Input
-            className="flex-1"
-            placeholder="请输入标签名称"
-            ref={inputRef}
-            value={newLabelName}
-            onChange={onInputChange}
-            onKeyDown={onKeyDown}
-            onClick={(e) => e.stopPropagation()}
-          />
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              onCreateLabel(e);
-            }}
-            className="hover:bg-blue-50 hover:text-blue-500 transition-colors"
-          >
-            新建
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-});
+import { useHostStore, useLabelManagement } from '@/pages/host-manage/hooks';
 
 export function AssignLabelModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [newLabelName, setNewLabelName] = useState('');
-  const inputRef = useRef<InputRef>(null);
-  const { labelAssign, setLabelAssign } = useHostState();
+  const { labelAssign, setLabelAssign } = useHostStore();
 
   const {
     hostList,
@@ -85,54 +36,34 @@ export function AssignLabelModal({ open, onClose }: { open: boolean; onClose: ()
     if (!newLabelName) return;
     createLabel.mutate(newLabelName);
     setNewLabelName('');
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 0);
   }, [newLabelName, createLabel]);
 
-  const renderDropdown = useCallback(
-    (menu: React.ReactElement) => (
-      <DropdownContent
-        menu={menu}
-        newLabelName={newLabelName}
-        inputRef={inputRef}
-        onInputChange={(e) => setNewLabelName(e.target.value)}
-        onKeyDown={(e) => {
-          e.stopPropagation();
-          if (e.key === 'Enter') {
-            handleCreateLabel();
-          }
-        }}
-        onCreateLabel={(e) => {
-          e.preventDefault();
-          handleCreateLabel();
-        }}
-      />
-    ),
-    [newLabelName, handleCreateLabel],
-  );
-
   return (
-    <Modal
-      title="分配标签"
-      open={open}
-      onCancel={onClose}
-      onOk={handleOk}
-      className="min-w-[500px]"
-    >
-      <Select
-        mode="multiple"
-        className="w-full"
-        placeholder="请选择标签"
-        value={labelAssign.selectedLabels}
-        onChange={(values) => setLabelAssign({ selectedLabels: values })}
-        options={options}
-        allowClear
-        showSearch
-        optionFilterProp="label"
-        dropdownRender={renderDropdown}
-        popupClassName="rounded-lg shadow-lg"
-      />
+    <Modal title="分配标签" open={open} onCancel={onClose} onOk={handleOk} width={500}>
+      <Space.Compact className="mb-4 w-full">
+        <Input
+          placeholder="输入标签名称"
+          value={newLabelName}
+          onChange={(e) => setNewLabelName(e.target.value)}
+          onPressEnter={handleCreateLabel}
+        />
+        <Button icon={<PlusOutlined />} onClick={handleCreateLabel} disabled={!newLabelName}>
+          创建
+        </Button>
+      </Space.Compact>
+      <Space direction="vertical" className="w-full" size="middle">
+        <Select
+          mode="multiple"
+          className="w-full"
+          placeholder="选择标签"
+          value={labelAssign.selectedLabels}
+          onChange={(values) => setLabelAssign({ selectedLabels: values })}
+          options={options}
+          showSearch
+          optionFilterProp="label"
+          listHeight={300}
+        />
+      </Space>
     </Modal>
   );
 }

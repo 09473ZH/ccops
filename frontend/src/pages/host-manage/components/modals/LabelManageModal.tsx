@@ -1,100 +1,16 @@
-import { Modal, Input, Typography, Alert, Button, Tooltip, Popover, Space, Popconfirm } from 'antd';
-import { useState, useMemo } from 'react';
+import { Modal, Input, Button, Table, Space, Popconfirm } from 'antd';
+import { useState } from 'react';
 
-import type { HostInfo } from '@/api/services/host';
 import type { LabelInfo } from '@/api/services/label';
 import { ActionButton } from '@/components/Button';
 import { Iconify } from '@/components/Icon';
+import ShowMoreTags from '@/components/ShowMoreTags';
 
-import { useLabelManagement } from '../../hooks/use-labels';
+import { useLabelManagement } from '../../hooks';
 
-interface LabelCardProps {
-  label: LabelInfo;
-  hostCount: number;
-  hosts: HostInfo[];
-  onDelete: (labelId: number) => void;
-  onUnbind: (labelId: number) => void;
-}
-
-function LabelCard({ label, hostCount, hosts, onDelete, onUnbind }: LabelCardProps) {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const renderHostList = () => (
-    <div className="max-h-[300px] overflow-y-auto p-2">
-      {hosts.map((host) => (
-        <div key={host.id} className="mb-1 text-sm">
-          {host.name}
-        </div>
-      ))}
-    </div>
-  );
-
-  const handleUnbind = async () => {
-    setIsLoading(true);
-    try {
-      await onUnbind(label.id);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="bg-white hover:bg-blue-50 hover:border-blue-200 flex items-center justify-between rounded-md border border-gray-100 p-2">
-      <div className="flex items-center space-x-2">
-        <div>
-          <div className="text-sm font-medium">{label.name}</div>
-          <div className="text-xs text-gray-500">
-            <span>{hostCount} 台主机</span>
-          </div>
-        </div>
-      </div>
-      <Space>
-        {hostCount > 0 ? (
-          <>
-            <Popover
-              content={renderHostList()}
-              title={`${label.name} 标签`}
-              trigger="click"
-              placement="left"
-            >
-              <ActionButton tooltip="查看绑定的主机" size="small" icon="host" />
-            </Popover>
-            <Popconfirm
-              title="解除标签绑定"
-              description={`确定要解除 ${hostCount} 台主机与该标签的绑定吗？`}
-              okText="确定解除"
-              cancelText="取消"
-              onConfirm={handleUnbind}
-            >
-              <ActionButton
-                loading={isLoading}
-                size="small"
-                icon="unlock"
-                tooltip="解除所有主机绑定"
-              />
-            </Popconfirm>
-          </>
-        ) : (
-          <Tooltip title="删除标签">
-            <Popconfirm
-              title="删除标签"
-              description="确定要删除这个标签吗？此操作不可恢复。"
-              okText="确定删除"
-              cancelText="取消"
-              onConfirm={() => onDelete(label.id)}
-              okButtonProps={{ danger: true }}
-            >
-              <ActionButton size="small" icon="delete" danger />
-            </Popconfirm>
-          </Tooltip>
-        )}
-      </Space>
-    </div>
-  );
-}
+import type { ColumnsType } from 'antd/es/table';
 
 export function LabelManageModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [labelTerm, setLabelTerm] = useState('');
   const [createLabelValue, setCreateLabelValue] = useState('');
 
   const {
@@ -103,14 +19,6 @@ export function LabelManageModal({ open, onClose }: { open: boolean; onClose: ()
     hostCounts,
     operations: { createLabel, deleteLabel, unbindHostsLabel },
   } = useLabelManagement();
-
-  const filteredLabels = useMemo(
-    () =>
-      labelList.filter((label: LabelInfo) =>
-        label.name.toLowerCase().includes(labelTerm.toLowerCase()),
-      ),
-    [labelList, labelTerm],
-  );
 
   const handleCreateLabel = () => {
     if (
@@ -122,20 +30,78 @@ export function LabelManageModal({ open, onClose }: { open: boolean; onClose: ()
     }
   };
 
+  const columns: ColumnsType<LabelInfo> = [
+    {
+      title: '标签名称',
+      dataIndex: 'name',
+      key: 'name',
+      width: '30%',
+      className: 'font-medium',
+      filterSearch: true,
+      filters: labelList.map((label) => ({ text: label.name, value: label.name })),
+      onFilter: (value, record) => record.name.toLowerCase().includes(String(value).toLowerCase()),
+    },
+    {
+      title: '绑定主机',
+      dataIndex: 'id',
+      key: 'hosts',
+      render: (id: number) => {
+        const hosts = hostsByLabel[id] || [];
+        if (hosts.length === 0) return <span className="text-gray-400">-</span>;
+        return <ShowMoreTags dataSource={hosts} maxCount={3} />;
+      },
+    },
+    {
+      title: '',
+      key: 'action',
+      width: 80,
+      align: 'right',
+      render: (_, record) => {
+        const hostCount = hostCounts[record.id] || 0;
+        return hostCount > 0 ? (
+          <Popconfirm
+            title="解除标签绑定"
+            description={`确定要解除 ${hostCount} 台主机与该标签的绑定吗？`}
+            okText="确定"
+            cancelText="取消"
+            onConfirm={() => unbindHostsLabel.mutate({ hostId: record.id, labelIds: [record.id] })}
+          >
+            <ActionButton icon="unlock" tooltip="解除绑定" />
+          </Popconfirm>
+        ) : (
+          <Popconfirm
+            title="删除标签"
+            description="确定要删除这个标签吗？此操作不可恢复。"
+            okText="确定"
+            cancelText="取消"
+            onConfirm={() => deleteLabel.mutate(record.id)}
+            okButtonProps={{ danger: true }}
+          >
+            <ActionButton icon="delete" danger tooltip="删除" />
+          </Popconfirm>
+        );
+      },
+    },
+  ];
+
   return (
-    <Modal title="标签管理" open={open} onCancel={onClose} width={600} footer={null}>
-      <div className="space-y-4 p-4">
-        {/* 创建标签区域 */}
-        <div className="bg-gray-50 rounded-lg border border-gray-300 p-4">
-          <Typography.Text strong className="mb-3 block">
-            新建标签
-          </Typography.Text>
-          <div className="flex items-center gap-3">
+    <Modal
+      title="标签管理"
+      open={open}
+      onCancel={onClose}
+      width={800}
+      footer={null}
+      bodyStyle={{ padding: '16px 24px' }}
+    >
+      <div className="space-y-3">
+        <div className="flex justify-end">
+          <Space.Compact>
             <Input
               value={createLabelValue}
               onChange={(e) => setCreateLabelValue(e.target.value)}
               placeholder="输入标签名称"
               maxLength={20}
+              style={{ width: 200 }}
             />
             <Button
               type="primary"
@@ -145,51 +111,24 @@ export function LabelManageModal({ open, onClose }: { open: boolean; onClose: ()
                 labelList.some((label: LabelInfo) => label.name === createLabelValue)
               }
             >
-              新建
+              新建标签
             </Button>
-          </div>
+          </Space.Compact>
         </div>
 
-        {/* 搜索区域 */}
-        <Input
-          placeholder="搜索标签"
-          value={labelTerm}
-          onChange={(e) => setLabelTerm(e.target.value)}
-          allowClear
+        <Table
+          columns={columns}
+          dataSource={labelList}
+          rowKey="id"
+          pagination={false}
+          scroll={{ y: 400 }}
+          size="small"
+          className="[&_.ant-table-thead_.ant-table-cell]:bg-gray-50/50"
         />
 
-        <Alert
-          message="需要解除所有主机的绑定后才能删除标签"
-          type="warning"
-          showIcon
-          className="mb-3"
-        />
-
-        {/* 标签列表 */}
-        <div className="bg-gray-50 rounded-lg border border-gray-300 p-4">
-          {filteredLabels.length === 0 ? (
-            <div className="flex h-[300px] flex-col items-center justify-center text-gray-500">
-              <Iconify icon="solar:emoji-sad-circle-linear" width={48} height={48} />
-              <p className="mt-2">暂无标签</p>
-            </div>
-          ) : (
-            <div className="h-[300px] overflow-y-auto pr-2">
-              <div className="grid grid-cols-2 gap-2">
-                {filteredLabels.map((label: LabelInfo) => (
-                  <LabelCard
-                    key={label.id}
-                    label={label}
-                    hostCount={hostCounts[label.id] || 0}
-                    hosts={hostsByLabel[label.id] || []}
-                    onDelete={deleteLabel.mutate}
-                    onUnbind={() =>
-                      unbindHostsLabel.mutate({ hostId: label.id, labelIds: [label.id] })
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+          <Iconify icon="solar:info-circle-line-duotone" className="text-[14px]" />
+          需要解除所有主机的绑定后才能删除标签
         </div>
       </div>
     </Modal>

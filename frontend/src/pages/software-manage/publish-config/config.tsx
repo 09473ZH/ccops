@@ -3,8 +3,8 @@ import { useEffect } from 'react';
 
 import SparkWandIcon from '@/components/Icon/SparkWandIcon';
 import MonacoEditor from '@/components/MonacoEditor';
-import { useFileList } from '@/hooks/use-file-list';
 import FileTable from '@/pages/file-manage/FileTable';
+import { useFileList } from '@/pages/file-manage/use-file';
 import { parseRole } from '@/utils/ansible';
 
 import {

@@ -30,9 +30,10 @@ export function useLabelActions() {
 
   const createLabel = useMutation({
     mutationFn: (name: string) => labelService.createLabel({ name }),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('创建标签成功');
-      queryClient.invalidateQueries({ queryKey: ['labels'] });
+      // 等待查询失效并重新获取
+      await queryClient.invalidateQueries({ queryKey: ['labels'] });
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : '创建标签失败');
@@ -41,9 +42,9 @@ export function useLabelActions() {
 
   const deleteLabel = useMutation({
     mutationFn: labelService.deleteLabel,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('删除标签成功');
-      queryClient.invalidateQueries({ queryKey: ['labels'] });
+      await queryClient.invalidateQueries({ queryKey: ['labels'] });
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : '删除标签失败');
@@ -53,9 +54,12 @@ export function useLabelActions() {
   const unbindHostsLabel = useMutation({
     mutationFn: (params: { hostId: number; labelIds: number[] }) =>
       labelService.unbindHostsLabel(params),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('解除标签绑定成功');
-      queryClient.invalidateQueries({ queryKey: ['labels', 'hostList'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['labels'] }),
+        queryClient.invalidateQueries({ queryKey: ['hostList'] }),
+      ]);
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : '解除标签绑定失败');
@@ -64,9 +68,12 @@ export function useLabelActions() {
 
   const assignLabel = useMutation({
     mutationFn: labelService.assignLabel,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('分配标签成功');
-      queryClient.invalidateQueries({ queryKey: ['labels', 'hostList'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['labels'] }),
+        queryClient.invalidateQueries({ queryKey: ['hostList'] }),
+      ]);
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : '分配标签失败');

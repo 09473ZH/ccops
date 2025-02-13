@@ -1,5 +1,6 @@
-import { ThemeNames } from '@/pages/host-manage/config/themes';
 import { cn } from '@/utils';
+
+import type { ThemeNames } from '../constants/themes';
 
 // 主题管理基础函数
 export const getCurrentTheme = (): ThemeNames => {
