@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 import type { TaskOutput } from '@/api/services/task';
-import useUserStore, { useUserToken } from '@/store/user';
+import { useUserToken } from '@/store/user';
 
 interface UseTaskWebSocketOptions {
   taskId: number | null;
