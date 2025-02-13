@@ -6,8 +6,8 @@ import type { HostInfo } from '@/api/services/host';
 import { useHostList } from '@/hooks/use-host-list';
 import { cn } from '@/utils';
 
+import { Terminal } from '../components/Terminal';
 import { FontSelector } from '../components/Terminal/FontSelector';
-import { SplitTerminal } from '../components/Terminal/SplitTerminal';
 import { terminalThemes, type ThemeNames } from '../constants/themes';
 import { useHostSearch, useTerminalSessions, type TerminalSession } from '../hooks';
 
@@ -84,11 +84,6 @@ export default function JumpServer() {
 
   const handleReconnect = useCallback(
     () => handleActiveSession((terminal) => terminal.reconnect()),
-    [handleActiveSession],
-  );
-
-  const handleReset = useCallback(
-    () => handleActiveSession((terminal) => terminal.reset?.()),
     [handleActiveSession],
   );
 
@@ -192,18 +187,6 @@ export default function JumpServer() {
         </div>
 
         <div className={styles.header.right.container}>
-          <button onClick={handleReset} className={styles.button.normal} title="重置分屏布局">
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M4 4h16v16H4z" />
-            </svg>
-            <span>重置分屏</span>
-          </button>
           <FontSelector value={fontFamily} onChange={setFontFamily} className="mr-4" />
           <div className={styles.header.right.themeSelector.container}>
             <select
@@ -274,14 +257,14 @@ export default function JumpServer() {
               key={session.id}
               className={styles.terminal.session(activeSessionId === session.id)}
             >
-              <SplitTerminal
+              <Terminal
                 ref={session.terminalRef}
                 className={styles.terminal.xterm(activeSessionId === session.id)}
+                hostId={session.hostId}
                 fontSize={fontSize}
                 fontFamily={fontFamily}
                 theme={terminalThemes[currentTheme]}
                 onConnectionChange={setIsConnected}
-                hostId={session.hostId}
               />
             </div>
           ))}
