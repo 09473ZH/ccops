@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -51,6 +52,22 @@ func isNormalClose(err error) bool {
 		return true
 	}
 	return false
+}
+
+// 添加一个新的辅助函数来验证和清理 UTF-8 数据
+func sanitizeOutput(data []byte) []byte {
+	// 如果数据是有效的 UTF-8，直接返回
+	if utf8.Valid(data) {
+		return data
+	}
+
+	// 将无效的 UTF-8 字符替换为替换字符 (U+FFFD)
+	return []byte(strings.Map(func(r rune) rune {
+		if r == utf8.RuneError {
+			return '\uFFFD' // 使用 Unicode 替换字符
+		}
+		return r
+	}, string(data)))
 }
 
 func (HostsApi) HandleWebSocket(c *gin.Context) {
@@ -187,7 +204,9 @@ func (HostsApi) HandleWebSocket(c *gin.Context) {
 				}
 				if n > 0 {
 					updateLastActivity()
-					if err := writer.writeMessage(websocket.TextMessage, buf[:n]); err != nil {
+					// 在发送之前清理输出
+					cleanData := sanitizeOutput(buf[:n])
+					if err := writer.writeMessage(websocket.TextMessage, cleanData); err != nil {
 						if !isNormalClose(err) {
 							log.Printf("写入stdout失败: %v", err)
 						}
@@ -211,7 +230,9 @@ func (HostsApi) HandleWebSocket(c *gin.Context) {
 				}
 				if n > 0 {
 					updateLastActivity()
-					if err := writer.writeMessage(websocket.TextMessage, buf[:n]); err != nil {
+					// 在发送之前清理输出
+					cleanData := sanitizeOutput(buf[:n])
+					if err := writer.writeMessage(websocket.TextMessage, cleanData); err != nil {
 						if !isNormalClose(err) {
 							log.Printf("写入stderr失败: %v", err)
 						}
