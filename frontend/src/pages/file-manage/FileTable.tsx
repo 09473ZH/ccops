@@ -16,13 +16,12 @@ import { ActionButton } from '@/components/Button';
 import { FileIcon } from '@/components/Icon';
 import CodeEditor from '@/components/MonacoEditor';
 import ShowTooltip from '@/components/ShowTooltip';
-import { useFileList } from '@/hooks/use-file-list';
 import { useModalsControl } from '@/hooks/use-modals-control';
 import { useTable } from '@/hooks/use-table';
 import { formatBytes } from '@/utils/format-number';
 import { formatDateTime, formatTimeAgo } from '@/utils/format-time';
 
-import { useFile, useFilePreview } from './use-file';
+import { useFile, useFileList, useFilePreview } from './use-file';
 
 interface EditorState {
   isPreview: boolean;
@@ -111,18 +110,20 @@ function FileTable({
 
   const handleEditOk = () => {
     if (editorState.fileId) {
-      editFile({
-        id: editorState.fileId,
-        content: editorState.content,
-      }).then(() => {
-        close('fileModal');
-      });
+      editFile
+        .mutateAsync({
+          id: editorState.fileId,
+          content: editorState.content,
+        })
+        .then(() => {
+          close('fileModal');
+        });
     }
   };
 
   const handleDownload = (record: FileInfo) => {
     if (record.id) {
-      downloadFile({
+      downloadFile.mutate({
         fileId: record.id,
         fileName: record.fileName,
       });
@@ -200,7 +201,7 @@ function FileTable({
               description="确定要删除这个文件吗？"
               okText="确认"
               cancelText="取消"
-              onConfirm={() => deleteFiles([record.id])}
+              onConfirm={() => deleteFiles.mutate([record.id])}
             >
               <ActionButton icon="delete" danger />
             </Popconfirm>

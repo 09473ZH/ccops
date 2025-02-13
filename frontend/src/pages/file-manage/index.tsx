@@ -29,7 +29,7 @@ function FileManager() {
       icon: <Iconify icon="solar:danger-circle-bold" />,
       content: '此操作不可逆，请谨慎操作。',
       onOk: () => {
-        deleteFiles(selectedRows).then(() => {
+        deleteFiles.mutateAsync(selectedRows).then(() => {
           setSelectedRows([]);
         });
       },
@@ -42,7 +42,7 @@ function FileManager() {
 
   const handleUploadModalOk = () => {
     const files = uploadFileList.map((file) => file.originFileObj as File);
-    uploadFiles(files).then(() => {
+    uploadFiles.mutateAsync(files).then(() => {
       close('uploadFile');
       setUploadFileList([]);
     });
@@ -77,7 +77,7 @@ function FileManager() {
           setUploadFileList([]);
         }}
         width={600}
-        confirmLoading={uploadFiles.isLoading}
+        confirmLoading={uploadFiles.isPending}
       >
         <Upload
           fileList={uploadFileList}

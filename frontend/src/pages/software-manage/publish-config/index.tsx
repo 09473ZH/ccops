@@ -12,7 +12,7 @@ import RevisionList from './RevisionList';
 function PublishConfig() {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState('1');
-  const { list: softwareInfo } = useRoleList();
+  const { data: softwareInfo } = useRoleList();
   const { setCustomBreadcrumbs } = useBreadcrumbStore();
   const [showActivateModal, setShowActivateModal] = useState(false);
   const [newRevisionId, setNewRevisionId] = useState<number>();
@@ -24,7 +24,7 @@ function PublishConfig() {
   };
 
   const softwareId = Number(id);
-  const softwareName = softwareInfo?.find((item) => item.id === softwareId)?.name;
+  const softwareName = softwareInfo?.list.find((item) => item.id === softwareId)?.name;
 
   const tabItems: TabItem[] = [
     {

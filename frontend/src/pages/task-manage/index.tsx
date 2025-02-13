@@ -2,9 +2,10 @@ import { Button, Space, Form } from 'antd';
 import { useState } from 'react';
 
 import { TaskInfo } from '@/api/services/task';
+import type { PlaybookTaskReq } from '@/api/services/task';
 import { Iconify } from '@/components/Icon';
 import { useModalsControl } from '@/hooks/use-modals-control';
-import { useSettings } from '@/store/setting'
+import { useSettings } from '@/store/setting';
 
 import { CreateTaskModal } from './components/CreateTaskModal';
 import { TaskOutputModal } from './components/TaskOutputModal';
@@ -97,21 +98,13 @@ function TaskManagePage() {
     open('taskOutput');
   };
 
-  const handleSubmit = async (values: any) => {
-    try {
-      const result = await createTask.mutateAsync({
-        ...values,
-        type: 'playbook' as const,
-      });
+  const handleSubmit = async (values: PlaybookTaskReq) => {
+    const taskId = await createTask.mutateAsync({
+      ...values,
+    });
 
-      if (result) {
-        handleCreateSuccess(result);
-      } else {
-        console.error('创建任务失败：未获取到任务ID');
-      }
-    } catch (error) {
-      console.error('Failed to create task:', error);
-    }
+    if (!taskId) return;
+    handleCreateSuccess(taskId);
   };
 
   return (

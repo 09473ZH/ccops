@@ -5,14 +5,13 @@ import 'xterm/css/xterm.css';
 import type { HostInfo } from '@/api/services/host';
 import { useHostList } from '@/hooks/use-host-list';
 import { cn } from '@/utils';
-import { getCurrentTheme, setTheme, getStyles } from '@/utils/jump-server-theme';
 
+import { Terminal } from '../components/Terminal';
 import { FontSelector } from '../components/Terminal/FontSelector';
-import { SplitTerminal } from '../components/Terminal/SplitTerminal';
-import { terminalThemes, type ThemeNames } from '../config/themes';
+import { terminalThemes, type ThemeNames } from '../constants/themes';
 import { useHostSearch, useTerminalSessions, type TerminalSession } from '../hooks';
 
-import type { TerminalRef } from '../components/Terminal/Terminal';
+import { getCurrentTheme, setTheme, getStyles } from './theme';
 
 export default function JumpServer() {
   const { id } = useParams<{ id: string }>();
@@ -78,17 +77,15 @@ export default function JumpServer() {
     setFontSize(size);
   };
 
-  const handleClear = useCallback(() => {
-    handleActiveSession((terminal: TerminalRef) => terminal.clear());
-  }, [handleActiveSession]);
+  const handleClear = useCallback(
+    () => handleActiveSession((terminal) => terminal.clear()),
+    [handleActiveSession],
+  );
 
-  const handleReconnect = useCallback(() => {
-    handleActiveSession((terminal: TerminalRef) => terminal.reconnect());
-  }, [handleActiveSession]);
-
-  const handleReset = useCallback(() => {
-    handleActiveSession((terminal: TerminalRef) => (terminal as any).reset?.());
-  }, [handleActiveSession]);
+  const handleReconnect = useCallback(
+    () => handleActiveSession((terminal) => terminal.reconnect()),
+    [handleActiveSession],
+  );
 
   useEffect(() => {
     // 清屏
@@ -186,25 +183,10 @@ export default function JumpServer() {
             <span>重新连接</span>
             <span className={styles.header.left.shortcut}>({shortcuts.reconnect})</span>
           </button>
-          <button className={cn(styles.header.left.button)} onClick={handleClear}>
-            <span>清屏</span>
-            <span className={styles.header.left.shortcut}>({shortcuts.clear})</span>
-          </button>
+          <button onClick={handleClear}>清屏</button>
         </div>
 
         <div className={styles.header.right.container}>
-          <button onClick={handleReset} className={styles.button.normal} title="重置分屏布局">
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M4 4h16v16H4z" />
-            </svg>
-            <span>重置分屏</span>
-          </button>
           <FontSelector value={fontFamily} onChange={setFontFamily} className="mr-4" />
           <div className={styles.header.right.themeSelector.container}>
             <select
@@ -275,14 +257,14 @@ export default function JumpServer() {
               key={session.id}
               className={styles.terminal.session(activeSessionId === session.id)}
             >
-              <SplitTerminal
+              <Terminal
                 ref={session.terminalRef}
                 className={styles.terminal.xterm(activeSessionId === session.id)}
+                hostId={session.hostId}
                 fontSize={fontSize}
                 fontFamily={fontFamily}
                 theme={terminalThemes[currentTheme]}
                 onConnectionChange={setIsConnected}
-                hostId={session.hostId}
               />
             </div>
           ))}
