@@ -10,7 +10,7 @@ export default function IconButton({ children, className, style, onClick }: Prop
   return (
     <button
       style={style}
-      className={`flex cursor-pointer items-center justify-center rounded-full p-2 hover:bg-gray-100 ${className}`}
+      className={`flex cursor-pointer items-center justify-center rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800/50 ${className}`}
       onClick={onClick}
     >
       {children}

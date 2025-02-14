@@ -91,7 +91,11 @@ export function LabelManageModal({ open, onClose }: { open: boolean; onClose: ()
       onCancel={onClose}
       width={800}
       footer={null}
-      bodyStyle={{ padding: '16px 24px' }}
+      styles={{
+        body: {
+          padding: '24px',
+        },
+      }}
     >
       <div className="space-y-3">
         <div className="flex justify-end">

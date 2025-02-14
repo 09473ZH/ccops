@@ -30,7 +30,7 @@ export default function NavVertical(props: Props) {
   const matches = useMatches();
   const pathname = usePathname();
 
-  const { colorBorder } = useThemeToken();
+  const { colorBorder, colorBgContainer, colorBgLayout } = useThemeToken();
   const settings = useSettings();
   const { themeLayout, themeMode, darkSidebar } = settings;
   const { setSettings } = useSettingActions();
@@ -89,6 +89,21 @@ export default function NavVertical(props: Props) {
     return darkSidebar ? 'dark' : 'light';
   }, [themeMode, darkSidebar]);
 
+  const sidebarStyle = useMemo(() => {
+    const style: React.CSSProperties = {
+      height: '100vh',
+      borderRight: `1px dashed ${Color(colorBorder).alpha(0.6).toString()}`,
+    };
+
+    if (themeMode === ThemeMode.Dark) {
+      style.backgroundColor = darkSidebar ? colorBgContainer : colorBgLayout;
+    } else {
+      style.backgroundColor = darkSidebar ? '#001529' : colorBgContainer;
+    }
+
+    return style;
+  }, [colorBorder, colorBgContainer, colorBgLayout, themeMode, darkSidebar]);
+
   return (
     <Sider
       trigger={null}
@@ -96,10 +111,7 @@ export default function NavVertical(props: Props) {
       collapsed={collapsed}
       width={NAV_WIDTH}
       theme={sidebarTheme}
-      style={{
-        height: '100vh',
-        borderRight: `1px dashed ${Color(colorBorder).alpha(0.6).toString()}`,
-      }}
+      style={sidebarStyle}
     >
       <NavLogo collapsed={collapsed} onToggle={handleToggleCollapsed} />
 
