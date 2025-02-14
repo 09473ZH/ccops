@@ -80,12 +80,7 @@ export default defineConfig({
           'antd-icons': ['@ant-design/icons'],
           iconify: ['@iconify/react'],
           'common-utils': ['lodash', 'dayjs', '@tanstack/react-query'],
-          'common-ui': [
-            './src/components/button',
-            './src/components/icon',
-            './src/components/loading',
-          ],
-          'common-hooks': ['./src/hooks/useTable', './src/hooks/useModalsControl'],
+          'common-hooks': ['./src/hooks/use-table', './src/hooks/use-modals-control'],
         },
         chunkFileNames: (chunkInfo) => {
           if (chunkInfo.name.includes('vendor') || chunkInfo.name.includes('antd')) {

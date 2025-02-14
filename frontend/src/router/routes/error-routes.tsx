@@ -1,8 +1,8 @@
 import { Suspense, lazy } from 'react';
 import { Outlet } from 'react-router-dom';
 
-import { CircleLoading } from '@/components/loading';
-import SimpleLayout from '@/layouts/simple';
+import { CircleLoading } from '@/components/Loading';
+import SimpleLayout from '@/layouts/SimpleLayout';
 
 import AuthGuard from '../components/auth-guard';
 

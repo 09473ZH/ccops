@@ -62,6 +62,10 @@ docker run -p 3001:80 ccops-frontend
 - `test`: 测试
 - `chore`: 构建过程或辅助工具的变动
 
+### 项目规范
+
+- 文件命名规范：除了组件（大驼峰），其他文件都是小写，单词之间用 `-` 连接 （例如：`file-manage` 即 kebab-case）
+
 ## 致谢
 
 特别感谢 [slash-admin](https://github.com/d3george/slash-admin) 提供的优秀脚手架。

@@ -2,14 +2,14 @@ import { Alert, Table } from 'antd';
 import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
-import type { HostInfo } from '@/api/services/hostService';
-import { BackableTabs } from '@/components/backable-tabs';
-import { CircleLoading } from '@/components/loading';
-import ShowMoreTags from '@/components/show-more-tags';
-import { useBreadcrumbStore } from '@/store/breadcrumbStore';
+import type { HostInfo } from '@/api/services/host';
+import { BackableTabs } from '@/components/BackableTabs';
+import { CircleLoading } from '@/components/Loading';
+import ShowMoreTags from '@/components/ShowMoreTags';
+import { useBreadcrumbStore } from '@/store/breadcrumb';
 import { formatTimeAgo } from '@/utils/format-time';
 
-import { StatusBadge } from '../components/status-badge';
+import { StatusBadge } from '../components/StatusBadge';
 import { useHostDetail } from '../hooks';
 
 // 定义配置类型

@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 
-import { Iconify } from '@/components/icon';
+import { Iconify } from '@/components/Icon';
 
 import Wrapper from './wrapper';
 

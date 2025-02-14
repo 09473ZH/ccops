@@ -5,9 +5,9 @@ import { Navigate } from 'react-router-dom';
 
 import LoginBgImg from '@/assets/images/background/login-bg.png';
 import Overlay2 from '@/assets/images/background/overlay_2.jpg';
-import { CircleLoading } from '@/components/loading';
-import LocalePicker from '@/components/locale-picker';
-import { useUserToken } from '@/store/userStore';
+import { CircleLoading } from '@/components/Loading';
+import LocalePicker from '@/components/LocalePicker';
+import { useUserToken } from '@/store/user';
 import { useThemeToken } from '@/theme/hooks';
 
 // 修改懒加载导入

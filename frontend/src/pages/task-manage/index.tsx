@@ -1,15 +1,16 @@
 import { Button, Space, Form } from 'antd';
 import { useState } from 'react';
 
-import { TaskInfo } from '@/api/services/taskService';
-import { useModalsControl } from '@/hooks/useModalsControl';
-import { useSettings } from '@/store/settingStore';
+import { TaskInfo } from '@/api/services/task';
+import type { PlaybookTaskReq } from '@/api/services/task';
+import { Iconify } from '@/components/Icon';
+import { useModalsControl } from '@/hooks/use-modals-control';
+import { useSettings } from '@/store/setting';
 
-import { CreateTaskModal } from './components/create-task-modal';
-import { TaskOutputModal } from './components/task-output-modal';
-import { TaskTable } from './components/task-table';
+import { CreateTaskModal } from './components/CreateTaskModal';
+import { TaskOutputModal } from './components/TaskOutputModal';
+import { TaskTable } from './components/TaskTable';
 import { useTaskManage } from './hooks/use-task-manage';
-import { Iconify } from '@/components/icon';
 
 function TaskManagePage() {
   const [form] = Form.useForm();
@@ -97,21 +98,13 @@ function TaskManagePage() {
     open('taskOutput');
   };
 
-  const handleSubmit = async (values: any) => {
-    try {
-      const result = await createTask.mutateAsync({
-        ...values,
-        type: 'playbook' as const,
-      });
+  const handleSubmit = async (values: PlaybookTaskReq) => {
+    const taskId = await createTask.mutateAsync({
+      ...values,
+    });
 
-      if (result) {
-        handleCreateSuccess(result);
-      } else {
-        console.error('创建任务失败：未获取到任务ID');
-      }
-    } catch (error) {
-      console.error('Failed to create task:', error);
-    }
+    if (!taskId) return;
+    handleCreateSuccess(taskId);
   };
 
   return (

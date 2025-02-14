@@ -1,15 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { App, Form } from 'antd';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
-import taskService, { RoleVarsConfig } from '@/api/services/taskService';
-import { useMutationWithMessage } from '@/hooks/useMutationWithMessage';
+import taskService, { RoleVarsConfig } from '@/api/services/task';
 import { useRoleList } from '@/pages/software-manage/use-software';
 import batchProcessTasks from '@/utils/batch-process-tasks';
 
 import type { TablePaginationConfig } from 'antd/es/table';
 
-// TODO: 优化得到更多的 hooks...
 /** 获取任务列表的 Hook */
 export const useTaskList = (limit = 10, page = 1) => {
   return useQuery({
@@ -20,27 +19,41 @@ export const useTaskList = (limit = 10, page = 1) => {
 
 /** 任务操作相关的 Hook */
 export const useTaskOperations = () => {
+  const queryClient = useQueryClient();
+
   /** 创建 Playbook 类型任务 */
-  const createTask = useMutationWithMessage({
+  const createTask = useMutation({
     mutationFn: taskService.createPlaybookTask,
-    successMsg: '任务创建成功',
-    errMsg: '任务创建失败',
-    invalidateKeys: ['taskList'],
+    onSuccess: () => {
+      toast.success('任务创建成功');
+      queryClient.invalidateQueries({ queryKey: ['taskList'] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : '任务创建失败');
+    },
   });
 
   /** 删除任务 */
-  const deleteTask = useMutationWithMessage({
+  const deleteTask = useMutation({
     mutationFn: taskService.deleteTask,
-    successMsg: '任务删除成功',
-    errMsg: '删除任务失败',
-    invalidateKeys: ['taskList'],
+    onSuccess: () => {
+      toast.success('任务删除成功');
+      queryClient.invalidateQueries({ queryKey: ['taskList'] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : '删除任务失败');
+    },
   });
 
   /** 执行快捷命令 */
-  const execQuickCommand = useMutationWithMessage({
+  const execQuickCommand = useMutation({
     mutationFn: taskService.createAdHocTask,
-    errMsg: '执行失败',
-    invalidateKeys: ['taskList'],
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : '执行失败');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['taskList'] });
+    },
   });
 
   /** 批量删除任务 */
@@ -59,12 +72,12 @@ export const useTaskOperations = () => {
 };
 
 export function useTaskManage() {
-  const { list: roleList, count: roleTotal } = useRoleList();
+  const { data: roleList } = useRoleList();
   const [form] = Form.useForm();
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
-    total: roleTotal,
+    total: roleList?.count || 0,
     showSizeChanger: true,
     showTotal: (total: number) => `总共 ${total} 项`,
   });
@@ -137,7 +150,7 @@ export function useTaskManage() {
 
   // 处理删除单个任务
   const handleDeleteTask = (taskId: number) => {
-    deleteTask(taskId);
+    deleteTask.mutate(taskId);
   };
 
   return {

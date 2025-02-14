@@ -20,6 +20,7 @@ type HostDetailInfo struct {
 	UserAuthorizeKeysInfo QueryResponse     `json:"user_authorize_keys_info"`
 	HostName              string            `json:"hostname"`
 	IP                    string            `json:"ip"`
+	PublicIPInfo          map[string]string `json:"public_ip_info"`
 }
 
 func RunQuery(sql string) (QueryResponse, error) {
@@ -166,6 +167,29 @@ func QuerySoftwareList() (QueryResponse, error) {
 	return info, nil
 }
 
+func GetPublicIPInfo() (map[string]string, error) {
+	cmd := exec.Command("curl", "ipinfo.io")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(out.Bytes(), &result); err != nil {
+		return nil, err
+	}
+
+	publicIPInfo := map[string]string{
+		"ip":      result["ip"].(string),
+		"city":    result["city"].(string),
+		"country": result["country"].(string),
+		"org":     result["org"].(string),
+	}
+
+	return publicIPInfo, nil
+}
+
 // QueryHostDetailInfo 主机详情数据
 //
 //	{
@@ -271,6 +295,12 @@ func QueryHostDetailInfo() (HostDetailInfo, error) {
 		return HostDetailInfo{}, err
 	}
 	info.UserAuthorizeKeysInfo = userAuthorizeKeysInfo
+
+	publicIPInfo, err := GetPublicIPInfo()
+	if err != nil {
+		return HostDetailInfo{}, err
+	}
+	info.PublicIPInfo = publicIPInfo
 
 	return info, nil
 }

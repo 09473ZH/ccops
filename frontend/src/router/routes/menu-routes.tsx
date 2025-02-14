@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 
-import DashboardLayout from '@/layouts/dashboard';
+import Layout from '@/layouts';
 
 import AuthGuard from '../components/auth-guard';
 import { getRoutesFromModules } from '../utils';
@@ -18,7 +18,7 @@ export const menuRoutes: AppRouteObject = {
   path: '/',
   element: (
     <AuthGuard>
-      <DashboardLayout />
+      <Layout />
     </AuthGuard>
   ),
   children: [{ index: true, element: <Navigate to={HOMEPAGE} replace /> }, ...menuModuleRoutes],

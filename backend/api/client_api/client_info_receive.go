@@ -22,6 +22,7 @@ type HostDetailInfo struct {
 	UserAuthorizeKeysInfo QueryResponse     `json:"user_authorize_keys_info"`
 	HostName              string            `json:"hostname"`
 	IP                    string            `json:"ip"`
+	PublicIPInfo          map[string]string `json:"public_ip_info"`
 }
 
 // 接收客户端上报来的机器信息
@@ -97,6 +98,10 @@ func (ClientApi) ClientInfoReceive(c *gin.Context) {
 	hostModel.Platform = cr.OsInfo["platform"]
 	hostModel.Version = cr.OsInfo["version"]
 	hostModel.Name = cr.HostName
+	hostModel.PublicIP = cr.PublicIPInfo["ip"]
+	hostModel.Country = cr.PublicIPInfo["country"]
+	hostModel.City = cr.PublicIPInfo["city"]
+	hostModel.Org = cr.PublicIPInfo["org"]
 
 	// 保存更新后的主机记录
 	if err := global.DB.Save(&hostModel).Error; err != nil {

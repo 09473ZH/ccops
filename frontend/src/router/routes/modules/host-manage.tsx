@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 
-import { Iconify } from '@/components/icon';
-import { CircleLoading } from '@/components/loading';
+import { Iconify } from '@/components/Icon';
+import { CircleLoading } from '@/components/Loading';
 
 import Wrapper from './wrapper';
 

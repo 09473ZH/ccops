@@ -62,6 +62,11 @@ docker run -p 3001:80 ccops-frontend
 - `test`: Testing
 - `chore`: Changes to build process or auxiliary tools
 
+### File Naming Convention
+
+- components use camelCase
+- other files use kebab-case
+
 ## Acknowledgments
 
 Special thanks to [slash-admin](https://github.com/d3george/slash-admin) for providing the excellent scaffold.
