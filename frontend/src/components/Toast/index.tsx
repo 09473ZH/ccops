@@ -68,6 +68,28 @@ const ToasterStyleWrapper = styled.div`
     max-width: 380px;
     z-index: 100000;
     animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: top center;
+
+    [data-content] {
+      height: auto !important;
+      transform: none !important;
+      opacity: 1 !important;
+    }
+
+    [data-title],
+    [data-description],
+    [data-icon] {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    &[data-visible='false'] {
+      animation: hideToast 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    &:not(:last-child) {
+      margin-bottom: 8px;
+    }
 
     &.toast-success {
       border-left: 2px solid rgba(76, 175, 80, 0.8) !important;
@@ -89,11 +111,22 @@ const ToasterStyleWrapper = styled.div`
   @keyframes slideIn {
     from {
       opacity: 0;
-      transform: translateY(-8px);
+      transform: translateY(-8px) scale(0.95);
     }
     to {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes hideToast {
+    from {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.95);
     }
   }
 `;
