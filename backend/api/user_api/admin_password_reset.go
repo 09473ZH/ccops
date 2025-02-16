@@ -7,6 +7,7 @@ import (
 	"ccops/utils/jwts"
 	"ccops/utils/permission"
 	"ccops/utils/pwd"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,6 +27,10 @@ func (UserApi) ResetUserPasswordByAdmin(c *gin.Context) {
 	id := c.Param("id")
 	if err := c.ShouldBindJSON(&cr); err != nil {
 		res.FailWithMessage(err.Error(), c)
+		return
+	}
+	if !regexp.MustCompile(`^[a-z0-9]{6,}$`).MatchString(cr.Password) {
+		res.FailWithMessage("密码格式不正确，必须为小写字母和数字，且至少6位", c)
 		return
 	}
 	err := global.DB.Model(&models.UserModel{}).Where("id = ?", id).Updates(map[string]interface{}{

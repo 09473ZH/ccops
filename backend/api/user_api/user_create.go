@@ -76,12 +76,13 @@ func (UserApi) UserCreate(c *gin.Context) {
 	username := req.UserName
 
 	// 生成随机密码并哈希
-	passwordLetters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()")
-	b := make([]rune, 12)
+	passwordLetters := []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+	b := make([]rune, 6)
 	for i := range b {
 		b[i] = passwordLetters[rand.Intn(len(passwordLetters))]
 	}
 	password := string(b)
+
 	hashedPassword := pwd.HashPwd(password)
 
 	// 开启事务

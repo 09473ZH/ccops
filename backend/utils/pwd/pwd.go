@@ -1,8 +1,10 @@
 package pwd
 
 import (
-	"golang.org/x/crypto/bcrypt"
 	"log"
+	"regexp"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // HashPwd hash密码
@@ -24,4 +26,9 @@ func CheckPwd(hashPwd string, pwd string) bool {
 		return false
 	}
 	return true
+}
+
+// ValidatePasswordFormat 验证密码是否仅包含小写字母和数字，且长度至少为6位
+func ValidatePasswordFormat(password string) bool {
+	return regexp.MustCompile(`^[a-z0-9]{6,}$`).MatchString(password)
 }
