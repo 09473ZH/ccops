@@ -4,7 +4,9 @@ import (
 	"ccops/global"
 	"ccops/models"
 
+	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -119,19 +121,42 @@ func (HostsApi) HandleWebSocket(c *gin.Context) {
 
 	address := fmt.Sprintf("%s:22", host.HostServerUrl)
 
+	// 创建一个context用于控制所有goroutine
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// 创建一个WaitGroup来等待所有goroutine完成
+	var wg sync.WaitGroup
+
+	// 创建一个错误通道用于传递错误
+	errChan := make(chan error, 3)
+
 	client, err := ssh.Dial("tcp", address, config)
 	if err != nil {
 		ws.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("SSH 连接失败: %v", err)))
 		return
 	}
-	defer client.Close()
+
+	// 确保资源正确清理
+	defer func() {
+		cancel() // 取消所有goroutine
+		if client != nil {
+			client.Close()
+		}
+		ws.Close()
+	}()
 
 	session, err := client.NewSession()
 	if err != nil {
 		ws.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("创建 SSH 会话失败: %v", err)))
 		return
 	}
-	defer session.Close()
+
+	// 使用defer和sync.Once确保session只被关闭一次
+	var once sync.Once
+	defer once.Do(func() {
+		session.Close()
+	})
 
 	// 使用更大的默认终端尺寸并设置合适的终端模式
 	if err := session.RequestPty("xterm", 40, 120, ssh.TerminalModes{
@@ -167,48 +192,31 @@ func (HostsApi) HandleWebSocket(c *gin.Context) {
 		return
 	}
 
-	// 设置空闲超时
-	// const idleTimeout = 10 * time.Minute
-	// idleTimer := time.NewTimer(idleTimeout)
-	// defer idleTimer.Stop()
-
-	// 更新最后活动时间的函数（只在真实操作时调用）
-	updateLastActivity := func() {
-		// if !idleTimer.Stop() {
-		//     select {
-		//     case <-idleTimer.C:
-		//     default:
-		//     }
-		// }
-		// idleTimer.Reset(idleTimeout)
-	}
-
 	// 在创建 WebSocket 连接后，初始化 wsWriter
 	writer := &wsWriter{conn: ws}
 
-	// 添加一个 done channel 用于协调关闭
-	done := make(chan struct{})
-	defer close(done)
-
-	// 修改输出处理的 goroutine
+	// 修改输出处理的goroutine
+	wg.Add(2)
 	go func() {
+		defer wg.Done()
 		buf := make([]byte, 4096)
 		for {
 			select {
-			case <-done:
+			case <-ctx.Done():
 				return
 			default:
 				n, err := stdout.Read(buf)
 				if err != nil {
+					if err != io.EOF {
+						errChan <- fmt.Errorf("stdout read error: %v", err)
+					}
 					return
 				}
 				if n > 0 {
-					updateLastActivity()
-					// 在发送之前清理输出
 					cleanData := sanitizeOutput(buf[:n])
 					if err := writer.writeMessage(websocket.TextMessage, cleanData); err != nil {
 						if !isNormalClose(err) {
-							log.Printf("写入stdout失败: %v", err)
+							errChan <- fmt.Errorf("stdout write error: %v", err)
 						}
 						return
 					}
@@ -218,23 +226,25 @@ func (HostsApi) HandleWebSocket(c *gin.Context) {
 	}()
 
 	go func() {
+		defer wg.Done()
 		buf := make([]byte, 4096)
 		for {
 			select {
-			case <-done:
+			case <-ctx.Done():
 				return
 			default:
 				n, err := stderr.Read(buf)
 				if err != nil {
+					if err != io.EOF {
+						errChan <- fmt.Errorf("stderr read error: %v", err)
+					}
 					return
 				}
 				if n > 0 {
-					updateLastActivity()
-					// 在发送之前清理输出
 					cleanData := sanitizeOutput(buf[:n])
 					if err := writer.writeMessage(websocket.TextMessage, cleanData); err != nil {
 						if !isNormalClose(err) {
-							log.Printf("写入stderr失败: %v", err)
+							errChan <- fmt.Errorf("stderr write error: %v", err)
 						}
 						return
 					}
@@ -243,62 +253,58 @@ func (HostsApi) HandleWebSocket(c *gin.Context) {
 		}
 	}()
 
-	// 修改空闲超时监听的 goroutine
-	//go func() {
-	//	for {
-	//		select {
-	//		case <-done:
-	//			return
-	//		case <-idleTimer.C:
-	//			writer.writeMessage(websocket.TextMessage, []byte("\r\n\033[33m会话已超时（10分钟无操作），连接已断开。\033[0m\r\n"))
-	//			writer.writeMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "idle timeout"))
-	//			ws.Close()
-	//			session.Close()
-	//			return
-	//		}
-	//	}
-	//}()
-	fmt.Println(1)
-	// 修改主循环的错误处理
-	for {
-		_, message, err := ws.ReadMessage()
-		if err != nil {
-			if !isNormalClose(err) {
-				log.Printf("读取 WebSocket 消息失败: %v", err)
-			}
+	// 启动一个goroutine来处理错误
+	go func() {
+		select {
+		case err := <-errChan:
+			log.Printf("Error occurred: %v", err)
+			cancel()
+		case <-ctx.Done():
 			return
 		}
+	}()
 
-		// 处理心跳包
-		if len(message) == 1 && message[0] == 0 {
-			err = writer.writeMessage(websocket.TextMessage, []byte{0})
+	// 主循环处理WebSocket消息
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			_, message, err := ws.ReadMessage()
 			if err != nil {
-				log.Printf("发送心跳响应失败: %v", err)
+				if !isNormalClose(err) {
+					log.Printf("读取 WebSocket 消息失败: %v", err)
+				}
 				return
 			}
-			continue
-		}
 
-		// 处理终端大小调整命令
-		if len(message) > 3 && message[0] == 0x1b && message[1] == '[' && message[2] == '8' {
-			dims := strings.Split(string(message[4:]), ",")
-			if len(dims) == 2 {
-				rows, _ := strconv.Atoi(dims[0])
-				cols, _ := strconv.Atoi(dims[1])
-				session.WindowChange(rows, cols)
-				updateLastActivity() // 调整终端大小算作活动
+			// 处理心跳包
+			if len(message) == 1 && message[0] == 0 {
+				err = writer.writeMessage(websocket.TextMessage, []byte{0})
+				if err != nil {
+					log.Printf("发送心跳响应失败: %v", err)
+					return
+				}
 				continue
 			}
-		}
 
-		// 更新活动时间（真实输入）
-		updateLastActivity()
+			// 处理终端大小调整命令
+			if len(message) > 3 && message[0] == 0x1b && message[1] == '[' && message[2] == '8' {
+				dims := strings.Split(string(message[4:]), ",")
+				if len(dims) == 2 {
+					rows, _ := strconv.Atoi(dims[0])
+					cols, _ := strconv.Atoi(dims[1])
+					session.WindowChange(rows, cols)
+					continue
+				}
+			}
 
-		// 直接写入消息
-		_, err = stdin.Write(message)
-		if err != nil {
-			log.Printf("写入命令失败: %v", err)
-			return
+			// 直接写入消息
+			_, err = stdin.Write(message)
+			if err != nil {
+				log.Printf("写入命令失败: %v", err)
+				return
+			}
 		}
 	}
 }
