@@ -1,4 +1,4 @@
-import { get, post, put, del } from '../client';
+import { get, post, del } from '../client';
 import { LabelApi } from '../constants';
 
 export interface LabelInfo {
@@ -39,8 +39,10 @@ const labelService = {
   },
 
   /** 解绑主机标签 */
-  unbindHostsLabel(labelId: number) {
-    return put<void>(LabelApi.UnlabelFromHost.replace(':id', labelId.toString()));
+  unbindHostsLabel(params: { hostId: number; labelIds: number[] }) {
+    return post<void>(LabelApi.UnlabelFromHost.replace(':id', params.hostId.toString()), {
+      labelIds: params.labelIds,
+    });
   },
 };
 

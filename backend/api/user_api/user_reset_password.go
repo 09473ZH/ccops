@@ -6,6 +6,7 @@ import (
 	"ccops/models/res"
 	"ccops/utils/jwts"
 	"ccops/utils/pwd"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,6 +30,10 @@ func (UserApi) ResetUserPassword(c *gin.Context) {
 	if cr.Password != cr.ConfirmPassword {
 		//两次密码不一致
 		res.FailWithMessage("两次密码不一致", c)
+		return
+	}
+	if !pwd.ValidatePasswordFormat(cr.Password) {
+		res.FailWithMessage("密码格式不正确，必须为小写字母和数字，且至少6位", c)
 		return
 	}
 	my.Password = pwd.HashPwd(cr.Password)

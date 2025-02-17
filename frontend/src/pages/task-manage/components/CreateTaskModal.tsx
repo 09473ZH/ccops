@@ -1,6 +1,7 @@
 import { Button, Drawer, Form, FormInstance, Input, Select, Space, Row, Col } from 'antd';
 import React, { useMemo } from 'react';
 
+import { RoleItem } from '@/api/services/software';
 import { PlaybookTaskReq } from '@/api/services/task';
 import HostSelector from '@/components/HostSelector';
 import { useHostList } from '@/hooks/use-host-list';
@@ -25,11 +26,11 @@ export function CreateTaskModal({
   onSubmit,
   form,
 }: CreateTaskModalProps) {
-  const { list: roleList } = useRoleList();
+  const { data: roleList } = useRoleList();
   const { list: hostList } = useHostList();
   const roleIdList = Form.useWatch('roleIdList', form);
   const generatedTaskName = useMemo(
-    () => generateTaskName(roleIdList || [], roleList),
+    () => generateTaskName(roleIdList || [], roleList?.list || []),
     [roleIdList, roleList],
   );
 
@@ -49,7 +50,6 @@ export function CreateTaskModal({
 
     const submitData: PlaybookTaskReq = {
       ...values,
-      type: 'playbook' as const,
       vars,
       taskName: values.taskName || generatedTaskName,
     };
@@ -94,7 +94,7 @@ export function CreateTaskModal({
               <Select
                 mode="multiple"
                 placeholder="请选择软件"
-                options={roleList.map((role) => ({
+                options={roleList?.list.map((role: RoleItem) => ({
                   label: role.existActiveRevision
                     ? role.name
                     : `${role.name}（请先激活版本后使用）`,
@@ -125,7 +125,7 @@ export function CreateTaskModal({
             return roleIdList.length > 0 ? (
               <div className="space-y-4">
                 {roleIdList.map((roleId: number) => {
-                  const role = roleList.find((r) => r.id === roleId);
+                  const role = roleList?.list.find((r: RoleItem) => r.id === roleId);
                   if (!role) return null;
 
                   return <RoleVarConfig key={role.id} role={role} form={form} />;

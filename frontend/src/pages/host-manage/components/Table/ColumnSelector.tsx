@@ -4,7 +4,7 @@ import type { HostInfo } from '@/api/services/host';
 import { Iconify } from '@/components/Icon';
 import { TableState } from '@/hooks/use-table';
 
-import { HOST_TABLE_CONFIG } from '../../config/columns';
+import { HOST_TABLE_CONFIG } from '../../constants/columns';
 
 import { ColumnGroup } from './get-columns';
 

@@ -18,7 +18,7 @@ interface SoftwareTableProps {
 export function SoftwareTable({ onAssignLabel }: SoftwareTableProps) {
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const { list: roleList, isLoading } = useRoleList();
+  const { data: roleList, isLoading } = useRoleList();
   const { updateRole, deleteRole } = useRoleOperations();
   const { editingId, actions } = useSoftwareStore();
 
@@ -31,7 +31,7 @@ export function SoftwareTable({ onAssignLabel }: SoftwareTableProps) {
 
   const handleSave = async (id: number) => {
     const row = await form.validateFields();
-    await updateRole({ id, data: row });
+    updateRole.mutate({ id, data: row });
     actions.cancelEdit();
   };
 
@@ -90,7 +90,7 @@ export function SoftwareTable({ onAssignLabel }: SoftwareTableProps) {
 
   return (
     <EditableTable
-      dataSource={roleList}
+      dataSource={roleList?.list || []}
       columns={columns}
       form={form}
       isEditing={isEditing}
@@ -106,7 +106,7 @@ export function SoftwareTable({ onAssignLabel }: SoftwareTableProps) {
             <ActionButton icon="tag" onClick={() => onAssignLabel?.(record)} type="text" />
             <Popconfirm
               title="确定要删除这个软件吗？"
-              onConfirm={() => deleteRole(record.id)}
+              onConfirm={() => deleteRole.mutate(record.id)}
               okText="确定"
               cancelText="取消"
             >

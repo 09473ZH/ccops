@@ -1,6 +1,7 @@
 import { Typography, Space, Table } from 'antd';
 import React from 'react';
 
+import { RoleItem } from '@/api/services/software';
 import { RoleDetails, RoleVarContent } from '@/api/services/task';
 import ShowMoreTags from '@/components/ShowMoreTags';
 import { useRoleList } from '@/pages/software-manage/use-software';
@@ -12,7 +13,7 @@ interface RoleDetailsListProps {
 }
 
 export default function RoleDetailsList({ roleDetails }: RoleDetailsListProps) {
-  const { list: roleList } = useRoleList();
+  const { data: roleList } = useRoleList();
   if (!roleDetails?.roleIdList?.length) return null;
 
   const hasVarContent = (content: RoleVarContent['content']) => {
@@ -61,7 +62,8 @@ export default function RoleDetailsList({ roleDetails }: RoleDetailsListProps) {
       id: `${roleId}-${index}`,
       roleId,
       roleVarContent: matchingVarContent || [],
-      roleName: roleList?.find((role) => role.id === roleId)?.name || `软件 - ${roleId}`,
+      roleName:
+        roleList?.list.find((role: RoleItem) => role.id === roleId)?.name || `软件 - ${roleId}`,
       customId: `${roleId}-${index}`,
     };
   });

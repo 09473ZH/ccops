@@ -5,6 +5,8 @@ import { CircleLoading } from '@/components/Loading';
 import Router from '@/router/index';
 import AntdConfig from '@/theme/antd';
 
+import { MotionLazy } from './components/animate/MotionLazy';
+import Toast from './components/Toast';
 import { useSettings } from './store/setting';
 
 function App() {
@@ -19,11 +21,14 @@ function App() {
 
   return (
     <AntdConfig>
-      <AntdApp>
-        <Suspense fallback={<CircleLoading />}>
-          <Router />
-        </Suspense>
-      </AntdApp>
+      <MotionLazy>
+        <AntdApp>
+          <Suspense fallback={<CircleLoading />}>
+            <Toast />
+            <Router />
+          </Suspense>
+        </AntdApp>
+      </MotionLazy>
     </AntdConfig>
   );
 }

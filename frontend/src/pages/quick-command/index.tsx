@@ -2,6 +2,7 @@ import { Button, Typography, App } from 'antd';
 import * as monaco from 'monaco-editor';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 
 import type { TaskOutput } from '@/api/services/task';
 import HostSelector from '@/components/HostSelector';
@@ -30,7 +31,6 @@ const EDITOR_KEYBINDINGS = [
 
 function QuickCommand() {
   const { t } = useTranslation();
-  const { message } = App.useApp();
   const { themeMode } = useSettings();
   const { execQuickCommand } = useTaskOperations();
   const { list: hostList } = useHostList();
@@ -70,40 +70,40 @@ function QuickCommand() {
   });
 
   const handleExecute = useCallback(async () => {
-    const error = validateExecution();
-    if (error) {
-      message.error(t(error));
+    const validationError = validateExecution();
+    if (validationError) {
+      toast.error(t(validationError));
       return;
     }
 
-    try {
-      resetStatus();
+    clearMessages();
+    resetStatus();
 
-      const taskId = await execQuickCommand({
-        taskName: '快捷命令',
+    try {
+      const taskId = await execQuickCommand.mutateAsync({
+        taskName: t('quick-command.task-name'),
         hostIdList: selectedHosts,
         shortcutScriptContent: content,
       });
 
-      if (!taskId) {
-        throw new Error('No task ID returned');
-      }
+      if (!taskId) return;
 
       setCurrentTaskId(taskId);
       initExecution();
-    } catch (error) {
-      message.error(`${t('quick-command.execute.error')}: ${(error as Error).message}`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      toast.error(t('quick-command.execute.error', { error: errorMessage }));
       resetStatus();
     }
   }, [
     validateExecution,
+    clearMessages,
+    resetStatus,
     content,
     selectedHosts,
-    message,
     t,
     initExecution,
     execQuickCommand,
-    resetStatus,
     setCurrentTaskId,
   ]);
 

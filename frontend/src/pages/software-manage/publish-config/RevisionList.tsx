@@ -1,5 +1,5 @@
 import { Table, Space, Modal, Typography, Select, List, Empty, Popconfirm } from 'antd';
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useMemo } from 'react';
 
 import { RevisionItem } from '@/api/services/software';
 import { ActionButton } from '@/components/Button';
@@ -21,15 +21,22 @@ interface RevisionListProps {
 }
 
 function RevisionList({ id, autoShowActivateModal, revisionIdToActivate }: RevisionListProps) {
-  const { data: revisionList, isLoading } = useRoleRevisions(id);
+  const { data, isLoading } = useRoleRevisions(id);
+  const revisions = useMemo(
+    () =>
+      data?.list
+        .filter((revision) => revision.isRelease !== false)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || [],
+    [data],
+  );
   const { activeRevision, deleteRevision } = useRevisionOperations();
   const { open, close, isOpen } = useModalsControl({ modals: ['compare', 'versionFileList'] });
   const {
     selectedFiles,
     currentId,
-    compareVersionId,
     currentContent,
-    newContent,
+    compareId,
+    compareContent: newContent,
     isComparing,
     actions,
   } = useRevisionStore();
@@ -42,7 +49,7 @@ function RevisionList({ id, autoShowActivateModal, revisionIdToActivate }: Revis
   };
 
   const handleFetchFileNames = (versionId: number) => {
-    const version = revisionList?.find((v) => v.id === versionId);
+    const version = revisions.find((v) => v.id === versionId);
     if (!version?.files) return;
 
     actions.setSelectedFiles(version.files.map((file) => file.fileName));
@@ -51,7 +58,7 @@ function RevisionList({ id, autoShowActivateModal, revisionIdToActivate }: Revis
 
   const handleVersionChange = (value: number) => {
     actions.setIsComparing(true);
-    const selectedVersion = revisionList?.find((version) => version.id === value);
+    const selectedVersion = revisions.find((version) => version.id === value);
     if (selectedVersion) {
       actions.setCompareVersion(value, selectedVersion.taskContent || '');
     }
@@ -60,10 +67,10 @@ function RevisionList({ id, autoShowActivateModal, revisionIdToActivate }: Revis
 
   const handleCompare = useCallback(
     (sourceId: number) => {
-      const sourceVersion = revisionList?.find((version) => version.id === sourceId);
+      const sourceVersion = revisions.find((version) => version.id === sourceId);
       const defaultTargetVersion =
-        revisionList?.find((version) => version.id === sourceId - 1) ||
-        revisionList?.find((version) => version.id !== sourceId);
+        revisions.find((version) => version.id === sourceId - 1) ||
+        revisions.find((version) => version.id !== sourceId);
 
       if (sourceVersion) {
         actions.setCurrentVersion(sourceId, sourceVersion.taskContent || '');
@@ -76,13 +83,13 @@ function RevisionList({ id, autoShowActivateModal, revisionIdToActivate }: Revis
         open('compare');
       }
     },
-    [revisionList, actions, open],
+    [revisions, actions, open],
   );
 
   const getVersionOptions = (currentVersionId: number) => {
     return (
-      revisionList
-        ?.filter((revision) => revision.id !== currentVersionId)
+      revisions
+        .filter((revision) => revision.id !== currentVersionId)
         .map((revision) => ({
           label: `版本 ${revision.id}`,
           value: revision.id,
@@ -91,18 +98,18 @@ function RevisionList({ id, autoShowActivateModal, revisionIdToActivate }: Revis
   };
 
   const hasComparableVersions = (currentId: number) => {
-    return revisionList && revisionList.some((revision) => revision.id !== currentId);
+    return revisions && revisions.some((revision) => revision.id !== currentId);
   };
 
   useEffect(() => {
-    if (revisionList && revisionList.length >= 2) {
-      const [latestVersion, previousVersion] = revisionList.slice(0, 2);
+    if (revisions && revisions.length >= 2) {
+      const [latestVersion, previousVersion] = revisions.slice(0, 2);
 
       if (latestVersion && previousVersion && isNewVersion(latestVersion.createdAt)) {
         handleCompare(latestVersion.id);
       }
     }
-  }, [revisionList, handleCompare]);
+  }, [revisions, handleCompare]);
 
   useEffect(() => {
     if (autoShowActivateModal) {
@@ -112,7 +119,7 @@ function RevisionList({ id, autoShowActivateModal, revisionIdToActivate }: Revis
 
   const handleActivate = () => {
     if (!revisionIdToActivate) return;
-    activeRevision(revisionIdToActivate);
+    activeRevision.mutate(revisionIdToActivate);
     setShowActivateModal(false);
   };
 
@@ -144,7 +151,7 @@ function RevisionList({ id, autoShowActivateModal, revisionIdToActivate }: Revis
           <Popconfirm
             title="确认激活"
             description={`你确定要激活版本 ${record.id} 吗？`}
-            onConfirm={() => activeRevision(record.id)}
+            onConfirm={() => activeRevision.mutate(record.id)}
             disabled={record.isActive}
           >
             <ActionButton
@@ -165,7 +172,7 @@ function RevisionList({ id, autoShowActivateModal, revisionIdToActivate }: Revis
           <Popconfirm
             title="确认删除"
             description={`你确定要删除版本 ${record.id} 吗？`}
-            onConfirm={() => deleteRevision(record.id)}
+            onConfirm={() => deleteRevision.mutate(record.id)}
           >
             <ActionButton
               icon="delete"
@@ -194,7 +201,7 @@ function RevisionList({ id, autoShowActivateModal, revisionIdToActivate }: Revis
           <DiffViewer
             oldValue={newContent}
             newValue={currentContent}
-            oldTitle={`版本 ${compareVersionId}`}
+            oldTitle={`版本 ${compareId}`}
             newTitle={`版本 ${currentId}`}
           />
         </div>
@@ -219,7 +226,7 @@ function RevisionList({ id, autoShowActivateModal, revisionIdToActivate }: Revis
 
   return (
     <div>
-      <Table columns={columns} dataSource={revisionList} rowKey="id" loading={isLoading} />
+      <Table columns={columns} dataSource={revisions} rowKey="id" loading={isLoading} />
       <Modal
         title="版本对比"
         width={800}
@@ -246,7 +253,7 @@ function RevisionList({ id, autoShowActivateModal, revisionIdToActivate }: Revis
                 size="middle"
                 placeholder="请选择"
                 onChange={handleVersionChange}
-                value={compareVersionId}
+                value={compareId}
                 options={getVersionOptions(currentId!)}
                 disabled={!currentId}
               />

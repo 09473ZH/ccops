@@ -1,5 +1,6 @@
-import { ThemeNames } from '@/pages/host-manage/config/themes';
 import { cn } from '@/utils';
+
+import type { ThemeNames } from '../constants/themes';
 
 // 主题管理基础函数
 export const getCurrentTheme = (): ThemeNames => {
@@ -200,7 +201,7 @@ export const getStyles = (theme: ThemeNames) => {
         'border-terminal-retro-border bg-terminal-retro-term': theme === 'Retro',
       }),
       session: (isActive: boolean) =>
-        cn('relative h-full rounded-lg p-2', isActive ? 'block' : 'hidden'),
+        cn('relative h-full rounded-lg p-4', isActive ? 'block' : 'hidden'),
       xterm: (isActive: boolean) =>
         cn('h-full w-full rounded-md', isActive ? 'visible' : 'invisible absolute'),
     },

@@ -1,37 +1,38 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { message } from 'antd';
 
 import softwareService, { RevisionListResponse, RevisionItem } from '@/api/services/software';
-import useMutationWithMessage from '@/hooks/use-mutation-with-message';
 
 export const useGetRoleRevisions = (id: number) => {
   return useQuery<RevisionListResponse, Error, RevisionItem[]>({
     queryKey: ['roleRevisions'],
     queryFn: () => softwareService.getRoleRevisions(id),
-    select: (data: RevisionListResponse) => {
-      return data.list;
-    },
+    select: (data: RevisionListResponse) => data.list,
   });
 };
 
 export const useActiveRoleRevision = () => {
-  return useMutationWithMessage({
-    mutationFn: (revisionId: number) => {
-      return softwareService.activeRevision(revisionId);
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (revisionId: number) => softwareService.activeRevision(revisionId),
+    onSuccess: () => {
+      message.success('激活成功');
+      queryClient.invalidateQueries({ queryKey: ['roleRevisions'] });
     },
-    successMsg: '激活成功',
-    errMsg: '激活失败',
-    invalidateKeys: ['roleRevisions'],
+    onError: () => message.error('激活失败'),
   });
 };
 
 export const useReleaseRoleRevision = () => {
-  return useMutationWithMessage({
-    mutationFn: ({ id, changeLog }: { id: number; changeLog: string }) => {
-      return softwareService.releaseRoleRevision(id, changeLog);
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, changeLog }: { id: number; changeLog: string }) =>
+      softwareService.releaseRoleRevision(id, changeLog),
+    onSuccess: () => {
+      message.success('版本打包成功');
+      queryClient.invalidateQueries({ queryKey: ['roleRevisions'] });
     },
-    successMsg: '版本打包成功',
-    errMsg: '版本打包失败',
-    invalidateKeys: ['roleRevisions'],
+    onError: () => message.error('版本打包失败'),
   });
 };
 
@@ -57,12 +58,13 @@ export const useGetRoleRevision = (revisionId: number) => {
 };
 
 export const useDeleteRoleRevision = () => {
-  return useMutationWithMessage({
-    mutationFn: async (revisionId: number) => {
-      await softwareService.deleteRoleRevision(revisionId);
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (revisionId: number) => softwareService.deleteRoleRevision(revisionId),
+    onSuccess: () => {
+      message.success('版本删除成功');
+      queryClient.invalidateQueries({ queryKey: ['roleRevisions'] });
     },
-    successMsg: '版本删除成功',
-    errMsg: '版本删除失败',
-    invalidateKeys: ['roleRevisions'],
+    onError: () => message.error('版本删除失败'),
   });
 };

@@ -1,6 +1,6 @@
 import { Input } from 'antd';
 
-import { CopyButton } from '@/components/Button';
+import { CopyButton } from './Button';
 
 interface TextAreaWithCopyProps {
   content: string;
