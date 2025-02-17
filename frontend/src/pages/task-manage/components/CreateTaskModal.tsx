@@ -19,6 +19,8 @@ interface CreateTaskModalProps {
   form: FormInstance;
 }
 
+const MAX_HOST_COUNT = 5;
+
 export function CreateTaskModal({
   open,
   isRestarting,
@@ -81,8 +83,8 @@ export function CreateTaskModal({
             >
               <div className="mb-2 flex items-center gap-2">
                 <span className="text-xs text-gray-500">已选择：</span>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {selectedHosts.map((hostId) => {
+                <div className="flex min-h-[22px] flex-wrap items-center gap-1.5">
+                  {selectedHosts.slice(0, MAX_HOST_COUNT).map((hostId) => {
                     const host = hostList?.find((h) => h.id === hostId);
                     return (
                       <Tag bordered={false} key={hostId}>
@@ -90,6 +92,11 @@ export function CreateTaskModal({
                       </Tag>
                     );
                   })}
+                  {selectedHosts.length > MAX_HOST_COUNT && (
+                    <span className="text-sm text-gray-400">
+                      等 {selectedHosts.length - MAX_HOST_COUNT} 个主机
+                    </span>
+                  )}
                   {selectedHosts.length === 0 && (
                     <span className="text-sm text-gray-400">未选择任何主机</span>
                   )}

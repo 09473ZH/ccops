@@ -1,5 +1,5 @@
 import { Table, Button, Input, Modal } from 'antd';
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 
 import type { HostInfo } from '@/api/services/host';
 import { Iconify } from '@/components/Icon';
