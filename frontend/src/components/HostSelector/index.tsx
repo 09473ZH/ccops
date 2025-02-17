@@ -1,227 +1,249 @@
 /* eslint-disable react/no-unstable-nested-components */
-import { QuestionCircleOutlined, TagsOutlined } from '@ant-design/icons';
-import { Select, Tooltip } from 'antd';
+import { CaretDownOutlined, CaretRightOutlined } from '@ant-design/icons';
+import { Input, Checkbox } from 'antd';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { HostInfo } from '@/api/services/host';
+import { useMyHosts } from '@/pages/host-manage/hooks';
+
+import { Iconify } from '../Icon';
 
 interface HostSelectorProps {
-  hostList: HostInfo[];
-  value?: number[];
+  defaultValue?: number[];
   onChange?: (value: number[]) => void;
   className?: string;
   style?: React.CSSProperties;
 }
 
-interface SelectOptionType {
-  label: React.ReactNode;
-  value: number;
-  searchLabel: string;
+interface GroupItemProps {
+  label: string;
+  hosts: Array<{ id: number; name: string; ip: string }>;
+  selectedHosts: Set<number>;
+  onToggleHost: (hostId: number) => void;
+  onToggleGroup: (hostIds: number[]) => void;
 }
 
-interface TagPlaceholderProps {
-  omittedValues: any[];
-}
-
-function TagPlaceholder({ omittedValues }: TagPlaceholderProps) {
+// 标签组组件
+const GroupItem: React.FC<GroupItemProps> = function GroupItem({
+  label,
+  hosts,
+  selectedHosts,
+  onToggleHost,
+  onToggleGroup,
+}) {
   const { t } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(true);
+  const allSelected = hosts.every((host) => selectedHosts.has(host.id));
+  const someSelected = !allSelected && hosts.some((host) => selectedHosts.has(host.id));
 
   return (
-    <Tooltip
-      title={
-        <div className="flex flex-col gap-1">
-          {omittedValues.map((item, index) => (
-            <div key={index}>{item.label}</div>
+    <div className="bg-gray-50/30 mb-1 rounded-lg p-1.5">
+      <div className="hover:bg-white/80 flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1">
+        <div
+          className="flex flex-1 items-center gap-1.5"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? (
+            <CaretDownOutlined className="text-gray-400" />
+          ) : (
+            <CaretRightOutlined className="text-gray-400" />
+          )}
+          <Checkbox
+            checked={allSelected}
+            indeterminate={someSelected}
+            onChange={() => onToggleGroup(hosts.map((h) => h.id))}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <span className="flex-1 text-sm font-medium text-gray-800">{label}</span>
+        </div>
+        <span className="bg-blue-50 text-blue-600 rounded-full px-2 py-0.5 text-xs font-medium">
+          {hosts.length} {t('台')}
+        </span>
+      </div>
+      {isExpanded && (
+        <div className="mt-0.5 space-y-0.5 pl-7">
+          {hosts.map((host) => (
+            <div
+              key={host.id}
+              className="hover:bg-white/80 flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1"
+              onClick={() => onToggleHost(host.id)}
+            >
+              <Checkbox
+                checked={selectedHosts.has(host.id)}
+                onChange={() => onToggleHost(host.id)}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <span className="flex-1 truncate text-sm text-gray-700">{host.name}</span>
+              <span className="min-w-[120px] text-sm text-gray-500">{host.ip}</span>
+            </div>
           ))}
         </div>
-      }
-      placement="top"
-    >
-      <span className="text-gray-500">
-        {t('components.host-selector.show-more')} ({omittedValues.length})
-      </span>
-    </Tooltip>
+      )}
+    </div>
   );
-}
+};
 
 export default function HostSelector({
-  hostList,
-  value = [],
+  defaultValue = [],
   onChange,
-  className,
-  style,
+  className = '',
+  style = {},
 }: HostSelectorProps) {
   const { t } = useTranslation();
-  const [selectedLabels, setSelectedLabels] = useState<number[]>([]);
-  const [enableLabelFilter, setEnableLabelFilter] = useState(true);
+  const [searchText, setSearchText] = useState('');
+  const { list: myHosts } = useMyHosts();
 
-  // 构建主机和标签的选项数据
-  const { hostOptions, labelOptions, hostsByLabel } = useMemo(() => {
-    const labelMap = new Map<number, number[]>();
-    const labelOpts: SelectOptionType[] = [];
+  const [selectedHostIds, setSelectedHostIds] = useState<number[]>(defaultValue);
+  const selectedHosts = useMemo(() => new Set(selectedHostIds), [selectedHostIds]);
 
-    // 构建标签映射和选项
-    hostList.forEach((host) => {
-      host.label?.forEach((label: { id: number; name: string }) => {
-        if (!labelMap.has(label.id)) {
-          const hostCount = hostList.filter((h) => h.label?.some((l) => l.id === label.id)).length;
+  const groups = useMemo(() => {
+    const searchLower = searchText.toLowerCase();
 
-          labelOpts.push({
-            label: (
-              <div className="flex items-center justify-between">
-                <span>{label.name}</span>
-                <span className="mx-2 text-xs text-gray-500">
-                  {`${hostCount} ${t('components.host-selector.hosts')}`}
-                </span>
-              </div>
-            ),
-            value: label.id,
-            searchLabel: label.name,
-          });
-          labelMap.set(label.id, []);
-        }
-        labelMap.get(label.id)?.push(host.id);
-      });
-    });
+    // 创建一个 Map 来存储所有匹配标签的主机
+    const matchedHostsByLabel = new Map<
+      number,
+      {
+        id: number;
+        name: string;
+        ip: string;
+        labelIds: number[];
+      }
+    >();
 
-    // 构建主机选项
-    const hostOpts: SelectOptionType[] = hostList.map((host) => ({
-      label: `${host.name}@${host.hostServerUrl}`,
-      value: host.id,
-      searchLabel: `${host.name}@${host.hostServerUrl}`,
-    }));
+    // 处理无标签组
+    const noLabelGroup = myHosts.find((group) => group.labelId === 0);
+    const result = [];
 
-    return {
-      hostOptions: hostOpts,
-      labelOptions: labelOpts,
-      hostsByLabel: labelMap,
-    };
-  }, [hostList, t]);
+    if (noLabelGroup) {
+      const filteredNoLabelHosts = noLabelGroup.hosts
+        .filter(
+          (host) =>
+            host.hostName.toLowerCase().includes(searchLower) ||
+            host.hostIp.toLowerCase().includes(searchLower),
+        )
+        .map((host) => ({
+          id: host.hostId,
+          name: host.hostName,
+          ip: host.hostIp,
+          labelIds: [] as number[],
+        }));
 
-  // 计算通过标签选中的主机
-  const hostsFromLabels = useMemo(
-    () => new Set(selectedLabels.flatMap((labelId) => hostsByLabel.get(labelId) || [])),
-    [selectedLabels, hostsByLabel],
-  );
-
-  // 处理主机选项的禁用状态
-  const filteredHostOptions = useMemo(
-    () =>
-      hostOptions.map((option) => ({
-        ...option,
-        disabled: enableLabelFilter && hostsFromLabels.has(option.value),
-        label: (
-          <div className="flex items-center justify-between">
-            <Tooltip title={option.searchLabel} placement="topLeft">
-              <span className="max-w-[200px] truncate">{option.searchLabel}</span>
-            </Tooltip>
-            {enableLabelFilter && hostsFromLabels.has(option.value) && (
-              <Tooltip title={t('components.host-selector.host-selected-by-label-des')}>
-                <span className="ml-2 shrink-0 text-xs text-gray-500">
-                  {t('components.host-selector.host-selected-by-label')}
-                </span>
-              </Tooltip>
-            )}
-          </div>
-        ),
-      })),
-    [hostOptions, hostsFromLabels, enableLabelFilter, t],
-  );
-
-  // 处理标签变化
-  const handleLabelChange = (selectedLabelIds: number[]) => {
-    setSelectedLabels(selectedLabelIds);
-    const newHostsFromLabels = new Set(
-      selectedLabelIds.flatMap((labelId) => hostsByLabel.get(labelId) || []),
-    );
-    const newDirectSelected = value.filter((hostId) => !newHostsFromLabels.has(hostId));
-    onChange?.(Array.from(new Set([...newDirectSelected, ...Array.from(newHostsFromLabels)])));
-  };
-
-  // 处理主机选择变化
-  const handleHostChange = (selectedHostIds: number[]) => {
-    onChange?.(Array.from(new Set([...selectedHostIds, ...Array.from(hostsFromLabels)])));
-  };
-
-  // 处理标签过滤开关
-  const handleFilterChange = (checked: boolean) => {
-    setEnableLabelFilter(checked);
-    if (!checked) {
-      setSelectedLabels([]);
-      onChange?.([]);
+      if (filteredNoLabelHosts.length > 0) {
+        result.push({
+          label: t('无标签'),
+          labelId: 0,
+          hosts: filteredNoLabelHosts,
+        });
+      }
     }
+
+    // 处理有标签的组
+    myHosts
+      .filter((group) => group.labelId !== 0)
+      .forEach((group) => {
+        const labelNameMatches = group.labelName.toLowerCase().includes(searchLower);
+
+        group.hosts.forEach((host) => {
+          const hostMatches =
+            host.hostName.toLowerCase().includes(searchLower) ||
+            host.hostIp.toLowerCase().includes(searchLower);
+
+          // 如果标签名匹配或主机信息匹配，则添加到结果中
+          if (labelNameMatches || hostMatches) {
+            const existingHost = matchedHostsByLabel.get(host.hostId);
+            if (existingHost) {
+              // 如果主机已存在，添加新的标签ID
+              existingHost.labelIds.push(group.labelId);
+            } else {
+              // 如果主机不存在，创建新记录
+              matchedHostsByLabel.set(host.hostId, {
+                id: host.hostId,
+                name: host.hostName,
+                ip: host.hostIp,
+                labelIds: [group.labelId],
+              });
+            }
+          }
+        });
+      });
+
+    // 将匹配的主机按标签分组
+    const labelGroups = Array.from(matchedHostsByLabel.values()).reduce((acc, host) => {
+      host.labelIds.forEach((labelId) => {
+        const group = myHosts.find((g) => g.labelId === labelId);
+        if (group) {
+          const existingGroup = acc.find((g) => g.labelId === labelId);
+          if (existingGroup) {
+            existingGroup.hosts.push(host);
+          } else {
+            acc.push({
+              label: group.labelName,
+              labelId: group.labelId,
+              hosts: [host],
+            });
+          }
+        }
+      });
+      return acc;
+    }, [] as Array<{ label: string; labelId: number; hosts: Array<{ id: number; name: string; ip: string; labelIds: number[] }> }>);
+
+    return [...result, ...labelGroups];
+  }, [myHosts, searchText, t]);
+
+  const handleToggleHost = (hostId: number) => {
+    const newSelected = new Set(selectedHosts);
+    if (newSelected.has(hostId)) {
+      newSelected.delete(hostId);
+    } else {
+      newSelected.add(hostId);
+    }
+    const newSelectedArray = Array.from(newSelected);
+    setSelectedHostIds(newSelectedArray);
+    onChange?.(newSelectedArray);
+  };
+
+  const handleToggleGroup = (hostIds: number[]) => {
+    const newSelected = new Set(selectedHosts);
+    const allSelected = hostIds.every((id) => newSelected.has(id));
+
+    if (allSelected) {
+      hostIds.forEach((id) => newSelected.delete(id));
+    } else {
+      hostIds.forEach((id) => newSelected.add(id));
+    }
+
+    const newSelectedArray = Array.from(newSelected);
+    setSelectedHostIds(newSelectedArray);
+    onChange?.(newSelectedArray);
   };
 
   return (
-    <div className={`${className} flex w-full flex-wrap items-center gap-4`} style={style}>
-      <div className="flex min-w-[240px] flex-1 items-center gap-2">
-        <Select
-          className="w-full"
-          size="middle"
-          mode="multiple"
-          allowClear
-          value={value.filter((hostId) => !hostsFromLabels.has(hostId))}
-          options={filteredHostOptions}
-          placeholder={t('components.host-selector.host-placeholder')}
-          onChange={handleHostChange}
-          maxTagCount="responsive"
-          listHeight={300}
-          showSearch
-          optionFilterProp="searchLabel"
-          notFoundContent={t('components.host-selector.no-available-hosts')}
-          maxTagPlaceholder={(omittedValues) => <TagPlaceholder omittedValues={omittedValues} />}
+    <div className={`flex flex-col gap-3 ${className}`} style={style}>
+      <div className="relative">
+        <Input
+          prefix={<Iconify icon="flowbite:search-outline" className="text-gray-400" />}
+          placeholder={t('输入主机名/IP/标签检索')}
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          className="bg-gray-50 focus:border-blue-500 focus:ring-blue-500 w-full rounded-lg border-gray-200 pl-10 focus:ring-1"
         />
       </div>
 
-      <Tooltip
-        title={
-          enableLabelFilter
-            ? t('components.host-selector.disable-label-filter')
-            : t('components.host-selector.enable-label-filter')
-        }
-        placement="top"
+      <div
+        className="bg-white overflow-auto rounded-lg border border-gray-100 p-3"
+        style={{ maxHeight: '460px' }}
       >
-        <button
-          type="button"
-          onClick={() => handleFilterChange(!enableLabelFilter)}
-          className={`
-            inline-flex h-8 shrink-0 items-center gap-1 rounded px-3 text-xs font-medium 
-            transition-all duration-200 ease-in-out
-            ${
-              enableLabelFilter
-                ? 'bg-primary-50 text-primary-500 hover:bg-primary-100 shadow-sm'
-                : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-            }
-          `}
-        >
-          <TagsOutlined className="text-sm" />
-          {t('components.host-selector.label')}
-        </button>
-      </Tooltip>
-
-      {enableLabelFilter && (
-        <div className="flex min-w-[240px] flex-1 items-center gap-2">
-          <Tooltip title={t('components.host-selector.label-tooltip')} placement="top">
-            <QuestionCircleOutlined className="cursor-pointer text-gray-400 transition-colors duration-200 hover:text-gray-600" />
-          </Tooltip>
-          <Select
-            className="w-full"
-            size="middle"
-            mode="multiple"
-            allowClear
-            value={selectedLabels}
-            options={labelOptions}
-            placeholder={t('components.host-selector.label-placeholder')}
-            onChange={handleLabelChange}
-            maxTagCount="responsive"
-            listHeight={300}
-            showSearch
-            optionFilterProp="searchLabel"
-            maxTagPlaceholder={(omittedValues) => <TagPlaceholder omittedValues={omittedValues} />}
+        {groups.map((group) => (
+          <GroupItem
+            key={group.labelId}
+            label={group.label}
+            hosts={group.hosts}
+            selectedHosts={selectedHosts}
+            onToggleHost={handleToggleHost}
+            onToggleGroup={handleToggleGroup}
           />
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }

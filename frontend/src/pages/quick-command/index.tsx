@@ -1,6 +1,6 @@
-import { Button, Typography, App } from 'antd';
+import { Button, Modal, Tag } from 'antd';
 import * as monaco from 'monaco-editor';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
@@ -34,6 +34,7 @@ function QuickCommand() {
   const { themeMode } = useSettings();
   const { execQuickCommand } = useTaskOperations();
   const { list: hostList } = useHostList();
+  const [showHostSelector, setShowHostSelector] = useState(false);
   const isDarkMode = themeMode === 'dark';
 
   const {
@@ -150,15 +151,39 @@ function QuickCommand() {
     <div className="flex h-full flex-col gap-4 p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Typography.Text strong className="whitespace-nowrap">
-            {t('quick-command.select-host.title')}
-          </Typography.Text>
-          <HostSelector
-            hostList={hostList}
-            className="w-[600px]"
-            value={selectedHosts}
-            onChange={(selectedHosts: number[]) => setSelectedHosts(selectedHosts)}
-          />
+          <Button type="primary" onClick={() => setShowHostSelector(true)}>
+            选择主机
+          </Button>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">已选择：</span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {selectedHosts.map((hostId) => {
+                const host = hostList?.find((h) => h.id === hostId);
+                return (
+                  <Tag bordered={false} key={hostId}>
+                    {host?.name || hostId}
+                  </Tag>
+                );
+              })}
+              {selectedHosts.length === 0 && (
+                <span className="text-sm text-gray-400">未选择任何主机</span>
+              )}
+            </div>
+          </div>
+          <Modal
+            title="选择主机"
+            footer={null}
+            open={showHostSelector}
+            onCancel={() => setShowHostSelector(false)}
+            onOk={() => setShowHostSelector(false)}
+          >
+            <HostSelector
+              defaultValue={selectedHosts}
+              onChange={(newSelected) => {
+                setSelectedHosts(newSelected);
+              }}
+            />
+          </Modal>
         </div>
         <StatusDisplay event={commandStatus.event} duration={commandStatus.duration} />
       </div>
