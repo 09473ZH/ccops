@@ -1,10 +1,10 @@
-import { Button, Drawer, Form, FormInstance, Input, Select, Space, Row, Col } from 'antd';
-import React, { useMemo } from 'react';
+import { Button, Drawer, Form, FormInstance, Input, Select, Space, Row, Col, Tag } from 'antd';
+import React, { useMemo, useState } from 'react';
 
 import { RoleItem } from '@/api/services/software';
 import { PlaybookTaskReq } from '@/api/services/task';
 import HostSelector from '@/components/HostSelector';
-import { useHostList } from '@/hooks/use-host-list';
+import { useHostList } from '@/pages/host-manage/hooks/state/use-host';
 import { useRoleList } from '@/pages/software-manage/use-software';
 
 import { generateTaskName } from '../utils';
@@ -19,6 +19,8 @@ interface CreateTaskModalProps {
   form: FormInstance;
 }
 
+const MAX_HOST_COUNT = 5;
+
 export function CreateTaskModal({
   open,
   isRestarting,
@@ -28,6 +30,7 @@ export function CreateTaskModal({
 }: CreateTaskModalProps) {
   const { data: roleList } = useRoleList();
   const { list: hostList } = useHostList();
+  const [selectedHosts, setSelectedHosts] = useState<number[]>([]);
   const roleIdList = Form.useWatch('roleIdList', form);
   const generatedTaskName = useMemo(
     () => generateTaskName(roleIdList || [], roleList?.list || []),
@@ -55,7 +58,6 @@ export function CreateTaskModal({
     };
     onSubmit(submitData);
   };
-
   return (
     <Drawer
       title={isRestarting ? '重启任务' : '新建任务'}
@@ -79,7 +81,34 @@ export function CreateTaskModal({
               label="主机列表"
               rules={[{ required: true, message: '请选择主机' }]}
             >
-              <HostSelector hostList={hostList} />
+              <div className="mb-2 flex items-center gap-2">
+                <span className="text-xs text-gray-500">已选择：</span>
+                <div className="flex min-h-[22px] flex-wrap items-center gap-1.5">
+                  {selectedHosts.slice(0, MAX_HOST_COUNT).map((hostId) => {
+                    const host = hostList?.find((h) => h.id === hostId);
+                    return (
+                      <Tag bordered={false} key={hostId}>
+                        {host?.name || hostId}
+                      </Tag>
+                    );
+                  })}
+                  {selectedHosts.length > MAX_HOST_COUNT && (
+                    <span className="text-sm text-gray-400">
+                      等 {selectedHosts.length - MAX_HOST_COUNT} 个主机
+                    </span>
+                  )}
+                  {selectedHosts.length === 0 && (
+                    <span className="text-sm text-gray-400">未选择任何主机</span>
+                  )}
+                </div>
+              </div>
+              <HostSelector
+                className="max-h-[300px]"
+                defaultValue={selectedHosts}
+                onChange={(newSelected) => {
+                  setSelectedHosts(newSelected);
+                }}
+              />
             </Form.Item>
           </Col>
         </Row>
@@ -132,7 +161,7 @@ export function CreateTaskModal({
                 })}
               </div>
             ) : (
-              <div className="rounded-lg border py-12 text-center text-gray-500">
+              <div className="rounded-lg border border-gray-300 py-12 text-center text-gray-400">
                 请先在基本信息中选择软件
               </div>
             );

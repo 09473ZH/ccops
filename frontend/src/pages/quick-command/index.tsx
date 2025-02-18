@@ -1,4 +1,4 @@
-import { Button, Typography, App } from 'antd';
+import { Button, Tag } from 'antd';
 import * as monaco from 'monaco-editor';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,7 +28,7 @@ const EDITOR_KEYBINDINGS = [
     },
   },
 ];
-
+const MAX_HOST_COUNT = 5;
 function QuickCommand() {
   const { t } = useTranslation();
   const { themeMode } = useSettings();
@@ -147,64 +147,88 @@ function QuickCommand() {
   }, [handleExecute]);
 
   return (
-    <div className="flex h-full flex-col gap-4 p-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Typography.Text strong className="whitespace-nowrap">
-            {t('quick-command.select-host.title')}
-          </Typography.Text>
+    <div className="flex h-full">
+      {/* Left side - Host Selector */}
+      <div className="relative w-80 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
+        <div className="sticky top-0 h-full p-4">
+          <div className="mb-3 text-sm font-medium">选择主机</div>
           <HostSelector
-            hostList={hostList}
-            className="w-[600px]"
-            value={selectedHosts}
-            onChange={(selectedHosts: number[]) => setSelectedHosts(selectedHosts)}
+            defaultValue={selectedHosts}
+            onChange={(newSelected) => {
+              setSelectedHosts(newSelected);
+            }}
+            className="max-h-[calc(100vh-120px)] overflow-auto"
           />
         </div>
-        <StatusDisplay event={commandStatus.event} duration={commandStatus.duration} />
       </div>
 
-      <div className="h-[300px]">
-        <MonacoEditor
-          height="100%"
-          language="yaml"
-          value={content}
-          onChange={(value) => setContent(value || '')}
-          className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"
-          keybindings={EDITOR_KEYBINDINGS}
+      {/* Right side - Main content */}
+      <div className="flex flex-1 flex-col gap-4 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">已选择：</span>
+            <div className="flex min-h-[22px] flex-wrap items-center gap-1.5">
+              {selectedHosts.slice(0, MAX_HOST_COUNT).map((hostId) => {
+                const host = hostList?.find((h) => h.id === hostId);
+                return (
+                  <Tag bordered={false} key={hostId}>
+                    {host?.name || hostId}
+                  </Tag>
+                );
+              })}
+              {selectedHosts.length > MAX_HOST_COUNT &&
+                `等 ${selectedHosts.length - MAX_HOST_COUNT} 个主机 `}
+              {selectedHosts.length === 0 && (
+                <span className="text-sm text-gray-400">未选择任何主机</span>
+              )}
+            </div>
+          </div>
+          <StatusDisplay event={commandStatus.event} duration={commandStatus.duration} />
+        </div>
+
+        <div className="h-[300px]">
+          <MonacoEditor
+            height="100%"
+            language="yaml"
+            value={content}
+            onChange={(value) => setContent(value || '')}
+            className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"
+            keybindings={EDITOR_KEYBINDINGS}
+          />
+        </div>
+
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            type="primary"
+            loading={commandStatus.event === 'running'}
+            className="flex h-7 items-center rounded-md px-3"
+            onClick={handleExecute}
+          >
+            <div className="flex items-center gap-1.5 text-sm">
+              <Iconify
+                icon={
+                  navigator.userAgent.includes('Mac')
+                    ? 'material-symbols:keyboard-command-key'
+                    : 'material-symbols:keyboard-ctrl'
+                }
+                size={13}
+              />
+              <span className="opacity-75">+</span>
+              <Iconify icon="material-symbols:keyboard-return" size={13} />
+              <span>{t('quick-command.execute.title')}</span>
+            </div>
+          </Button>
+        </div>
+
+        <OutputPanel
+          output={messages}
+          autoScroll={autoScroll}
+          onAutoScrollChange={setAutoScroll}
+          onClear={clearMessages}
+          isDarkMode={isDarkMode}
+          error={error}
         />
       </div>
-
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          type="primary"
-          loading={commandStatus.event === 'running'}
-          className="flex h-7 items-center rounded-md px-3"
-          onClick={handleExecute}
-        >
-          <div className="flex items-center gap-1.5 text-sm">
-            <Iconify
-              icon={
-                navigator.userAgent.includes('Mac')
-                  ? 'material-symbols:keyboard-command-key'
-                  : 'material-symbols:keyboard-ctrl'
-              }
-              size={13}
-            />
-            <span className="opacity-75">+</span>
-            <Iconify icon="material-symbols:keyboard-return" size={13} />
-            <span>{t('quick-command.execute.title')}</span>
-          </div>
-        </Button>
-      </div>
-
-      <OutputPanel
-        output={messages}
-        autoScroll={autoScroll}
-        onAutoScrollChange={setAutoScroll}
-        onClear={clearMessages}
-        isDarkMode={isDarkMode}
-        error={error}
-      />
     </div>
   );
 }
