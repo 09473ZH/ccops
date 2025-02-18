@@ -103,7 +103,7 @@ export function CreateTaskModal({
                 </div>
               </div>
               <HostSelector
-                className="h-[300px]"
+                className="max-h-[300px]"
                 defaultValue={selectedHosts}
                 onChange={(newSelected) => {
                   setSelectedHosts(newSelected);
@@ -161,7 +161,7 @@ export function CreateTaskModal({
                 })}
               </div>
             ) : (
-              <div className="rounded-lg border py-12 text-center text-gray-500">
+              <div className="rounded-lg border border-gray-300 py-12 text-center text-gray-400">
                 请先在基本信息中选择软件
               </div>
             );
