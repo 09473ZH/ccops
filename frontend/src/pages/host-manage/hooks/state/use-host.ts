@@ -2,12 +2,25 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import configService from '@/api/services/config';
-import hostService, { HostListResponse } from '@/api/services/host';
+import hostService, { HostListResponse, MyHostListResponse } from '@/api/services/host';
 
 export function useHostList() {
   const { data, ...rest } = useQuery<HostListResponse>({
     queryKey: ['hostList'],
     queryFn: () => hostService.getHosts(),
+  });
+
+  return {
+    list: data?.list || [],
+    count: data?.count || 0,
+    ...rest,
+  };
+}
+
+export function useMyHosts() {
+  const { data, ...rest } = useQuery<MyHostListResponse>({
+    queryKey: ['myHosts'],
+    queryFn: () => hostService.getMyHosts(),
   });
 
   return {
