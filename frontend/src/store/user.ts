@@ -83,18 +83,10 @@ export const useSignIn = () => {
     mutationFn: userService.signin,
     onSuccess: (res) => {
       if (!res.accessToken || !res.refreshToken || !res.expireAt) {
-        console.log(
-          '登录失败：返回数据不完整',
-          res,
-          !res.accessToken,
-          !res.refreshToken,
-          !res.expireAt,
-        );
         toast.warning('登录失败：token信息不完整');
         return;
       }
 
-      // 确保只传入需要的字段
       const tokenInfo: Partial<SignInRes> = {
         accessToken: res.accessToken,
         refreshToken: res.refreshToken,
