@@ -2,40 +2,58 @@ import { Divider, MenuProps } from 'antd';
 import Dropdown, { DropdownProps } from 'antd/es/dropdown/dropdown';
 import React, { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
+import { NavLink } from 'react-router-dom';
 
 import { IconButton } from '@/components/Icon';
-import { useUserInfo, useSignOut } from '@/store/user';
+import { useUserInfo } from '@/hooks/useUser';
+import { useSignOut } from '@/store/user';
 import { useThemeToken } from '@/theme/hooks';
 
-// 导入 LoginStateProvider 和类型
 const LoginStateProvider = lazy(() => import('@/pages/sys/login/providers/LoginStateProvider'));
-// 导入默认头像
-const DEFAULT_AVATAR = 'https://api.dicebear.com/9.x/bottts/svg?seed=Riley';
+
+// https://www.dicebear.com/
+const DEFAULT_AVATAR = 'https://api.dicebear.com/9.x/initials/svg?backgroundType=gradientLinear';
 
 // 把使用 context 的部分抽出来作为子组件
 function AccountDropdownContent() {
-  const { username } = useUserInfo();
+  const { userInfo } = useUserInfo();
+  const { username, email, role } = userInfo || {};
   const signOut = useSignOut();
   const { t } = useTranslation();
   const logout = () => {
     signOut();
   };
-  const { colorBgElevated, borderRadiusLG, boxShadowSecondary } = useThemeToken();
+  const { colorBgElevated, borderRadiusLG } = useThemeToken();
+
+  // 生成基于用户名的头像URL
+  const avatarUrl = username
+    ? `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(username)}&backgroundType=gradientLinear`
+    : DEFAULT_AVATAR;
 
   const contentStyle: React.CSSProperties = {
     backgroundColor: colorBgElevated,
     borderRadius: borderRadiusLG,
-    boxShadow: boxShadowSecondary,
+    border: '1px solid #e5e7eb',
+    minWidth: '200px',
   };
 
   const menuStyle: React.CSSProperties = {
     boxShadow: 'none',
+    width: '100%',
   };
 
   const dropdownRender: DropdownProps['dropdownRender'] = (menu) => (
     <div style={contentStyle}>
-      <div className="flex flex-col items-start p-4">
-        <div>{username}</div>
+      <div className="px-3 py-2">
+        <div className="min-w-0">
+          <div className="truncate text-base font-medium text-gray-900 dark:text-gray-100">
+            {username}
+          </div>
+          <div className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">{email}</div>
+          <div className="mt-2 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+            {role}
+          </div>
+        </div>
       </div>
       <Divider style={{ margin: 0 }} />
       {React.cloneElement(menu as React.ReactElement, { style: menuStyle })}
@@ -44,16 +62,34 @@ function AccountDropdownContent() {
 
   const items: MenuProps['items'] = [
     {
-      label: <button className="text-warning font-bold">{t('sys.login.logout')}</button>,
+      label: <NavLink to="/account_manage">{t('sys.menu.user.account')}</NavLink>,
       key: '0',
+    },
+    { type: 'divider' },
+    {
+      label: (
+        <button className="font-bold text-orange-500" type="button">
+          {t('sys.login.logout')}
+        </button>
+      ),
+      key: '1',
       onClick: logout,
     },
   ];
 
   return (
-    <Dropdown menu={{ items }} trigger={['click']} dropdownRender={dropdownRender}>
-      <IconButton className="h-10 w-10 transform-none px-0 hover:scale-105">
-        <img className="h-8 w-8 rounded-full" src={DEFAULT_AVATAR} alt={username || 'user'} />
+    <Dropdown
+      menu={{ items }}
+      trigger={['click']}
+      dropdownRender={dropdownRender}
+      placement="bottomRight"
+    >
+      <IconButton className="h-9 w-9 transform-none px-0 transition-transform duration-200 hover:scale-105">
+        <img
+          className="h-7 w-7 rounded-full ring-2 ring-gray-200 dark:ring-gray-700"
+          src={avatarUrl}
+          alt={username || 'user'}
+        />
       </IconButton>
     </Dropdown>
   );

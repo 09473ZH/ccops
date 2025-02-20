@@ -35,7 +35,7 @@ function LoginForm() {
         initialValues={{
           remember: true,
           username: 'admin',
-          password: 'admin',
+          password: 'admin123',
         }}
         onFinish={handleFinish}
       >

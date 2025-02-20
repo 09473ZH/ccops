@@ -34,7 +34,7 @@ export const UserApi = {
   GetMe: `${ApiPath.Users}/me`, // 获取当前用户信息
   UpdateStatus: `${ApiPath.Users}/:id/status`, // 禁用/启用用户
   Initialize: `${ApiPath.Users}/me/initialize`, // 初始化用户密码
-  ResetPassword: `${ApiPath.Users}/:id/reset_password`, // 管理员重置用户密码
+  ResetPassword: `${ApiPath.Users}/:id/reset_password`, // 重置用户密码
   GetPermissions: `${ApiPath.Users}/:id/permissions`, // 获取用户权限信息
   UpdatePermissions: `${ApiPath.Users}/:id/permissions`, // 分配权限
 } as const;
