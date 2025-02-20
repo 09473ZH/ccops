@@ -6,6 +6,7 @@ import { NavLink } from 'react-router-dom';
 
 import { IconButton } from '@/components/Icon';
 import { useUserInfo } from '@/hooks/useUser';
+import { useSettings } from '@/store/setting';
 import { useSignOut } from '@/store/user';
 import { useThemeToken } from '@/theme/hooks';
 
@@ -24,20 +25,26 @@ function AccountDropdownContent() {
     signOut();
   };
   const { colorBgElevated, borderRadiusLG } = useThemeToken();
+  const { themeMode } = useSettings();
+  const isDarkMode = themeMode === 'dark';
 
   // 生成基于用户名的头像URL
   const avatarUrl = username
-    ? `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(username)}&backgroundType=gradientLinear`
+    ? `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
+        username,
+      )}&backgroundType=gradientLinear`
     : DEFAULT_AVATAR;
 
   const contentStyle: React.CSSProperties = {
     backgroundColor: colorBgElevated,
     borderRadius: borderRadiusLG,
-    border: '1px solid #e5e7eb',
+    border: '1px solid #e5e7eb ',
     minWidth: '200px',
   };
 
   const menuStyle: React.CSSProperties = {
+    backgroundColor: colorBgElevated,
+    borderRadius: borderRadiusLG,
     boxShadow: 'none',
     width: '100%',
   };
@@ -50,7 +57,7 @@ function AccountDropdownContent() {
             {username}
           </div>
           <div className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">{email}</div>
-          <div className="mt-2 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+          <div className="mt-2 inline-flex rounded-full  px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
             {role}
           </div>
         </div>
@@ -62,7 +69,14 @@ function AccountDropdownContent() {
 
   const items: MenuProps['items'] = [
     {
-      label: <NavLink to="/account_manage">{t('sys.menu.user.account')}</NavLink>,
+      label: (
+        <NavLink
+          to="/account_manage"
+          style={{ color: isDarkMode ? 'white' : 'black', textDecoration: 'none' }}
+        >
+          {t('sys.menu.user.account')}
+        </NavLink>
+      ),
       key: '0',
     },
     { type: 'divider' },
@@ -79,17 +93,16 @@ function AccountDropdownContent() {
 
   return (
     <Dropdown
-      menu={{ items }}
+      menu={{
+        items,
+        theme: isDarkMode ? 'dark' : 'light',
+      }}
       trigger={['click']}
       dropdownRender={dropdownRender}
       placement="bottomRight"
     >
       <IconButton className="h-9 w-9 transform-none px-0 transition-transform duration-200 hover:scale-105">
-        <img
-          className="h-7 w-7 rounded-full ring-2 ring-gray-200 dark:ring-gray-700"
-          src={avatarUrl}
-          alt={username || 'user'}
-        />
+        <img className="h-7 w-7 rounded-full ring-2" src={avatarUrl} alt={username || 'user'} />
       </IconButton>
     </Dropdown>
   );
