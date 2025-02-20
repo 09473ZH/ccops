@@ -1,11 +1,17 @@
+import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { Button, Form, Input, Tabs, Descriptions, Spin } from 'antd';
+import { Button, Form, Input, Switch, Spin } from 'antd';
+import React, { useEffect } from 'react';
 import { toast } from 'sonner';
 
 import userService from '@/api/services/user';
 import { useUserInfo } from '@/hooks/useUser';
 
-import type { DescriptionsProps } from 'antd';
+interface UserInfoForm {
+  username: string;
+  email: string;
+  role: string;
+}
 
 interface ResetPasswordForm {
   oldPassword: string;
@@ -13,15 +19,40 @@ interface ResetPasswordForm {
   confirmPassword: string;
 }
 
+const PASSWORD_RULES = {
+  minLength: 6,
+  pattern: /^[a-z0-9]+$/,
+};
+
+const FORM_RULES = {
+  password: [
+    { required: true, message: '请输入新密码' },
+    { min: PASSWORD_RULES.minLength, message: `密码长度至少为${PASSWORD_RULES.minLength}个字符` },
+    { pattern: PASSWORD_RULES.pattern, message: '密码只能包含数字和小写字母' },
+  ],
+};
+
 function AccountManage() {
-  const [form] = Form.useForm<ResetPasswordForm>();
+  const [userForm] = Form.useForm<UserInfoForm>();
+  const [passwordForm] = Form.useForm<ResetPasswordForm>();
   const { userInfo, isLoading } = useUserInfo();
-  const { username = '-', email = '-', role = '-', isEnabled = false } = userInfo ?? {};
+  const [showPasswordForm, setShowPasswordForm] = React.useState(false);
+
+  useEffect(() => {
+    if (userInfo) {
+      userForm.setFieldsValue({
+        username: userInfo.username,
+        email: userInfo.email,
+        role: userInfo.role,
+      });
+    }
+  }, [userInfo, userForm]);
+
   const resetPasswordMutation = useMutation({
     mutationFn: (data: ResetPasswordForm) => userService.resetMyPassword(data),
     onSuccess: () => {
       toast.success('密码重置成功');
-      form.resetFields();
+      passwordForm.resetFields();
     },
     onError: (error) => {
       toast.error(error.message);
@@ -32,76 +63,83 @@ function AccountManage() {
     e.preventDefault();
   };
 
-  const userInfoItems: DescriptionsProps['items'] = [
-    {
-      key: 'username',
-      label: '用户名',
-      children: username,
-      span: 1,
-    },
-    {
-      key: 'role',
-      label: '角色',
-      children: role,
-      span: 1,
-    },
-    {
-      key: 'email',
-      label: '邮箱',
-      children: email,
-      span: 1,
-    },
-    {
-      key: 'status',
-      label: '账户状态',
-      children: (
-        <span className={isEnabled ? 'text-green-600' : 'text-red-600'}>
-          {isEnabled ? '已启用' : '已禁用'}
-        </span>
-      ),
-      span: 1,
-    },
-  ];
+  return (
+    <div className="bg-white p-5">
+      <div className="container max-w-[720px]">
+        <div className="space-y-3">
+          {/* 用户信息部分 */}
+          <div>
+            <h2 className="dark: mb-4 flex items-center gap-2 text-xl font-normal text-gray-900 dark:text-gray-300">
+              <UserOutlined className="text-gray-600 dark:text-gray-300" />
+              Profile
+            </h2>
+            {isLoading ? (
+              <div className="flex min-h-[200px] items-center justify-center">
+                <Spin size="large" tip="Loading..." />
+              </div>
+            ) : (
+              <Form form={userForm} layout="vertical">
+                <div className="space-y-3">
+                  <Form.Item label="用户名" name="username">
+                    <Input disabled className="rounded-md" />
+                  </Form.Item>
 
-  const items = [
-    {
-      key: 'info',
-      label: '基本信息',
-      children: isLoading ? (
-        <div className="flex justify-center py-8">
-          <Spin />
-        </div>
-      ) : (
-        <Descriptions items={userInfoItems} column={{ xs: 1, sm: 2 }} size="default" />
-      ),
-    },
-    {
-      key: 'password',
-      label: '重置密码',
-      children: (
-        <div className="bg-white rounded-lg p-6">
-          <div className="mx-auto max-w-[480px]">
-            <div className="mb-8 text-center">
-              <h2 className="text-center text-xl font-semibold text-gray-900">设置新密码</h2>
-              <p className="mt-2 text-sm text-gray-600">
-                密码长度至少为6个字符, 且只能包含数字和小写字母
-              </p>
-            </div>
+                  <Form.Item label="邮箱" name="email">
+                    <Input disabled className="rounded-md" />
+                  </Form.Item>
 
+                  <Form.Item label="角色" name="role">
+                    <Input disabled className="rounded-md" />
+                  </Form.Item>
+
+                  <Form.Item label="账户状态">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-700 dark:text-gray-300">
+                        {userInfo?.isEnabled ? '已启用' : '已禁用'}
+                      </span>
+                      <Switch disabled checked={userInfo?.isEnabled} />
+                    </div>
+                  </Form.Item>
+                </div>
+              </Form>
+            )}
+          </div>
+
+          {/* 密码部分 */}
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-xl font-normal text-gray-900 dark:text-gray-300">
+              <LockOutlined className="text-gray-600 dark:text-gray-300" />
+              Password
+            </h2>
+            <Button
+              type="default"
+              onClick={() => setShowPasswordForm(!showPasswordForm)}
+              id="change-password-toggle"
+              size="middle"
+              className="flex items-center gap-1"
+            >
+              {showPasswordForm ? '隐藏' : '修改密码'}
+            </Button>
+          </div>
+
+          <div
+            className={`transition-all duration-300 ${showPasswordForm ? 'block' : 'hidden'}`}
+            id="password-form-section"
+          >
             <Form
-              form={form}
+              form={passwordForm}
               layout="vertical"
               onFinish={resetPasswordMutation.mutate}
-              className="space-y-6"
+              className="space-y-3"
             >
               <Form.Item
-                label="当前密码"
+                label={<span className="text-gray-700">当前密码</span>}
                 name="oldPassword"
                 rules={[{ required: true, message: '请输入当前密码' }]}
               >
                 <Input.Password
-                  placeholder="请输入当前密码"
-                  size="large"
+                  placeholder="输入当前密码"
+                  className="rounded-md"
                   onCopy={preventCopyPaste}
                   onPaste={preventCopyPaste}
                   onCut={preventCopyPaste}
@@ -109,16 +147,13 @@ function AccountManage() {
               </Form.Item>
 
               <Form.Item
-                label="新密码"
+                label={<span className="text-gray-700">新密码</span>}
                 name="password"
-                rules={[
-                  { required: true, message: '请输入新密码' },
-                  { min: 8, message: '密码长度至少为6个字符, 且只能包含数字和小写字母' },
-                ]}
+                rules={FORM_RULES.password}
               >
                 <Input.Password
-                  placeholder="请输入新密码"
-                  size="large"
+                  placeholder="输入新密码"
+                  className="rounded-md"
                   onCopy={preventCopyPaste}
                   onPaste={preventCopyPaste}
                   onCut={preventCopyPaste}
@@ -126,7 +161,7 @@ function AccountManage() {
               </Form.Item>
 
               <Form.Item
-                label="确认新密码"
+                label={<span className="text-gray-700">确认新密码</span>}
                 name="confirmPassword"
                 dependencies={['password']}
                 rules={[
@@ -142,39 +177,35 @@ function AccountManage() {
                 ]}
               >
                 <Input.Password
-                  placeholder="请再次输入新密码"
-                  size="large"
+                  placeholder="再次输入新密码"
+                  className="rounded-md"
                   onCopy={preventCopyPaste}
                   onPaste={preventCopyPaste}
                   onCut={preventCopyPaste}
                 />
               </Form.Item>
 
-              <Form.Item className="mb-0 mt-8">
+              <div className="mt-3">
+                <p className="mb-3 text-sm text-gray-500">
+                  密码长度至少为6个字符, 且只能包含数字和小写字母
+                </p>
                 <Button
                   type="primary"
                   htmlType="submit"
                   loading={resetPasswordMutation.isPending}
-                  block
-                  size="large"
-                  className="h-11"
+                  className="px-4"
+                  size="middle"
+                  id="submit-password-change"
                 >
-                  重置
+                  更新密码
                 </Button>
-              </Form.Item>
+              </div>
             </Form>
           </div>
         </div>
-      ),
-    },
-  ];
-
-  return (
-    <div className="bg-gray-50">
-      <div className="container mx-auto px-4">
-        <Tabs defaultActiveKey="info" items={items} />
       </div>
     </div>
   );
 }
+
 export default AccountManage;

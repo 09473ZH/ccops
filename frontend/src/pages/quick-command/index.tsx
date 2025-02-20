@@ -151,7 +151,7 @@ function QuickCommand() {
       {/* Left side - Host Selector */}
       <div className="relative w-80 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
         <div className="sticky top-0 h-full p-4">
-          <div className="mb-3 text-sm font-medium">选择主机</div>
+          <div className="mb-3 text-sm font-medium text-gray-900 dark:text-gray-300">选择主机</div>
           <HostSelector
             defaultValue={selectedHosts}
             onChange={(newSelected) => {
