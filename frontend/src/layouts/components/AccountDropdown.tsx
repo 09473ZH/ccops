@@ -57,7 +57,7 @@ function AccountDropdownContent() {
             {username}
           </div>
           <div className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">{email}</div>
-          <div className="mt-2 inline-flex rounded-full  px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+          <div className="mt-2 inline-flex rounded-full  bg-gray-300 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
             {role}
           </div>
         </div>
