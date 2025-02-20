@@ -1,6 +1,6 @@
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { Button, Form, Input, Switch, Spin } from 'antd';
+import { Button, Form, Input, Spin } from 'antd';
 import React, { useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -69,7 +69,7 @@ function AccountManage() {
         <div className="space-y-3">
           {/* 用户信息部分 */}
           <div>
-            <h2 className="dark: mb-4 flex items-center gap-2 text-xl font-normal text-gray-900 dark:text-gray-300">
+            <h2 className="mb-4 flex items-center gap-2 text-xl font-normal text-gray-900 dark:text-gray-300">
               <UserOutlined className="text-gray-600 dark:text-gray-300" />
               Profile
             </h2>
@@ -90,15 +90,6 @@ function AccountManage() {
 
                   <Form.Item label="角色" name="role">
                     <Input disabled className="rounded-md" />
-                  </Form.Item>
-
-                  <Form.Item label="账户状态">
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-700 dark:text-gray-300">
-                        {userInfo?.isEnabled ? '已启用' : '已禁用'}
-                      </span>
-                      <Switch disabled checked={userInfo?.isEnabled} />
-                    </div>
                   </Form.Item>
                 </div>
               </Form>
