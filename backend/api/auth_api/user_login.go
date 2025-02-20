@@ -61,15 +61,7 @@ func (AuthApi) UserLoginView(c *gin.Context) {
 	loginResponse := res.LoginResponse{
 		AccessToken:  tokenPair.AccessToken,
 		RefreshToken: tokenPair.RefreshToken,
-		UserInfo: map[string]interface{}{
-			"isInit":    userModel.IsInit,
-			"isEnabled": userModel.IsEnabled,
-			"email":     userModel.Email,
-			"id":        userModel.ID,
-			"username":  userModel.Username,
-			"role":      userModel.Role,
-		},
-		ExpireAt: time.Now().Add(time.Duration(global.Config.Jwt.AccessExpires) * time.Hour).Unix(),
+		ExpireAt:     time.Now().Add(time.Duration(global.Config.Jwt.AccessExpires) * time.Hour).Unix(),
 	}
 
 	res.OkWithData(loginResponse, c)
