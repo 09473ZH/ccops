@@ -7,6 +7,10 @@ import (
 	"ccops/router"
 	utils "ccops/utils"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
@@ -35,8 +39,33 @@ func main() {
 
 	utils.PrintSystem()
 
+	// 设置信号处理
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigChan
+		global.Log.Infof("收到信号: %v, 开始执行清理操作...", sig)
+
+		// 执行清理操作
+		if global.DB != nil {
+			db, err := global.DB.DB()
+			if err == nil {
+				db.Close()
+				global.Log.Info("数据库连接已关闭")
+			}
+		}
+
+		// 等待一段时间确保其他goroutine完成
+		time.Sleep(time.Second)
+
+		global.Log.Info("清理完成，程序退出")
+		os.Exit(0)
+	}()
+
+	// 启动HTTP服务
 	err1 := router.Run(addr)
 	if err1 != nil {
-		global.Log.Fatalf(err1.Error())
+		global.Log.Fatalf("服务启动失败: %v", err1)
 	}
 }
