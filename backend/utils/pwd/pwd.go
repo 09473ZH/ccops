@@ -28,7 +28,22 @@ func CheckPwd(hashPwd string, pwd string) bool {
 	return true
 }
 
-// ValidatePasswordFormat 验证密码是否仅包含小写字母和数字，且长度至少为6位
+// ValidatePasswordFormat 验证密码复杂度
+// 要求：
+// 1. 长度至少8位
+// 2. 必须包含字母和数字
 func ValidatePasswordFormat(password string) bool {
-	return regexp.MustCompile(`^[a-z0-9]{6,}$`).MatchString(password)
+	// 检查长度是否至少8位
+	if len(password) < 8 {
+		return false
+	}
+
+	// 定义密码规则
+	var (
+		hasLetter = regexp.MustCompile(`[a-zA-Z]`).MatchString(password)
+		hasNumber = regexp.MustCompile(`[0-9]`).MatchString(password)
+	)
+
+	// 必须同时满足包含字母和数字
+	return hasLetter && hasNumber
 }
