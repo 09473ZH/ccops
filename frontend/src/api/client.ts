@@ -37,11 +37,11 @@ let isRefreshing = false;
 
 // 判断token是否过期
 function isTokenExpired(): boolean {
-  const { userToken } = useUserStore.getState();
-  if (!userToken.accessToken) return true;
+  const { tokenInfo } = useUserStore.getState();
+  if (!tokenInfo.accessToken) return true;
 
   try {
-    const payload = JSON.parse(atob(userToken.accessToken.split('.')[1]));
+    const payload = JSON.parse(atob(tokenInfo.accessToken.split('.')[1]));
     // 提前5分钟判定为过期
     return payload.exp * 1000 < Date.now() + 5 * 60 * 1000;
   } catch {
@@ -54,16 +54,16 @@ async function refreshToken(): Promise<void> {
   try {
     if (refreshTokenPromise) return await refreshTokenPromise;
 
-    const { userToken } = useUserStore.getState();
-    if (!userToken.refreshToken) throw new Error('No refresh token');
+    const { tokenInfo } = useUserStore.getState();
+    if (!tokenInfo.refreshToken) throw new Error('No refresh token');
 
     isRefreshing = true;
     refreshTokenPromise = (async () => {
       try {
-        const response = await fetch(`${BASE_URL}/api/refresh`, {
+        const response = await fetch(`${BASE_URL}/api/auth/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken: userToken.refreshToken }),
+          body: JSON.stringify({ refreshToken: tokenInfo.refreshToken }),
         });
 
         if (!response.ok) {
@@ -72,9 +72,9 @@ async function refreshToken(): Promise<void> {
 
         const data = await response.json();
         if (data.code === ResultEnum.SUCCESS && data.data?.accessToken) {
-          useUserStore.getState().actions.setUserToken({
+          useUserStore.getState().actions.setTokenInfo({
             accessToken: data.data.accessToken,
-            refreshToken: userToken.refreshToken,
+            refreshToken: tokenInfo.refreshToken,
           });
 
           // 执行队列中的请求
@@ -83,7 +83,7 @@ async function refreshToken(): Promise<void> {
           throw new Error(data.msg || 'Refresh failed');
         }
       } catch (error) {
-        useUserStore.getState().actions.clearUserInfoAndToken();
+        useUserStore.getState().actions.clearToken();
         throw error;
       } finally {
         refreshTokenPromise = null;
@@ -97,7 +97,7 @@ async function refreshToken(): Promise<void> {
     refreshTokenPromise = null;
     requestQueue = [];
     isRefreshing = false;
-    useUserStore.getState().actions.clearUserInfoAndToken();
+    useUserStore.getState().actions.clearToken();
     throw error;
   }
 }
@@ -136,11 +136,11 @@ async function request<T>(endpoint: string, config: RequestConfig = {}): Promise
 
   // 添加认证头，白名单接口不添加token
   if (!skipAuth && !whiteList.includes(endpoint)) {
-    const { userToken } = useUserStore.getState();
-    if (userToken.accessToken) {
+    const { tokenInfo } = useUserStore.getState();
+    if (tokenInfo.accessToken) {
       Object.assign(headers, {
-        Authorization: `Bearer ${userToken.accessToken}`,
-        'X-Refresh-Token': userToken.refreshToken || '',
+        Authorization: `Bearer ${tokenInfo.accessToken}`,
+        'X-Refresh-Token': tokenInfo.refreshToken || '',
       });
     }
   }

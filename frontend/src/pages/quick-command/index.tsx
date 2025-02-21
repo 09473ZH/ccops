@@ -28,7 +28,7 @@ const EDITOR_KEYBINDINGS = [
     },
   },
 ];
-const MAX_HOST_COUNT = 5;
+const MAX_HOST_COUNT = 3;
 function QuickCommand() {
   const { t } = useTranslation();
   const { themeMode } = useSettings();
@@ -151,7 +151,7 @@ function QuickCommand() {
       {/* Left side - Host Selector */}
       <div className="relative w-80 flex-shrink-0 border-r border-gray-200 dark:border-gray-700">
         <div className="sticky top-0 h-full p-4">
-          <div className="mb-3 text-sm font-medium">选择主机</div>
+          <div className="mb-3 text-sm font-medium text-gray-900 dark:text-gray-300">选择主机</div>
           <HostSelector
             defaultValue={selectedHosts}
             onChange={(newSelected) => {
@@ -176,8 +176,7 @@ function QuickCommand() {
                   </Tag>
                 );
               })}
-              {selectedHosts.length > MAX_HOST_COUNT &&
-                `等 ${selectedHosts.length - MAX_HOST_COUNT} 个主机 `}
+              {selectedHosts.length > MAX_HOST_COUNT && `等 ${selectedHosts.length} 个主机 `}
               {selectedHosts.length === 0 && (
                 <span className="text-sm text-gray-400">未选择任何主机</span>
               )}

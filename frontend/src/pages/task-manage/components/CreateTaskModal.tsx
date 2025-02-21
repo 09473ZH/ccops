@@ -93,9 +93,7 @@ export function CreateTaskModal({
                     );
                   })}
                   {selectedHosts.length > MAX_HOST_COUNT && (
-                    <span className="text-sm text-gray-400">
-                      等 {selectedHosts.length - MAX_HOST_COUNT} 个主机
-                    </span>
+                    <span className="text-sm text-gray-400">等 {selectedHosts.length} 个主机</span>
                   )}
                   {selectedHosts.length === 0 && (
                     <span className="text-sm text-gray-400">未选择任何主机</span>
