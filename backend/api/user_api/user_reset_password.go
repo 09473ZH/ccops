@@ -33,7 +33,7 @@ func (UserApi) ResetUserPassword(c *gin.Context) {
 		return
 	}
 	if !pwd.ValidatePasswordFormat(cr.Password) {
-		res.FailWithMessage("密码格式不正确，必须为小写字母和数字，且至少6位", c)
+		res.FailWithMessage("密码必须至少8位，包含字母和数字", c)
 		return
 	}
 	my.Password = pwd.HashPwd(cr.Password)

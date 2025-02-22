@@ -84,8 +84,7 @@ func FailWithCode(code ErrorCode, c *gin.Context) {
 
 // LoginResponse 登录响应结构体
 type LoginResponse struct {
-	AccessToken  string      `json:"accessToken"`  // 访问令牌
-	RefreshToken string      `json:"refreshToken"` // 刷新令牌
-	UserInfo     interface{} `json:"userInfo"`     // 用户信息
-	ExpireAt     int64       `json:"expireAt"`     // 访问令牌过期时间（时间戳）
+	AccessToken  string `json:"accessToken"`  // 访问令牌
+	RefreshToken string `json:"refreshToken"` // 刷新令牌
+	ExpireAt     int64  `json:"expireAt"`     // 访问令牌过期时间（时间戳）
 }

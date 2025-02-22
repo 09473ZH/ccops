@@ -56,7 +56,9 @@ export function OutputPanel({
   return (
     <div className="flex h-[300px] flex-col">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm font-medium">{t('quick-command.output.title')}</span>
+        <span className="text-sm font-medium text-gray-900 dark:text-gray-300">
+          {t('quick-command.output.title')}
+        </span>
         <div className="flex items-center gap-2">
           <Switch
             size="small"

@@ -1,5 +1,5 @@
 import { Table, Button, Input, Modal } from 'antd';
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 
 import type { HostInfo } from '@/api/services/host';
 import { Iconify } from '@/components/Icon';
@@ -65,6 +65,39 @@ function HostManage() {
     open(ModalName.AssignLabel);
   };
 
+  const batchActions = [
+    <Button
+      key="ssh"
+      type="text"
+      size="small"
+      className="hover:bg-white/10 flex items-center"
+      icon={<Iconify icon="flowbite:code-outline" />}
+      onClick={() => open(ModalName.SshConfig)}
+    >
+      SSH 配置
+    </Button>,
+    <Button
+      key="delete"
+      type="text"
+      danger
+      size="small"
+      className="hover:bg-white/10 flex items-center"
+      icon={<Iconify icon="flowbite:trash-bin-outline" />}
+      onClick={() => {
+        Modal.confirm({
+          title: '确认删除',
+          content: `确定要删除选中的 ${table.selectedRows.length} 个主机吗？`,
+          okText: '确认',
+          cancelText: '取消',
+          okButtonProps: { danger: true },
+          onOk: () => actions.deleteHosts.mutate(table.selectedRows as number[]),
+        });
+      }}
+    >
+      删除所选项
+    </Button>,
+  ];
+
   const columns = getColumns(
     editing,
     handleEditName,
@@ -73,85 +106,9 @@ function HostManage() {
     actions.deleteHosts.mutate,
     setEditing,
     hostList,
+    hasSelected,
+    batchActions,
   );
-
-  const getTableColumns = () => {
-    const filteredColumns = columns.filter((col) =>
-      table.visibleColumns.includes(col.key as string),
-    );
-
-    if (!hasSelected) {
-      return filteredColumns;
-    }
-
-    const batchActions = [
-      <Button
-        key="ssh"
-        type="text"
-        size="small"
-        className="hover:bg-white/10 flex items-center"
-        icon={<Iconify icon="flowbite:code-outline" />}
-        onClick={() => open(ModalName.SshConfig)}
-      >
-        SSH 配置
-      </Button>,
-      <Button
-        key="delete"
-        type="text"
-        danger
-        size="small"
-        className="hover:bg-white/10 flex items-center"
-        icon={<Iconify icon="flowbite:trash-bin-outline" />}
-        onClick={() => {
-          Modal.confirm({
-            title: '确认删除',
-            content: `确定要删除选中的 ${table.selectedRows.length} 个主机吗？`,
-            okText: '确认',
-            cancelText: '取消',
-            okButtonProps: { danger: true },
-            onOk: () => actions.deleteHosts.mutate(table.selectedRows as number[]),
-          });
-        }}
-      >
-        删除所选项
-      </Button>,
-    ];
-
-    const firstColumn = {
-      title: (
-        <div className="flex w-full items-center">
-          <div className="flex items-center gap-2 pl-2">
-            <span className="text-xs text-gray-600 dark:text-gray-300">
-              已选择 {table.selectedRows.length} 项
-            </span>
-            <div className="flex items-center gap-3">{batchActions}</div>
-          </div>
-        </div>
-      ),
-      dataIndex: 'placeholder',
-      key: 'placeholder',
-      colSpan: filteredColumns.length,
-      width: 0,
-      onHeaderCell: () => ({
-        style: {
-          padding: '8px 16px',
-        },
-      }),
-      onCell: () => ({
-        style: {
-          padding: 0,
-        },
-      }),
-    };
-
-    return [
-      firstColumn,
-      ...filteredColumns.map((col) => ({
-        ...col,
-        title: ' ',
-      })),
-    ];
-  };
 
   return (
     <div className="flex h-full flex-col p-5">
@@ -196,7 +153,7 @@ function HostManage() {
       {/* 主机列表表格 */}
       <Table
         scroll={{ x: 'max-content' }}
-        columns={getTableColumns()}
+        columns={columns}
         dataSource={paginatedData}
         loading={isLoading}
         rowSelection={{

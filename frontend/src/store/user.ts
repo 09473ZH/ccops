@@ -1,89 +1,104 @@
 import { useMutation } from '@tanstack/react-query';
-import { App } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
-import userService, { SignInReq } from '@/api/services/user';
-
-import { UserInfo, UserToken } from '#/entity';
-import { StorageEnum } from '#/enum';
+import userService, { SignInReq, SignInRes } from '@/api/services/user';
 
 const { VITE_APP_HOMEPAGE: HOMEPAGE } = import.meta.env;
 
+// 定义初始状态
+const initialState: SignInRes = {
+  accessToken: '',
+  refreshToken: '',
+  expireAt: 0,
+};
+
 type UserStore = {
-  userInfo: Partial<UserInfo>;
-  userToken: UserToken;
-  // 使用 actions 命名空间来存放所有的 action
+  tokenInfo: SignInRes;
   actions: {
-    setUserInfo: (userInfo: UserInfo) => void;
-    setUserToken: (token: UserToken) => void;
-    clearUserInfoAndToken: () => void;
+    setTokenInfo: (token: Partial<SignInRes>) => void;
+    clearToken: () => void;
   };
 };
 
 const useUserStore = create<UserStore>()(
   persist(
     (set) => ({
-      userInfo: {},
-      userToken: {},
+      tokenInfo: initialState,
       actions: {
-        setUserInfo: (userInfo) => {
-          set({ userInfo });
-        },
-        setUserToken: (userToken) => {
-          set({ userToken });
-        },
-        clearUserInfoAndToken() {
-          set({ userInfo: {}, userToken: {} });
-        },
+        setTokenInfo: (tokenInfo) =>
+          set((state) => ({
+            tokenInfo: {
+              ...state.tokenInfo,
+              ...tokenInfo,
+            },
+          })),
+        clearToken: () => set({ tokenInfo: initialState }),
       },
     }),
     {
-      name: 'userStore', // name of the item in the storage (must be unique)
-      storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
-      partialize: (state) => ({
-        [StorageEnum.UserInfo]: state.userInfo,
-        [StorageEnum.UserToken]: state.userToken,
-      }),
+      name: 'user-storage', // localStorage 中的 key 名
+      storage: createJSONStorage(() => localStorage), // 显式指定使用 localStorage
+      partialize: (state) => ({ tokenInfo: state.tokenInfo }), // 只持久化 tokenInfo
     },
   ),
 );
 
-export const useUserInfo = () => useUserStore((state) => state.userInfo);
-export const useUserToken = () => useUserStore((state) => state.userToken);
-export const useUserPermission = () => useUserStore((state) => state.userInfo.permissions);
+export const useRefreshToken = () => {
+  const { setTokenInfo, clearToken } = useUserActions();
+
+  return useMutation({
+    mutationFn: userService.refreshToken,
+    onSuccess: (res) => {
+      setTokenInfo({
+        accessToken: res.accessToken,
+        refreshToken: res.refreshToken,
+        expireAt: res.expireAt,
+      });
+      return res;
+    },
+    onError: () => {
+      clearToken();
+      return initialState;
+    },
+  });
+};
+
+export const useTokenInfo = () => {
+  const tokenInfo = useUserStore((state) => state.tokenInfo);
+  return tokenInfo;
+};
+
+export const useUserToken = () => useUserStore((state) => state.tokenInfo);
+
 export const useUserActions = () => useUserStore((state) => state.actions);
 
 export const useSignIn = () => {
-  const navigatge = useNavigate();
-  const { message } = App.useApp();
-  const { setUserToken, setUserInfo } = useUserActions();
+  const navigate = useNavigate();
+  const setTokenInfo = useUserStore((state) => state.actions.setTokenInfo);
 
   const signInMutation = useMutation({
     mutationFn: userService.signin,
     onSuccess: (res) => {
-      if (!res?.accessToken || !res?.refreshToken || !res?.userInfo) {
-        message.warning({
-          content: '登录失败',
-          duration: 3,
-        });
+      if (!res.accessToken || !res.refreshToken || !res.expireAt) {
+        toast.warning('登录失败：token信息不完整');
         return;
       }
 
-      setUserToken({
+      const tokenInfo: Partial<SignInRes> = {
         accessToken: res.accessToken,
         refreshToken: res.refreshToken,
-      });
-      setUserInfo(res.userInfo);
-      navigatge(HOMEPAGE, { replace: true });
+        expireAt: res.expireAt,
+      };
+
+      setTokenInfo(tokenInfo);
+      navigate(HOMEPAGE, { replace: true });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       const errorMessage = error?.message || '登录失败，请稍后重试';
-      message.warning({
-        content: errorMessage,
-        duration: 3,
-      });
+      toast.error(errorMessage);
     },
   });
 
@@ -92,10 +107,10 @@ export const useSignIn = () => {
 
 export const useSignOut = () => {
   const navigate = useNavigate();
-  const { clearUserInfoAndToken } = useUserActions();
+  const { clearToken } = useUserActions();
 
   return () => {
-    clearUserInfoAndToken();
+    clearToken();
     navigate('/login', { replace: true });
   };
 };

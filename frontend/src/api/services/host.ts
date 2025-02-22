@@ -12,6 +12,16 @@ export interface DiskInfo {
   createdAt: string;
 }
 
+export interface MyHostInfo {
+  labelName: string;
+  labelId: number;
+  hosts: {
+    hostId: number;
+    hostName: string;
+    hostIp: string;
+  }[];
+}
+
 export interface HostInfo {
   id: number;
   name: string;
@@ -53,6 +63,11 @@ export interface HostListResponse {
   list: HostInfo[];
 }
 
+export interface MyHostListResponse {
+  count: number;
+  list: MyHostInfo[];
+}
+
 /**
  * 主机管理
  */
@@ -60,6 +75,11 @@ const hostService = {
   /** 获取主机列表 */
   getHosts() {
     return get<HostListResponse>(HostApi.List);
+  },
+
+  /** 获取我的主机列表 */
+  getMyHosts() {
+    return get<MyHostListResponse>(HostApi.GetMine);
   },
 
   /** 获取主机详情 */
@@ -85,11 +105,6 @@ const hostService = {
   /** 获取新增主机命令 */
   getCreateHostCommand(osFamily: string) {
     return get<{ command: string }>(`${HostApi.Install}?osFamily=${osFamily}`);
-  },
-
-  /** 获取我的主机列表 */
-  getMyHosts() {
-    return get<HostListResponse>(HostApi.GetMine);
   },
 
   /** 搜索主机 */

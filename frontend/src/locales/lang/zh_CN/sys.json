@@ -118,6 +118,7 @@
       "publish_config": "配置发布",
       "quick_command": "快捷命令",
       "system_settings": "系统设置",
+      "account_manage": "账号管理",
       "clipboard": "剪贴板",
       "token_expired": "Token失效",
       "menulevel": {
