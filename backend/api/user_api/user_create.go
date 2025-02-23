@@ -14,6 +14,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type UserPermission struct {
+	HostIds  []uint `json:"hostIds"`
+	LabelIds []uint `json:"labelIds"` // 新增标签ID列表
+}
+
 func (UserApi) UserCreate(c *gin.Context) {
 	_claims, _ := c.Get("claims")
 	claims := _claims.(*jwts.CustomClaims)
@@ -21,10 +26,7 @@ func (UserApi) UserCreate(c *gin.Context) {
 		res.FailWithMessage("权限不足", c)
 		return
 	}
-	type UserPermission struct {
-		HostIds  []uint `json:"hostIds"`
-		LabelIds []uint `json:"labelIds"` // 新增标签ID列表
-	}
+
 	// 定义请求结构体
 	type CreateUserReq struct {
 		UserName    string         `json:"username"`
