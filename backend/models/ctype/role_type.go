@@ -3,7 +3,7 @@ package ctype
 type Role string
 
 const (
-	PermissionAdmin          = "系统管理员" // 系统管理员
-	PermissionServiceManager = "用户"    // 用户
+	PermissionAdmin          = "admin" // 系统管理员
+	PermissionServiceManager = "user"  // 用户
 
 )
