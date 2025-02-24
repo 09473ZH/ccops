@@ -1,5 +1,6 @@
 {
   "config": {
+    "accordionModeDesc": "Accordion Mode",
     "aiName": "AI Name",
     "aiNameDesc": "Set the name of AI assistant",
     "apiConfig": "API Configuration",
@@ -9,11 +10,16 @@
     "baseUrlDesc": "Set the base URL for the system",
     "baseUrlRequired": "Please input base URL",
     "basicConfig": "Basic Configuration",
+    "collapseMode": "Collapse Mode",
     "inputPlaceholder": "Please input {{label}}",
+    "keyConfig": "Safe Configuration",
+    "llmConfig": "LLM Configuration",
+    "multipleModeDesc": "Multiple Mode",
     "privateKey": "Private Key",
     "privateKeyDesc": "Private key for decryption",
     "publicKey": "Public Key",
     "publicKeyDesc": "Public key for encryption",
+    "required": "Please input",
     "resetAll": "Clear All",
     "saveAll": "Save All",
     "saveAllSuccess": "All settings saved",
@@ -26,13 +32,28 @@
     "securityConfig": "Security Configuration",
     "serverUrl": "Server URL",
     "serverUrlDesc": "API server address",
-    "title": "System Settings",
-    "collapseMode": "Collapse Mode",
-    "accordionModeDesc": "Accordion Mode",
-    "multipleModeDesc": "Multiple Mode",
-    "required": "Please input",
-    "keyConfig": "Safe Configuration",
-    "llmConfig": "LLM Configuration",
-    "systemConfig": "System Configuration"
-  }
+    "systemConfig": "System Configuration",
+    "title": "System Settings"
+  },
+  "user": {
+    "createUser": "Create User",
+    "deleteConfirm": "Are you sure you want to delete this user?",
+    "deleteSuccess": "User deleted successfully",
+    "editUser": "Edit User",
+    "email": "Email",
+    "hosts": "Hosts",
+    "labels": "Labels",
+    "permissionUpdateSuccess": "User permissions updated successfully",
+    "permissions": "Permissions",
+    "resetPassword": "Reset Password",
+    "role": "Role",
+    "roleAdmin": "Administrator",
+    "roleUser": "User",
+    "search": "Username/Email",
+    "status": "Status",
+    "statusUpdateSuccess": "User status updated successfully",
+    "username": "Username"
+  },
+  "user.cannotDeleteSelf": "cannot delete yourself",
+  "user.deleteUser": "delete user"
 }

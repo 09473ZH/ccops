@@ -1,28 +1,45 @@
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
+import { Outlet } from 'react-router-dom';
 
 import { Iconify } from '@/components/Icon';
-
-import Wrapper from './wrapper';
+import { CircleLoading } from '@/components/Loading';
 
 import { AppRouteObject } from '#/router';
 
-const SystemSettingsPage = lazy(() => import('@/pages/system-config'));
+const CommonSettingPage = lazy(() => import('@/pages/admin-setting/common-setting'));
+const UserManagePage = lazy(() => import('@/pages/admin-setting/user-manage'));
 
-const systemSettings: AppRouteObject[] = [
-  {
-    order: 6,
-    path: 'system_settings',
-    element: (
-      <Wrapper>
-        <SystemSettingsPage />
-      </Wrapper>
-    ),
-    meta: {
-      label: 'sys.menu.system_settings',
-      icon: <Iconify icon="solar:settings-minimalistic-bold-duotone" size={24} />,
-      key: '/system_settings',
-    },
+const adminSettings: AppRouteObject = {
+  order: 6,
+  path: 'admin_settings',
+  element: (
+    <Suspense fallback={<CircleLoading />}>
+      <Outlet />
+    </Suspense>
+  ),
+  meta: {
+    label: 'sys.menu.admin_settings',
+    icon: <Iconify icon="solar:settings-minimalistic-bold-duotone" size={24} />,
+    key: '/admin_settings',
   },
-];
+  children: [
+    {
+      path: 'common_settings',
+      element: <CommonSettingPage />,
+      meta: {
+        label: 'sys.menu.common_settings',
+        key: '/admin_settings/common_settings',
+      },
+    },
+    {
+      path: 'user_manage',
+      element: <UserManagePage />,
+      meta: {
+        label: 'sys.menu.user_manage',
+        key: '/admin_settings/user_manage',
+      },
+    },
+  ],
+};
 
-export default systemSettings;
+export default adminSettings;

@@ -1,5 +1,6 @@
 {
   "config": {
+    "accordionModeDesc": "手风琴模式",
     "aiName": "AI 名称",
     "aiNameDesc": "设置 AI 助手的名称",
     "apiConfig": "API 配置",
@@ -9,11 +10,16 @@
     "baseUrlDesc": "设置系统的基础 URL 地址",
     "baseUrlRequired": "请输入基础 URL",
     "basicConfig": "基础配置",
+    "collapseMode": "折叠模式",
     "inputPlaceholder": "请输入{{label}}",
+    "keyConfig": "公钥配置",
+    "llmConfig": "大模型配置",
+    "multipleModeDesc": "多选模式",
     "privateKey": "私钥",
     "privateKeyDesc": "用于解密通信的私钥",
     "publicKey": "公钥",
     "publicKeyDesc": "用于加密通信的公钥",
+    "required": "请填写",
     "resetAll": "清空输入",
     "saveAll": "保存所有配置",
     "saveAllSuccess": "所有配置已保存",
@@ -26,13 +32,29 @@
     "securityConfig": "安全配置",
     "serverUrl": "服务器 URL",
     "serverUrlDesc": "API 服务器地址",
-    "title": "系统配置",
-    "collapseMode": "折叠模式",
-    "accordionModeDesc": "手风琴模式",
-    "multipleModeDesc": "多选模式",
-    "required": "请填写",
-    "keyConfig": "公钥配置",
-    "llmConfig": "大模型配置",
-    "systemConfig": "系统配置" 
+    "systemConfig": "系统配置",
+    "title": "系统配置"
+  },
+  "user": {
+    "createUser": "创建用户",
+    "deleteConfirm": "确定要删除该用户吗？",
+    "deleteSuccess": "用户删除成功",
+    "editUser": "编辑用户",
+    "email": "邮箱",
+    "hosts": "主机",
+    "labels": "主机标签",
+    "permissionUpdateSuccess": "用户权限更新成功",
+    "permissions": "权限分配",
+    "resetPassword": "重置密码",
+    "role": "角色",
+    "roleAdmin": "管理员",
+    "roleUser": "用户",
+    "search": "用户名/邮箱",
+    "status": "状态",
+    "statusUpdateSuccess": "用户状态更新成功",
+    "username": "用户名",
+    "cannotDeleteSelf": "不能删除当前用户",
+    "deleteUser": "删除用户"
   }
 }
+

@@ -118,7 +118,9 @@
       "quick_command": "Quick Command",
       "software_manage": "Software Manage",
       "task_manage": "Task Manage",
-      "system_settings": "System Settings",
+      "common_settings": "Common Settings",
+      "admin_settings": "Admin Settings",
+      "user_manage": "User Manage",
       "clipboard": "Clipboard",
       "token_expired": "Token Expired",
       "menulevel": {

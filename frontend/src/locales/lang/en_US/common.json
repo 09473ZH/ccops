@@ -11,11 +11,15 @@
     "queryText": "Search",
     "inputText": "Please enter",
     "chooseText": "Please choose",
+    "edit": "Edit",
 
     "redo": "Refresh",
     "back": "Back",
 
     "light": "Light",
-    "dark": "Dark"
+    "dark": "Dark",
+
+    "actions": "Actions",
+    "delete": "Delete"
   }
 }
