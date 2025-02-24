@@ -5,7 +5,7 @@ import React, { useEffect } from 'react';
 import { toast } from 'sonner';
 
 import userService from '@/api/services/user';
-import { useUserInfo } from '@/hooks/useUser';
+import { useUserInfo } from '@/hooks/use-user';
 
 interface UserInfoForm {
   username: string;

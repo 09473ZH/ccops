@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { Params, RouteObject } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import type { Params, RouteObject } from 'react-router-dom';
 
 export interface RouteMeta {
   /**
@@ -33,7 +33,7 @@ export interface RouteMeta {
   /**
    * react router outlet
    */
-  outlet?: any;
+  outlet?: ReactNode;
   /**
    * use to refresh tab
    */
@@ -41,7 +41,7 @@ export interface RouteMeta {
   /**
    * external link and iframe need
    */
-  frameSrc?: string;
+  frameSrc?: URL;
   /**
    * dynamic route params
    *

@@ -4,7 +4,7 @@ import React, { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { IconButton } from '@/components/Icon';
-import { useUserInfo } from '@/hooks/useUser';
+import { useUserInfo } from '@/hooks/use-user';
 import { useSettings } from '@/store/setting';
 import { useSignOut } from '@/store/user';
 import { useThemeToken } from '@/theme/hooks';
