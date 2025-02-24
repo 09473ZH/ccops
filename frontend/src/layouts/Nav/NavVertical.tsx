@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMatches, useNavigate } from 'react-router-dom';
 
 import Scrollbar from '@/components/Scrollbar';
-import { useUserInfo } from '@/hooks/use-user';
 import {
   useRouteToMenuFn,
   usePermissionRoutes,

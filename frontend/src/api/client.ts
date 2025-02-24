@@ -35,18 +35,22 @@ let requestQueue: Array<() => Promise<void>> = [];
 // token是否正在刷新
 let isRefreshing = false;
 
+const TOKEN_EXPIRE_AHEAD_TIME = 5 * 60; // 提前5分钟过期，单位：秒
+
 // 判断token是否过期
 function isTokenExpired(): boolean {
   const { tokenInfo } = useUserStore.getState();
   if (!tokenInfo.accessToken) return true;
+  if (!tokenInfo.expireAt) return true;
 
-  try {
-    const payload = JSON.parse(atob(tokenInfo.accessToken.split('.')[1]));
-    // 提前5分钟判定为过期
-    return payload.exp * 1000 < Date.now() + 5 * 60 * 1000;
-  } catch {
-    return true;
-  }
+  return tokenInfo.expireAt < Date.now() / 1000 + TOKEN_EXPIRE_AHEAD_TIME;
+}
+
+// 清理刷新token相关状态
+function cleanupRefreshState() {
+  refreshTokenPromise = null;
+  requestQueue = [];
+  isRefreshing = false;
 }
 
 // 刷新 token
@@ -74,7 +78,7 @@ async function refreshToken(): Promise<void> {
         if (data.code === ResultEnum.SUCCESS && data.data?.accessToken) {
           useUserStore.getState().actions.setTokenInfo({
             accessToken: data.data.accessToken,
-            refreshToken: tokenInfo.refreshToken,
+            expireAt: data.data.expireAt,
           });
 
           // 执行队列中的请求
@@ -86,20 +90,21 @@ async function refreshToken(): Promise<void> {
         useUserStore.getState().actions.clearToken();
         throw error;
       } finally {
-        refreshTokenPromise = null;
-        requestQueue = [];
-        isRefreshing = false;
+        cleanupRefreshState();
       }
     })();
 
     return await refreshTokenPromise;
   } catch (error) {
-    refreshTokenPromise = null;
-    requestQueue = [];
-    isRefreshing = false;
+    cleanupRefreshState();
     useUserStore.getState().actions.clearToken();
     throw error;
   }
+}
+
+function handleAuthError() {
+  window.location.href = '/login';
+  throw new Error('认证失败');
 }
 
 // 统一的请求处理
@@ -124,8 +129,7 @@ async function request<T>(endpoint: string, config: RequestConfig = {}): Promise
     try {
       await refreshToken();
     } catch (error) {
-      window.location.href = '/login';
-      throw new Error('认证失败');
+      handleAuthError();
     }
   }
 
@@ -163,19 +167,16 @@ async function request<T>(endpoint: string, config: RequestConfig = {}): Promise
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, requestConfig);
 
-    // 处理401错误，尝试刷新token
     if (response.status === 401 && !skipAuth) {
       if (retryCount < 1) {
         try {
           await refreshToken();
           return await request<T>(endpoint, { ...config, retryCount: retryCount + 1 });
         } catch (error) {
-          window.location.href = '/login';
-          throw new Error('认证失败');
+          handleAuthError();
         }
       }
-      window.location.href = '/login';
-      throw new Error('认证失败');
+      handleAuthError();
     }
 
     // 如果是blob响应，直接返回
@@ -196,6 +197,9 @@ async function request<T>(endpoint: string, config: RequestConfig = {}): Promise
     // 处理其他错误
     throw new Error(result.msg || '请求失败');
   } catch (error) {
+    if ((error as Error).message === '认证失败') {
+      handleAuthError();
+    }
     console.error('Request error:', error);
     throw error;
   }
@@ -214,5 +218,5 @@ export const put = <T>(url: string, data?: unknown, config?: Omit<RequestConfig,
 export const del = <T>(url: string, data?: unknown, config?: Omit<RequestConfig, 'data'>) =>
   request<T>(url, { ...config, method: 'DELETE', data });
 
-export const apiClient = { get, post, put, delete: del };
+export const apiClient = { get, post, put, del };
 export default apiClient;

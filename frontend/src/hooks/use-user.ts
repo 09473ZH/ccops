@@ -10,6 +10,7 @@ export function useUserInfo() {
   const { data, ...rest } = useQuery<UserInfo>({
     queryKey: ['userInfo'],
     queryFn: () => userService.getCurrentUser(),
+    staleTime: 1000 * 60 * 5, // 5分钟
   });
 
   return {

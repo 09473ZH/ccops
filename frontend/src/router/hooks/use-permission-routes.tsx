@@ -9,7 +9,6 @@ import { getRoutesFromModules } from '../utils';
  */
 export function usePermissionRoutes() {
   const { userInfo } = useUserInfo();
-
   return useMemo(() => {
     const routes = getRoutesFromModules();
 
