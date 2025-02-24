@@ -14,7 +14,7 @@ export function usePermissionRoutes() {
     const routes = getRoutesFromModules();
 
     if (!userInfo || userInfo.role !== 'admin') {
-      return routes.filter((route) => route.path !== 'admin_settings');
+      return routes.filter((route) => route.path !== '/admin_settings');
     }
     return routes;
   }, [userInfo]);

@@ -1,12 +1,14 @@
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
-import { Table, Button, Space, Input, Switch } from 'antd';
+import { Table, Button, Space, Input, Switch, Modal } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import debounce from 'lodash/debounce';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ActionButton } from '@/components/Button';
+import { TextAreaWithCopy } from '@/components/TextAreaWithCopy';
 import { useUserInfo } from '@/hooks/use-user';
+import ProTag from '@/theme/antd/components/Tag';
 
 import ResetPasswordModal from './components/ResetPasswordModal';
 import UserModal from './components/UserModal';
@@ -31,6 +33,9 @@ export default function UserManagePage() {
     handleResetPasswordOk,
     handleCloseResetPasswordModal,
     modalRecord,
+    initUserModalOpen,
+    initUserInfo,
+    handleCloseInitUserModal,
   } = useUserManage();
   const [searchParams, setSearchParams] = useState({ page: 1, pageSize: 10, keyword: '' });
   const handleSearch = debounce((value: string) => {
@@ -50,6 +55,18 @@ export default function UserManagePage() {
       title: t('user.email'),
       dataIndex: 'email',
       key: 'email',
+    },
+    {
+      title: t('user.role'),
+      dataIndex: 'role',
+      key: 'role',
+      render: (text: string) => {
+        return text === 'admin' ? (
+          <ProTag color="blue">{t('user.roleAdmin')}</ProTag>
+        ) : (
+          <ProTag color="green">{t('user.roleUser')}</ProTag>
+        );
+      },
     },
     {
       title: t('user.status'),
@@ -146,6 +163,29 @@ export default function UserManagePage() {
         record={modalRecord}
         onCancel={handleCloseModal}
       />
+
+      <Modal
+        title={`${initUserInfo?.username} - ${t('user.initialPassword')}`}
+        open={initUserModalOpen}
+        onCancel={handleCloseInitUserModal}
+        footer={null}
+        width={400}
+      >
+        <div className="space-y-4 py-2">
+          {[
+            { label: 'user.email', content: initUserInfo?.email || t('user.emailNotFound') },
+            {
+              label: 'user.initialPassword',
+              content: initUserInfo?.password || t('user.passwordInitFailed'),
+            },
+          ].map(({ label, content }) => (
+            <div key={label} className="space-y-2">
+              <div className="text-gray-700 dark:text-gray-500">{t(label)}:</div>
+              <TextAreaWithCopy size="small" content={content} />
+            </div>
+          ))}
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -8,11 +8,17 @@ import { useModalsControl } from '@/hooks/use-modals-control';
 
 import { UserInfo } from '#/entity';
 
+export interface InitUserInfo {
+  username: string;
+  email: string;
+  password: string;
+}
+
 export function useUserManage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { open, close, isOpen } = useModalsControl({
-    modals: ['userModal', 'resetPasswordModal'],
+    modals: ['userModal', 'resetPasswordModal', 'initialPasswordModal'],
   });
 
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -28,6 +34,8 @@ export function useUserManage() {
     isEnabled: false,
     isInit: false,
   });
+
+  const [initUserInfo, setInitUserInfo] = useState<InitUserInfo | null>(null);
 
   // 获取用户列表
   const { data: userList, isLoading } = useQuery({
@@ -83,8 +91,10 @@ export function useUserManage() {
         labelIds: number[];
       };
     }) => userService.createUser(params),
-    onSuccess: () => {
+    onSuccess: (response) => {
       toast.success(t('common.createSuccess'));
+      setInitUserInfo(response as InitUserInfo);
+      open('initUserModal');
       handleCloseModal();
       refreshTable();
     },
@@ -162,6 +172,11 @@ export function useUserManage() {
     close('resetPasswordModal');
   };
 
+  const handleCloseInitUserModal = () => {
+    close('initUserModal');
+    setInitUserInfo(null);
+  };
+
   const refreshTable = () => {
     queryClient.invalidateQueries({ queryKey: ['users'] });
   };
@@ -181,5 +196,8 @@ export function useUserManage() {
     handleResetPasswordOk,
     handleCloseResetPasswordModal,
     modalRecord,
+    initUserModalOpen: isOpen('initUserModal'),
+    initUserInfo,
+    handleCloseInitUserModal,
   };
 }

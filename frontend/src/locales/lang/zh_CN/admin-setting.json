@@ -48,6 +48,7 @@
     "permissionUpdateSuccess": "用户权限更新成功",
     "permissions": "权限分配",
     "resetPassword": "重置密码",
+    "resetPasswordSuccess": "密码重置成功",
     "role": "角色",
     "roleAdmin": "管理员",
     "roleUser": "用户",
@@ -55,6 +56,8 @@
     "status": "状态",
     "statusUpdateSuccess": "用户状态更新成功",
     "username": "用户名",
-    "resetPasswordSuccess": "密码重置成功"
+    "emailNotFound": "未获取到邮箱",
+    "initialPassword": "初始密码",
+    "passwordInitFailed": "密码初始化失败"
   }
 }

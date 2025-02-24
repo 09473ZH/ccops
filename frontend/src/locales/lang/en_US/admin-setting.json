@@ -52,9 +52,12 @@
     "search": "Username/Email",
     "status": "Status",
     "statusUpdateSuccess": "User status updated successfully",
-    "username": "Username"
-  },
-  "user.cannotDeleteSelf": "cannot delete yourself",
-  "user.deleteUser": "delete user",
-  "user.resetPasswordSuccess": "Password Reset"
+    "username": "Username",
+    "cannotDeleteSelf": "cannot delete yourself",
+    "deleteUser": "delete user",
+    "emailNotFound": "email not found",
+    "initialPassword": "initial password",
+    "passwordInitFailed": "password init failed",
+    "esetPasswordSuccess": "Password Reset"
+  }
 }
