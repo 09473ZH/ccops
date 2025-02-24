@@ -55,5 +55,6 @@
     "username": "Username"
   },
   "user.cannotDeleteSelf": "cannot delete yourself",
-  "user.deleteUser": "delete user"
+  "user.deleteUser": "delete user",
+  "user.resetPasswordSuccess": "Password Reset"
 }

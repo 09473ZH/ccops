@@ -36,9 +36,11 @@
     "title": "系统配置"
   },
   "user": {
+    "cannotDeleteSelf": "不能删除当前用户",
     "createUser": "创建用户",
     "deleteConfirm": "确定要删除该用户吗？",
     "deleteSuccess": "用户删除成功",
+    "deleteUser": "删除用户",
     "editUser": "编辑用户",
     "email": "邮箱",
     "hosts": "主机",
@@ -53,8 +55,6 @@
     "status": "状态",
     "statusUpdateSuccess": "用户状态更新成功",
     "username": "用户名",
-    "cannotDeleteSelf": "不能删除当前用户",
-    "deleteUser": "删除用户"
+    "resetPasswordSuccess": "密码重置成功"
   }
 }
-

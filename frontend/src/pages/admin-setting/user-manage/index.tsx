@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ActionButton } from '@/components/Button';
-import { useUserInfo } from '@/hooks/useUser';
+import { useUserInfo } from '@/hooks/use-user';
 
 import ResetPasswordModal from './components/ResetPasswordModal';
 import UserModal from './components/UserModal';
