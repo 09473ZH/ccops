@@ -21,6 +21,7 @@ const adminSettings: AppRouteObject = {
     label: 'sys.menu.admin_settings',
     icon: <Iconify icon="solar:settings-minimalistic-bold-duotone" size={24} />,
     key: '/admin_settings',
+    requireAdmin: true,
   },
   children: [
     {

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { SignInReq } from '@/api/services/user';
+import { useUserInfo } from '@/hooks/use-user';
 import { useSignIn } from '@/store/user';
 
 // TODO 使用手机号登录
@@ -12,7 +13,7 @@ const { useLoginStateContext, LoginStateEnum } = await import('./providers/Login
 function LoginForm() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-
+  const { refresh } = useUserInfo();
   const { loginState, setLoginState } = useLoginStateContext();
   const signIn = useSignIn();
 
@@ -21,7 +22,8 @@ function LoginForm() {
   const handleFinish = async ({ username, password }: SignInReq) => {
     setLoading(true);
     try {
-      await signIn({ username, password });
+      signIn({ username, password });
+      refresh();
     } finally {
       setLoading(false);
     }

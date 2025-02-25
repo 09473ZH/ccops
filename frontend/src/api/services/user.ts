@@ -27,10 +27,6 @@ interface CreateUserParams {
   role: string;
 }
 
-interface UpdateUserPermissionsRequest {
-  permissions: string[];
-}
-
 const userService = {
   /** 登录 */
   signin: (params: SignInReq) => post<SignInRes>(AuthApi.Login, params),
