@@ -16,7 +16,7 @@ export default function BreadCrumb() {
   const flattenedRoutes = useFlattenedRoutes();
   const permissionRoutes = usePermissionRoutes();
   const { customBreadcrumbs } = useBreadcrumbStore();
-  const { colorPrimary, colorTextSecondary } = useThemeToken();
+  const { colorPrimary } = useThemeToken();
 
   const breadCrumbs = useMemo(() => {
     if (customBreadcrumbs) {

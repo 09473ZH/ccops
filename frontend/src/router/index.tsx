@@ -7,6 +7,7 @@ import PageError from '@/pages/sys/error/PageError';
 import Login from '@/pages/sys/login/Login';
 import ProtectedRoute from '@/router/components/protected-route';
 import { ERROR_ROUTE } from '@/router/routes/error-routes';
+import terminalRoutes from '@/router/routes/modules/terminal';
 import { getRoutesFromModules } from '@/router/utils';
 
 import type { AppRouteObject } from '#/router';
@@ -37,13 +38,14 @@ export default function Router() {
     ),
     children: [
       { index: true, element: <Navigate to={HOMEPAGE} replace /> },
-      ...getRoutesFromModules(),
+      ...getRoutesFromModules().filter((route) => !route.path?.startsWith('terminal')),
     ],
   };
 
   const routesArray = [
     PUBLIC_ROUTE,
     PROTECTED_ROUTE,
+    ...terminalRoutes,
     ERROR_ROUTE,
     NO_MATCHED_ROUTE,
   ] as RouteObject[];

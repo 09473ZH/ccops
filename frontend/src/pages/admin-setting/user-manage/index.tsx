@@ -1,5 +1,5 @@
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
-import { Table, Button, Space, Input, Switch, Modal } from 'antd';
+import { Table, Button, Space, Input, Switch, Modal, Popconfirm } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import debounce from 'lodash/debounce';
 import { useState } from 'react';
@@ -96,13 +96,21 @@ export default function UserManagePage() {
             onClick={() => handleResetPasswordOpen(record)}
             tooltip={t('user.resetPassword')}
           />
-          <ActionButton
-            icon="delete"
-            danger
-            disabled={record.id === userInfo?.id}
-            tooltip={record.id === userInfo?.id ? t('user.cannotDeleteSelf') : t('user.deleteUser')}
-            onClick={() => deleteUserMutation.mutate(String(record.id))}
-          />
+          <Popconfirm
+            title={t('common.deleteConfirm')}
+            onConfirm={() => deleteUserMutation.mutate(String(record.id))}
+            okText={t('common.okText')}
+            cancelText={t('common.cancelText')}
+          >
+            <ActionButton
+              icon="delete"
+              danger
+              disabled={record.id === userInfo?.id}
+              tooltip={
+                record.id === userInfo?.id ? t('user.cannotDeleteSelf') : t('user.deleteUser')
+              }
+            />
+          </Popconfirm>
         </Space>
       ),
     },

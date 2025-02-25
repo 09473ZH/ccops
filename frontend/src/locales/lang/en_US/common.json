@@ -1,25 +1,24 @@
 {
   "common": {
-    "okText": "OK",
-    "closeText": "Close",
-    "cancelText": "Cancel",
-    "loadingText": "Loading...",
-    "saveText": "Save",
-    "delText": "Delete",
-    "resetText": "Reset",
-    "searchText": "Search",
-    "queryText": "Search",
-    "inputText": "Please enter",
-    "chooseText": "Please choose",
-    "edit": "Edit",
-
-    "redo": "Refresh",
-    "back": "Back",
-
-    "light": "Light",
-    "dark": "Dark",
-
     "actions": "Actions",
-    "delete": "Delete"
+    "back": "Back",
+    "cancelText": "Cancel",
+    "chooseText": "Please choose",
+    "closeText": "Close",
+    "dark": "Dark",
+    "delText": "Delete",
+    "delete": "Delete",
+    "edit": "Edit",
+    "inputText": "Please enter",
+    "light": "Light",
+    "loadingText": "Loading...",
+    "okText": "OK",
+    "queryText": "Search",
+    "redo": "Refresh",
+    "resetText": "Reset",
+    "saveText": "Save",
+    "searchText": "Search",
+    "deleteConfirm": "Are you sure you want to delete this item?"
   }
 }
+

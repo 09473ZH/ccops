@@ -8,6 +8,7 @@
     "dark": "黑暗主题",
     "delText": "删除",
     "delete": "删除",
+    "edit": "编辑",
     "inputText": "请输入",
     "light": "亮色主题",
     "loadingText": "加载中...",
@@ -17,8 +18,6 @@
     "resetText": "重置",
     "saveText": "保存",
     "searchText": "搜索",
-    "edit": "编辑"
-  },
-  "common.createSuccess": "创建成功",
-  "common.updateSuccess": "更新成功"
+    "deleteConfirm": "确定删除？"
+  }
 }
