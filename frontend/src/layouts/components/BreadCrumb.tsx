@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatches, Link } from 'react-router-dom';
 
-import { Iconify } from '@/components/Icon';
 import { useFlattenedRoutes, usePermissionRoutes } from '@/router/hooks';
 import { menuFilter } from '@/router/utils';
 import { useBreadcrumbStore } from '@/store/breadcrumb';
@@ -17,38 +16,31 @@ export default function BreadCrumb() {
   const flattenedRoutes = useFlattenedRoutes();
   const permissionRoutes = usePermissionRoutes();
   const { customBreadcrumbs } = useBreadcrumbStore();
-  const { colorPrimary } = useThemeToken();
+  const { colorPrimary, colorTextSecondary } = useThemeToken();
 
   const breadCrumbs = useMemo(() => {
-    // 如果有自定义面包屑，优先使用
     if (customBreadcrumbs) {
       return customBreadcrumbs;
     }
 
-    // 原有的自动生成逻辑
     const menuRoutes = menuFilter(permissionRoutes);
     const paths = matches.filter((item) => item.pathname !== '/').map((item) => item.pathname);
-
     const pathRouteMetas = flattenedRoutes.filter((item) => paths.includes(item.key));
-
     let currentMenuItems = [...menuRoutes];
 
     return pathRouteMetas.map((routeMeta, index): MenuItem => {
       const { key, label } = routeMeta;
       const isLast = index === pathRouteMetas.length - 1;
-
-      // Find current level menu items
       const currentRoute = currentMenuItems.find((item) => item.meta?.key === key);
-
-      // Update menu items for next level
       currentMenuItems = currentRoute?.children?.filter((item) => !item.meta?.hideMenu) ?? [];
+      const hasDropdown = currentMenuItems.length > 0;
 
       return {
         key,
         title: (
           <span
             style={{
-              fontSize: isLast ? 16 : 14,
+              fontSize: 14,
               fontWeight: isLast ? 600 : 'normal',
               color: isLast ? colorPrimary : undefined,
             }}
@@ -56,22 +48,34 @@ export default function BreadCrumb() {
             {t(label)}
           </span>
         ),
-        ...(currentMenuItems.length > 0 && {
+        ...(hasDropdown && {
           menu: {
             items: currentMenuItems.map((item) => ({
               key: item.meta?.key,
-              label: <Link to={item.meta!.key!}>{t(item.meta!.label)}</Link>,
+              label: (
+                <Link
+                  to={item.meta!.key!}
+                  className="text-secondary hover:text-primary transition-colors"
+                >
+                  {t(item.meta!.label)}
+                </Link>
+              ),
             })),
           },
         }),
       };
     });
-  }, [matches, flattenedRoutes, t, permissionRoutes, customBreadcrumbs, colorPrimary]);
+  }, [
+    matches,
+    flattenedRoutes,
+    t,
+    permissionRoutes,
+    customBreadcrumbs,
+    colorPrimary,
+    colorTextSecondary,
+  ]);
 
   return (
-    <Breadcrumb
-      items={breadCrumbs}
-      separator={<Iconify icon="ph:dot-duotone" className="mx-2" />}
-    />
+    <Breadcrumb items={breadCrumbs} separator={<span className="mx-1 text-[#00000026]">·</span>} />
   );
 }
