@@ -65,15 +65,7 @@ export default function BreadCrumb() {
         }),
       };
     });
-  }, [
-    matches,
-    flattenedRoutes,
-    t,
-    permissionRoutes,
-    customBreadcrumbs,
-    colorPrimary,
-    colorTextSecondary,
-  ]);
+  }, [matches, flattenedRoutes, t, permissionRoutes, customBreadcrumbs, colorPrimary]);
 
   return (
     <Breadcrumb items={breadCrumbs} separator={<span className="mx-1 text-[#00000026]">·</span>} />
