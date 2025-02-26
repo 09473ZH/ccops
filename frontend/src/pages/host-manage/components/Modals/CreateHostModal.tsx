@@ -2,7 +2,7 @@ import { Modal, Button, Tabs, Typography, Space } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
 import { TextAreaWithCopy } from '@/components/TextAreaWithCopy';
-import useSystemConfigStore from '@/pages/system-config/hooks/use-system-config-store';
+import useSystemConfigStore from '@/pages/admin-setting/common-setting/hooks/use-system-config-store';
 
 import { useServerUrl } from '../../hooks';
 

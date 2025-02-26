@@ -6,14 +6,14 @@ import type { HostInfo } from '@/api/services/host';
 import { useHostList } from '@/hooks/use-host-list';
 import { cn } from '@/utils';
 
-import { Terminal } from '../components/Terminal';
+import { Terminal as TerminalComponent } from '../components/Terminal';
 import { FontSelector } from '../components/Terminal/FontSelector';
 import { terminalThemes, type ThemeNames } from '../constants/themes';
 import { useHostSearch, useTerminalSessions, type TerminalSession } from '../hooks';
 
 import { getCurrentTheme, setTheme, getStyles } from './theme';
 
-export default function JumpServer() {
+export default function Terminal() {
   const { id } = useParams<{ id: string }>();
   const { list: hosts } = useHostList();
   const [isConnected, setIsConnected] = useState(false);
@@ -257,7 +257,7 @@ export default function JumpServer() {
               key={session.id}
               className={styles.terminal.session(activeSessionId === session.id)}
             >
-              <Terminal
+              <TerminalComponent
                 ref={session.terminalRef}
                 className={styles.terminal.xterm(activeSessionId === session.id)}
                 hostId={session.hostId}
