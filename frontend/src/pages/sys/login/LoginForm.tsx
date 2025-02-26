@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Button, Checkbox, Col, Form, Input, Row } from 'antd';
+import { Button, Form, Input } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,6 +13,7 @@ const { useLoginStateContext, LoginStateEnum } = await import('./providers/Login
 function LoginForm() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const [showTip, setShowTip] = useState(false);
   const { refresh } = useUserInfo();
   const { loginState, setLoginState } = useLoginStateContext();
   const signIn = useSignIn();
@@ -28,48 +29,86 @@ function LoginForm() {
       setLoading(false);
     }
   };
+
   return (
-    <>
-      <div className="mb-4 text-2xl font-bold xl:text-3xl">{t('sys.login.signInFormTitle')}</div>
-      <Form
-        name="login"
-        size="large"
-        initialValues={{
-          remember: true,
-          username: 'admin',
-          password: 'admin123',
-        }}
-        onFinish={handleFinish}
+    <Form
+      name="login"
+      size="large"
+      layout="vertical"
+      initialValues={{
+        remember: true,
+        username: 'admin',
+        password: 'admin123',
+      }}
+      onFinish={handleFinish}
+      className="w-full"
+    >
+      <Form.Item
+        name="username"
+        rules={[{ required: true, message: t('sys.login.accountPlaceholder') }]}
+        className="mb-4"
       >
-        <Form.Item
-          name="username"
-          rules={[{ required: true, message: t('sys.login.accountPlaceholder') }]}
+        <div className="relative">
+          <div
+            className={`absolute -top-5 left-0 text-xs text-gray-400 transition-opacity duration-200 ${
+              showTip ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            支持用户名或邮箱登录
+          </div>
+          <Input
+            placeholder={t('sys.login.userName')}
+            className="bg-white/60 dark:bg-white/10 h-11 rounded-lg backdrop-blur-sm"
+            onFocus={() => setShowTip(true)}
+            onBlur={() => setShowTip(false)}
+          />
+        </div>
+      </Form.Item>
+
+      <Form.Item
+        name="password"
+        rules={[{ required: true, message: t('sys.login.passwordPlaceholder') }]}
+        className="mb-6"
+      >
+        <Input.Password
+          placeholder={t('sys.login.password')}
+          className="bg-white/60 dark:bg-white/10 h-11 rounded-lg backdrop-blur-sm"
+        />
+      </Form.Item>
+      {/* 
+      <div className="mb-6 flex items-center justify-between">
+        <Form.Item name="remember" valuePropName="checked" noStyle>
+          <Checkbox className="text-gray-600 dark:text-gray-300">
+            {t('sys.login.rememberMe')}
+          </Checkbox>
+        </Form.Item>
+        <Button type="link" className="hover:!text-primary !px-0 text-gray-600 dark:text-gray-300">
+          忘记密码？
+        </Button>
+      </div> */}
+
+      <Form.Item>
+        <Button
+          type="primary"
+          htmlType="submit"
+          className="h-8 w-full rounded-lg text-base font-medium"
+          loading={loading}
         >
-          <Input placeholder={t('sys.login.userName')} />
-        </Form.Item>
-        <Form.Item
-          name="password"
-          rules={[{ required: true, message: t('sys.login.passwordPlaceholder') }]}
+          {t('sys.login.loginButton')}
+        </Button>
+      </Form.Item>
+      {/* 
+      <div className="flex items-center justify-center gap-1 text-gray-500"> */}
+      {/* <span>还没有账号？</span> */}
+      {/* <Button
+          type="link"
+          className="hover:!text-primary !px-1 !text-sm font-medium"
+          onClick={() => setLoginState?.(LoginStateEnum.REGISTER)}
         >
-          <Input.Password type="password" placeholder={t('sys.login.password')} />
-        </Form.Item>
-        <Form.Item>
-          <Row align="middle">
-            <Col span={12}>
-              <Form.Item name="remember" valuePropName="checked" noStyle>
-                <Checkbox>{t('sys.login.rememberMe')}</Checkbox>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form.Item>
-        <Form.Item>
-          <Button type="primary" htmlType="submit" className="w-full" loading={loading}>
-            {t('sys.login.loginButton')}
-          </Button>
-        </Form.Item>
-        <Button className="w-full !text-sm">{t('sys.login.signUpFormTitle')}</Button>
-      </Form>
-    </>
+          {t('sys.login.signUpFormTitle')}
+        </Button> */}
+      {/* </div> */}
+    </Form>
   );
 }
 
