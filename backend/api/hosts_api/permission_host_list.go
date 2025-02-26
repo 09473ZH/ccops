@@ -30,12 +30,35 @@ func (HostsApi) PermissionHosts(c *gin.Context) {
 	var hostIds []uint
 	global.DB.Model(&models.HostPermission{}).Where("user_id = ?", claims.UserID).Select("host_id").Find(&hostIds)
 
-	var hosts []models.HostModel
+	// 获取用户拥有的标签ID
+	var labelIds []uint
+	global.DB.Model(&models.UserLabels{}).Where("user_id = ?", claims.UserID).Select("label_id").Find(&labelIds)
 
+	// 获取与这些标签关联的主机ID
+	var additionalHostIds []uint
+	if len(labelIds) > 0 {
+		global.DB.Model(&models.HostLabels{}).Where("label_model_id IN ?", labelIds).Select("host_model_id").Find(&additionalHostIds)
+	}
+
+	// 合并主机ID
+	hostIds = append(hostIds, additionalHostIds...)
+
+	// 去重
+	hostIdsMap := make(map[uint]bool)
+	for _, id := range hostIds {
+		hostIdsMap[id] = true
+	}
+	uniqueHostIds := make([]uint, 0, len(hostIdsMap))
+	for id := range hostIdsMap {
+		uniqueHostIds = append(uniqueHostIds, id)
+	}
+
+	// 根据合并后的主机ID列表获取主机信息
+	var hosts []models.HostModel
 	if claims.Role == ctype.PermissionAdmin {
 		global.DB.Model(&models.HostModel{}).Preload("Label").Find(&hosts)
 	} else {
-		global.DB.Model(&models.HostModel{}).Where("id IN ?", hostIds).Preload("Label").Find(&hosts)
+		global.DB.Model(&models.HostModel{}).Where("id IN ?", uniqueHostIds).Preload("Label").Find(&hosts)
 	}
 
 	labelMap := make(map[string]struct {
