@@ -67,7 +67,7 @@ export default {
         (acc, num) => ({
           ...acc,
           [`orange-${num}00`]: [
-            '#FFF3E0',
+            '#FCEED8',
             '#FFE0B2',
             '#FFCC80',
             '#FFB74D',

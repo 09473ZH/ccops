@@ -1,5 +1,6 @@
 import { Layout } from 'antd';
 import { m } from 'framer-motion';
+import { t } from 'i18next';
 import { lazy, Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -8,7 +9,6 @@ import { varFade } from '@/components/animate/variants';
 import { CircleLoading } from '@/components/Loading';
 import LocalePicker from '@/components/LocalePicker';
 import { useUserToken } from '@/store/user';
-import { useThemeToken } from '@/theme/hooks';
 
 const LoginStateProvider = lazy(() => import('./providers/LoginStateProvider'));
 const LoginForm = lazy(() => import('./LoginForm'));
@@ -17,8 +17,6 @@ const { VITE_APP_HOMEPAGE: HOMEPAGE } = import.meta.env;
 
 function Login() {
   const token = useUserToken();
-  const { colorPrimary, colorBgContainer } = useThemeToken();
-
   if (token.accessToken) {
     return <Navigate to={HOMEPAGE} replace />;
   }
@@ -26,28 +24,19 @@ function Login() {
   return (
     <Layout className="relative min-h-screen w-full overflow-hidden">
       {/* 主背景渐变 */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          background: `linear-gradient(140deg, 
-            ${colorPrimary}30 0%,
-            ${colorPrimary}15 30%,
-            ${colorBgContainer} 100%
-          )`,
-        }}
-      />
+      <div className="absolute inset-0 z-0 bg-orange-100" />
 
       {/* 主要内容区 */}
       <div className="relative z-10 flex min-h-screen w-full items-center">
         {/* 左侧标题区域 */}
         <div className="hidden w-[calc(100%-580px)] items-center justify-center md:flex">
           <div className="relative">
-            <div className="dark:text-white/10 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[180px] font-bold text-gray-100">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[180px] font-bold text-gray-100">
               OPS
             </div>
             <div className="relative text-center">
-              <div className="dark:text-white mb-3 text-6xl font-bold text-gray-800">
-                CC <span className="text-primary">OPS</span>
+              <div className="mb-3 text-6xl font-bold text-orange-500">
+                CC <span className="text-gray-800">OPS</span>
               </div>
               <div className="text-xl font-medium text-gray-500">运维管理平台</div>
             </div>
@@ -60,13 +49,13 @@ function Login() {
             variants={varFade().inRight}
             initial="initial"
             animate="animate"
-            className="md:bg-white/40 md:dark:bg-white/5 w-full md:w-[580px] md:backdrop-blur-2xl"
+            className="md:bg-white/40 w-full md:w-[580px] md:backdrop-blur-2xl"
           >
             <div className="flex min-h-screen flex-col items-center justify-center px-8 md:px-32">
               <div className="w-full max-w-[420px]">
                 <div className="mb-8">
-                  <h2 className="dark:text-white mb-2 text-3xl font-semibold text-gray-800">
-                    Welcome back!
+                  <h2 className="mb-2 text-3xl font-semibold text-gray-800">
+                    {t('sys.login.signInPrimaryTitle')}
                   </h2>
                 </div>
 

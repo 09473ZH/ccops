@@ -35,6 +35,7 @@
     "systemConfig": "系统配置",
     "title": "系统配置"
   },
+  "sys.login.showPassword": "显示密码",
   "user": {
     "cannotDeleteSelf": "不能删除当前用户",
     "createUser": "创建用户",
@@ -43,8 +44,11 @@
     "deleteUser": "删除用户",
     "editUser": "编辑用户",
     "email": "邮箱",
+    "emailNotFound": "未获取到邮箱",
     "hosts": "主机",
+    "initialPassword": "初始密码",
     "labels": "主机标签",
+    "passwordInitFailed": "密码初始化失败",
     "permissionUpdateSuccess": "用户权限更新成功",
     "permissions": "权限分配",
     "resetPassword": "重置密码",
@@ -55,9 +59,6 @@
     "search": "用户名/邮箱",
     "status": "状态",
     "statusUpdateSuccess": "用户状态更新成功",
-    "username": "用户名",
-    "emailNotFound": "未获取到邮箱",
-    "initialPassword": "初始密码",
-    "passwordInitFailed": "密码初始化失败"
+    "username": "用户名"
   }
 }

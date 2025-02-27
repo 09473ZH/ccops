@@ -36,6 +36,7 @@
     "systemConfig": "System Configuration",
     "title": "System Settings"
   },
+  "sys.login.showPassword": "show password",
   "user": {
     "cannotDeleteSelf": "cannot delete yourself",
     "createUser": "Create User",
