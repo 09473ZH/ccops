@@ -81,7 +81,7 @@ function QuickCommand() {
 
     try {
       const taskId = await execQuickCommand.mutateAsync({
-        taskName: t('quick-command.task-name'),
+        taskName: t('quick-command.title'),
         hostIdList: selectedHosts,
         shortcutScriptContent: content,
       });

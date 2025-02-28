@@ -108,6 +108,11 @@ export default function HostSelector({
   const { list: myHosts } = useMyHosts();
 
   const [selectedHostIds, setSelectedHostIds] = useState<number[]>(defaultValue);
+
+  useEffect(() => {
+    setSelectedHostIds(defaultValue);
+  }, [defaultValue]);
+
   const selectedHosts = useMemo(() => new Set(selectedHostIds), [selectedHostIds]);
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(() => {
     const noLabelGroup = myHosts.find((group) => group.labelId === 0);
@@ -220,7 +225,7 @@ export default function HostSelector({
   }, [groups]);
 
   const handleToggleHost = (hostId: number) => {
-    const newSelected = new Set(selectedHosts);
+    const newSelected = new Set(selectedHostIds);
     if (newSelected.has(hostId)) {
       newSelected.delete(hostId);
     } else {
@@ -232,7 +237,7 @@ export default function HostSelector({
   };
 
   const handleToggleGroup = (hostIds: number[]) => {
-    const newSelected = new Set(selectedHosts);
+    const newSelected = new Set(selectedHostIds);
     const allSelected = hostIds.every((id) => newSelected.has(id));
 
     if (allSelected) {

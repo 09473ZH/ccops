@@ -43,7 +43,7 @@ export const UserApi = {
 export const LabelApi = {
   ...createCrudApi(ApiPath.Labels),
   AssignToHost: `${ApiPath.Hosts}/assign_labels`, // 分配标签到主机
-  UnlabelFromHost: `${ApiPath.Hosts}/:id/unlabel`, // 解除主机标签关联
+  UnlabelFromHost: `${ApiPath.Labels}/:id/unbind_all_hosts `, // 解除所有主机标签关联
 } as const;
 
 /** 文件相关接口 */
