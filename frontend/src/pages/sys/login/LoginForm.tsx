@@ -47,17 +47,17 @@ function LoginForm() {
           type="text"
           autoComplete="username"
           placeholder=" "
-          className="focus:border-blue-600 peer h-11 w-full rounded-lg border border-gray-500 bg-[#fff] px-3 py-2 outline-none placeholder:text-gray-500 placeholder:transition-all placeholder:duration-150 focus:border-2 data-[error=true]:border-[#dd4e4e] [&:-webkit-autofill:focus]:!bg-[#fff] [&:-webkit-autofill:hover]:!bg-[#fff] [&:-webkit-autofill]:!bg-[#fff] [&:-webkit-autofill]:!bg-clip-text [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s]"
+          className="peer h-11 w-full rounded-lg border border-gray-500 bg-white px-3 py-2 text-black outline-none focus:border-2 data-[error=true]:border-red-500 [&:-webkit-autofill:focus]:!bg-white [&:-webkit-autofill:hover]:!bg-white [&:-webkit-autofill]:!bg-white [&:-webkit-autofill]:!bg-clip-text [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s]"
           data-error={!!errors.username}
           {...register('username', {
             required: t('sys.login.accountPlaceholder'),
           })}
         />
-        <div className="peer-focus:text-blue-600 peer-[:not(:placeholder-shown)]:text-blue-600 pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 bg-[#fff] px-1 text-gray-500 transition-all duration-200 ease-out peer-focus:left-2 peer-focus:top-[-8px] peer-focus:translate-y-0 peer-focus:text-xs peer-[:not(:placeholder-shown)]:left-2 peer-[:not(:placeholder-shown)]:top-[-8px] peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-xs peer-data-[error=true]:left-2 peer-data-[error=true]:top-[-8px] peer-data-[error=true]:translate-y-0 peer-data-[error=true]:text-xs peer-data-[error=true]:text-[#dd4e4e]">
+        <div className="peer-focus:text-blue-600 peer-[:not(:placeholder-shown)]:text-blue-600 pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 bg-white px-1 text-gray-500 transition-all duration-200 ease-out peer-focus:left-2 peer-focus:top-[-8px] peer-focus:translate-y-0 peer-focus:text-xs peer-[:not(:placeholder-shown)]:left-2 peer-[:not(:placeholder-shown)]:top-[-8px] peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-xs peer-data-[error=true]:left-2 peer-data-[error=true]:top-[-8px] peer-data-[error=true]:translate-y-0 peer-data-[error=true]:text-xs peer-data-[error=true]:text-red-500">
           {t('sys.login.account')}
         </div>
         {errors.username && (
-          <div className="mt-1 flex h-6 items-center text-sm text-[#dd4e4e]">
+          <div className="mt-1 flex h-6 items-center text-sm text-red-500">
             <Iconify icon="mdi:alert-circle" className="mr-1 h-4 w-4" />
             {errors.username.message}
           </div>
@@ -70,13 +70,13 @@ function LoginForm() {
             type={showPassword ? 'text' : 'password'}
             autoComplete="current-password"
             placeholder=" "
-            className="focus:border-blue-600 peer h-11 w-full rounded-lg border border-gray-500 bg-[#fff] px-3 py-2 pr-10 outline-none placeholder:text-gray-500 placeholder:transition-all placeholder:duration-150 focus:border-2 data-[error=true]:border-[#dd4e4e] [&:-webkit-autofill:focus]:!bg-[#fff] [&:-webkit-autofill:hover]:!bg-[#fff] [&:-webkit-autofill]:!bg-[#fff] [&:-webkit-autofill]:!bg-clip-text [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s]"
+            className="peer h-11 w-full rounded-lg border border-gray-500 bg-white px-3 py-2 pr-10 text-black outline-none focus:border-2 data-[error=true]:border-red-500 [&:-webkit-autofill:focus]:!bg-white [&:-webkit-autofill:hover]:!bg-white [&:-webkit-autofill]:!bg-white [&:-webkit-autofill]:!bg-clip-text [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s]"
             data-error={!!errors.password}
             {...register('password', {
               required: t('sys.login.passwordPlaceholder'),
             })}
           />
-          <div className="peer-focus:text-blue-600 pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 bg-[#fff] px-1 text-gray-500 transition-all duration-200 ease-out peer-focus:left-2 peer-focus:top-[-8px] peer-focus:translate-y-0 peer-focus:text-xs peer-[:not(:placeholder-shown)]:left-2 peer-[:not(:placeholder-shown)]:top-[-8px] peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-xs peer-data-[error=true]:left-2 peer-data-[error=true]:top-[-8px] peer-data-[error=true]:translate-y-0 peer-data-[error=true]:text-xs peer-data-[error=true]:text-[#dd4e4e]">
+          <div className="peer-focus:text-blue-600 peer-[:not(:placeholder-shown)]:text-blue-600 pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 bg-white px-1 text-gray-500 transition-all duration-200 ease-out peer-focus:left-2 peer-focus:top-[-8px] peer-focus:translate-y-0 peer-focus:text-xs peer-[:not(:placeholder-shown)]:left-2 peer-[:not(:placeholder-shown)]:top-[-8px] peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:text-xs peer-data-[error=true]:left-2 peer-data-[error=true]:top-[-8px] peer-data-[error=true]:translate-y-0 peer-data-[error=true]:text-xs peer-data-[error=true]:text-red-500">
             {t('sys.login.password')}
           </div>
           <button
@@ -88,20 +88,13 @@ function LoginForm() {
           </button>
         </div>
         {errors.password && (
-          <div className="mt-1 flex h-6 items-center text-sm text-[#dd4e4e]">
+          <div className="mt-1 flex h-6 items-center text-sm text-red-500">
             <Iconify icon="mdi:alert-circle" className="mr-1 h-4 w-4" />
             {errors.password.message}
           </div>
         )}
       </div>
-      <Button
-        className="mt-4"
-        type="primary"
-        htmlType="submit"
-        loading={loginMutation.isPending}
-        block
-        size="large"
-      >
+      <Button type="primary" htmlType="submit" loading={loginMutation.isPending} block size="large">
         {t('sys.login.loginButton')}
       </Button>
     </form>
