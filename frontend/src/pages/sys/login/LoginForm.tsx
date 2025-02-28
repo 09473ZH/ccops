@@ -42,7 +42,7 @@ function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="w-full" autoComplete="on">
-      <div className="relative mb-4">
+      <div className="relative mb-6">
         <input
           type="text"
           autoComplete="username"
@@ -64,7 +64,7 @@ function LoginForm() {
         )}
       </div>
 
-      <div className="relative mb-2">
+      <div className="relative mb-6">
         <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
