@@ -9,6 +9,7 @@ import { varFade } from '@/components/animate/variants';
 import { CircleLoading } from '@/components/Loading';
 import LocalePicker from '@/components/LocalePicker';
 import { useUserToken } from '@/store/user';
+import { useThemeToken } from '@/theme/hooks';
 
 const LoginStateProvider = lazy(() => import('./providers/LoginStateProvider'));
 const LoginForm = lazy(() => import('./LoginForm'));
@@ -18,6 +19,7 @@ const { VITE_APP_HOMEPAGE: HOMEPAGE } = import.meta.env;
 function Login() {
   const { t } = useTranslation();
   const token = useUserToken();
+  const { colorPrimary, colorBgContainer } = useThemeToken();
   if (token.accessToken) {
     return <Navigate to={HOMEPAGE} replace />;
   }
@@ -25,9 +27,13 @@ function Login() {
   return (
     <Layout className="relative min-h-screen w-full overflow-hidden">
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 z-0"
         style={{
-          background: 'linear-gradient(to bottom right, #fff8f0, #fff0e0, #ffe8cc)',
+          background: `linear-gradient(140deg, 
+            ${colorPrimary}30 0%,
+            ${colorPrimary}15 30%,
+            ${colorBgContainer} 100%
+          )`,
         }}
       />
 
