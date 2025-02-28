@@ -1,9 +1,12 @@
 import { Layout } from 'antd';
 import { m } from 'framer-motion';
+import { m } from 'framer-motion';
 import { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 
+import { MotionLazy } from '@/components/animate/MotionLazy';
+import { varFade } from '@/components/animate/variants';
 import { MotionLazy } from '@/components/animate/MotionLazy';
 import { varFade } from '@/components/animate/variants';
 import { CircleLoading } from '@/components/Loading';
@@ -27,6 +30,7 @@ function Login() {
   return (
     <Layout className="relative min-h-screen w-full overflow-hidden">
       <div
+        className="absolute inset-0 z-0"
         className="absolute inset-0 z-0"
         style={{
           background: `linear-gradient(140deg, 
