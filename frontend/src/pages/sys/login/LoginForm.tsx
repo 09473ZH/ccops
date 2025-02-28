@@ -23,7 +23,7 @@ function LoginForm() {
   } = useForm<SignInReq>({
     defaultValues: {
       username: 'admin',
-      password: 'admin123',
+      password: 'admin',
     },
   });
 

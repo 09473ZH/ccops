@@ -1,4 +1,4 @@
-import { Divider, MenuProps } from 'antd';
+import { App, Divider, MenuProps } from 'antd';
 import Dropdown, { DropdownProps } from 'antd/es/dropdown/dropdown';
 import React, { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -27,7 +27,7 @@ function AccountDropdownContent() {
   const { colorBgElevated, borderRadiusLG } = useThemeToken();
   const { themeMode } = useSettings();
   const isDarkMode = themeMode === 'dark';
-
+  const { modal } = App.useApp();
   // 生成基于用户名的头像URL
   const avatarUrl = username
     ? `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
@@ -85,7 +85,13 @@ function AccountDropdownContent() {
         </button>
       ),
       key: '1',
-      onClick: logout,
+      onClick: () => {
+        modal.confirm({
+          title: '确定要退出登录吗？',
+          content: '退出登录后，您将需要重新登录。',
+          onOk: logout,
+        });
+      },
     },
   ];
   return (
