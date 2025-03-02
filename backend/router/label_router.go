@@ -13,7 +13,7 @@ func (router RouterGroup) LabelRouter(labelRouterGroup *gin.RouterGroup) {
 	labelRouterGroup.POST("", app.HostLabelCreate)
 	labelRouterGroup.GET("", app.HostLabelList)
 	labelRouterGroup.PUT("/:id", app.HostLabelUpdateView)
-	labelRouterGroup.DELETE("/:id/", app.HostLabelRemoveView)
+	labelRouterGroup.DELETE("/:id", app.HostLabelRemoveView)
 
 	labelRouterGroup.POST("/:id/unbind_all_hosts", app.LabelDisassociateView)
 
