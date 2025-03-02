@@ -1,10 +1,10 @@
 package core
 
 func InitAll() error {
-	InitUser()
+	InitDb()
 	InitAIConfiguration()
 	InitSystemConfiguration()
-	InitDb()
+	InitUser()
 	err := InitKeysConfiguration()
 	if err != nil {
 		return err
