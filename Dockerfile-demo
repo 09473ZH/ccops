@@ -1,0 +1,12 @@
+FROM ccr.ccs.tencentyun.com/corgi/python:3.10-slim
+
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update && apt install -y curl
+
+RUN curl -L -o /tmp/osquery.deb http://cdn.corgi.plus/ccops/osquery_5.13.1-1.linux_amd64.deb && dpkg -i /tmp/osquery.deb 
+RUN curl -o /tmp/ccagent.tgz http://cdn.corgi.plus/ccops/ccagent.tgz && tar zxvf /tmp/ccagent.tgz -C /usr/local/bin
+
+CMD ccagent -action run -server http://host.docker.internal:8083
