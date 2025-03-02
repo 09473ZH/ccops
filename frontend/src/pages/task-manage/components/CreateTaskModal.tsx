@@ -1,5 +1,5 @@
 import { Button, Drawer, Form, FormInstance, Input, Select, Space, Row, Col, Tag } from 'antd';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 
 import { RoleItem } from '@/api/services/software';
 import { PlaybookTaskReq } from '@/api/services/task';
@@ -32,6 +32,14 @@ export function CreateTaskModal({
   const { list: hostList } = useHostList();
   const [selectedHosts, setSelectedHosts] = useState<number[]>([]);
   const roleIdList = Form.useWatch('roleIdList', form);
+  const hostIdList = Form.useWatch('hostIdList', form);
+
+  useEffect(() => {
+    if (hostIdList) {
+      setSelectedHosts(hostIdList);
+    }
+  }, [hostIdList]);
+
   const generatedTaskName = useMemo(
     () => generateTaskName(roleIdList || [], roleList?.list || []),
     [roleIdList, roleList],
@@ -93,9 +101,7 @@ export function CreateTaskModal({
                     );
                   })}
                   {selectedHosts.length > MAX_HOST_COUNT && (
-                    <span className="text-sm text-gray-400">
-                      等 {selectedHosts.length - MAX_HOST_COUNT} 个主机
-                    </span>
+                    <span className="text-sm text-gray-400">等 {selectedHosts.length} 个主机</span>
                   )}
                   {selectedHosts.length === 0 && (
                     <span className="text-sm text-gray-400">未选择任何主机</span>
@@ -107,6 +113,7 @@ export function CreateTaskModal({
                 defaultValue={selectedHosts}
                 onChange={(newSelected) => {
                   setSelectedHosts(newSelected);
+                  form.setFieldValue('hostIdList', newSelected);
                 }}
               />
             </Form.Item>

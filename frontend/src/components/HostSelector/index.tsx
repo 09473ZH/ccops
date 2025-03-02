@@ -40,14 +40,14 @@ const GroupItem: React.FC<GroupItemProps> = function GroupItem({
   const someSelected = !allSelected && hosts.some((host) => selectedHosts.has(host.id));
 
   return (
-    <div className="bg-gray-50/30 mb-[0.5px] rounded-lg pl-2">
-      <div className="hover:bg-white/80 flex cursor-pointer items-center gap-1 rounded pl-3 pr-2">
+    <div className="mb-[0.5px] rounded-lg pl-2">
+      <div className="flex cursor-pointer items-center gap-1 rounded pl-3 pr-2 hover:bg-gray-100 dark:hover:bg-gray-800">
         <div className="flex flex-1 items-center gap-1" onClick={() => onExpandChange(!isExpanded)}>
           <div
             className="transition-transform duration-200"
             style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
           >
-            <CaretRightOutlined className="text-xs text-gray-400" />
+            <CaretRightOutlined className="text-gray-400 dark:text-gray-500" />
           </div>
           <Checkbox
             className="origin-left scale-75"
@@ -56,9 +56,9 @@ const GroupItem: React.FC<GroupItemProps> = function GroupItem({
             onChange={() => onToggleGroup(hosts.map((h) => h.id))}
             onClick={(e) => e.stopPropagation()}
           />
-          <span className="flex-1 text-xs text-gray-800">{label}</span>
+          <span className="flex-1 text-xs text-gray-700 dark:text-gray-200">{label}</span>
         </div>
-        <span className="bg-blue-50 text-blue-600 rounded px-1 text-xs">
+        <span className="rounded px-1 text-xs text-gray-600 dark:text-gray-400">
           {hosts.length} {t('台')}
         </span>
       </div>
@@ -75,7 +75,7 @@ const GroupItem: React.FC<GroupItemProps> = function GroupItem({
             {hosts.map((host) => (
               <div
                 key={host.id}
-                className="hover:bg-white/80 flex cursor-pointer items-center gap-1 rounded pl-5 pr-3"
+                className="flex cursor-pointer items-center gap-1 rounded pl-5 pr-3 hover:bg-gray-100 dark:hover:bg-gray-800"
                 onClick={() => onToggleHost(host.id)}
               >
                 <Checkbox
@@ -84,8 +84,10 @@ const GroupItem: React.FC<GroupItemProps> = function GroupItem({
                   onChange={() => onToggleHost(host.id)}
                   onClick={(e) => e.stopPropagation()}
                 />
-                <span className="flex-1 truncate text-xs text-gray-700">{host.name}</span>
-                <span className="text-xs text-gray-500">{host.ip}</span>
+                <span className="flex-1 truncate text-xs text-gray-700 dark:text-gray-200">
+                  {host.name}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{host.ip}</span>
               </div>
             ))}
           </div>
@@ -106,6 +108,11 @@ export default function HostSelector({
   const { list: myHosts } = useMyHosts();
 
   const [selectedHostIds, setSelectedHostIds] = useState<number[]>(defaultValue);
+
+  useEffect(() => {
+    setSelectedHostIds(defaultValue);
+  }, [defaultValue]);
+
   const selectedHosts = useMemo(() => new Set(selectedHostIds), [selectedHostIds]);
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(() => {
     const noLabelGroup = myHosts.find((group) => group.labelId === 0);
@@ -218,7 +225,7 @@ export default function HostSelector({
   }, [groups]);
 
   const handleToggleHost = (hostId: number) => {
-    const newSelected = new Set(selectedHosts);
+    const newSelected = new Set(selectedHostIds);
     if (newSelected.has(hostId)) {
       newSelected.delete(hostId);
     } else {
@@ -230,7 +237,7 @@ export default function HostSelector({
   };
 
   const handleToggleGroup = (hostIds: number[]) => {
-    const newSelected = new Set(selectedHosts);
+    const newSelected = new Set(selectedHostIds);
     const allSelected = hostIds.every((id) => newSelected.has(id));
 
     if (allSelected) {
@@ -268,25 +275,30 @@ export default function HostSelector({
       <div className="relative flex items-center gap-2">
         <Input
           size="small"
-          prefix={<Iconify icon="flowbite:search-outline" className="text-xs text-gray-400" />}
+          prefix={
+            <Iconify
+              icon="flowbite:search-outline"
+              className="text-xs text-gray-400 dark:text-gray-500"
+            />
+          }
           placeholder={t('输入主机名/IP/标签检索')}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="bg-gray-50 focus:border-blue-500 focus:ring-blue-500 w-full rounded-lg border-gray-200 pl-10 focus:ring-1 [&>input::placeholder]:text-xs"
+          className="w-full rounded-lg border-gray-200 pl-10 focus:border-gray-500 focus:ring-1 focus:ring-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 [&>input::placeholder]:text-gray-400 dark:[&>input::placeholder]:text-gray-500"
         />
       </div>
 
-      <div className="bg-white overflow-auto rounded-lg border border-gray-100 p-3">
+      <div className="overflow-auto rounded-lg border border-gray-200 p-3 dark:border-gray-700">
         <div className="space-y-[0.5px]">
           <div
-            className="hover:bg-gray-50/30 flex cursor-pointer items-center gap-1 rounded-lg pr-2"
+            className="flex cursor-pointer items-center gap-1 rounded-lg pr-2 hover:bg-gray-100 dark:hover:bg-gray-800"
             onClick={() => handleExpandChange(!isAllExpanded)}
           >
             <div
               className="transition-transform duration-200"
               style={{ transform: isAllExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
             >
-              <CaretRightOutlined className="text-xs text-gray-400" />
+              <CaretRightOutlined className="text-gray-400 dark:text-gray-500" />
             </div>
             <Checkbox
               className="origin-left scale-75"
@@ -295,8 +307,8 @@ export default function HostSelector({
               onChange={() => handleToggleGroup(allHostIds)}
               onClick={(e) => e.stopPropagation()}
             />
-            <span className="flex-1 text-xs text-gray-500">{t('全部')}</span>
-            <span className="bg-blue-50 text-blue-600 rounded px-1 text-xs">
+            <span className="flex-1 text-xs text-gray-700 dark:text-gray-200">{t('全部')}</span>
+            <span className="rounded px-1 text-xs text-gray-600 dark:text-gray-400">
               {allHostIds.length} {t('台')}
             </span>
           </div>

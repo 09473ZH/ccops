@@ -47,6 +47,7 @@ const ActionIconMap = {
   file: 'flowbite:file-lines-outline',
   replay: 'material-symbols:replay-rounded',
   host: 'material-symbols:host-outline',
+  resetPassword: 'mdi:password-reset',
 } as const;
 
 export const IconMap = {

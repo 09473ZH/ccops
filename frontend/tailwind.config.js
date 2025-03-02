@@ -53,6 +53,8 @@ export default {
         disabled: 'rgba(0, 0, 0, 0.12)', // 禁用态
       },
       // 基础
+      white: '#fff',
+      red: '#dd4e4e',
       black: '#000',
       green: '#00A76F',
       blue: '#1fb6ff',
@@ -67,7 +69,7 @@ export default {
         (acc, num) => ({
           ...acc,
           [`orange-${num}00`]: [
-            '#FFF3E0',
+            '#FCEED8',
             '#FFE0B2',
             '#FFCC80',
             '#FFB74D',
@@ -98,6 +100,17 @@ export default {
             '#616161',
             '#424242',
             '#212121',
+          ][num - 1],
+          [`red-${num}00`]: [
+            '#FFEBE6',
+            '#FFD8D2',
+            '#FFB4A9',
+            '#FF8F80',
+            '#FF6B5A',
+            '#FF4733',
+            '#E03E25',
+            '#C6361F',
+            '#AD2E19',
           ][num - 1],
         }),
         {},

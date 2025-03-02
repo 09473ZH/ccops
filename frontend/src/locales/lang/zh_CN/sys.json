@@ -60,7 +60,7 @@
       "policyPlaceholder": "勾选后才能注册",
       "diffPwd": "两次输入密码不一致",
 
-      "userName": "账号",
+      "account": "用户名/邮箱",
       "password": "密码",
       "confirmPassword": "确认密码",
       "email": "邮箱",
@@ -117,7 +117,10 @@
       "task_manage": "任务管理",
       "publish_config": "配置发布",
       "quick_command": "快捷命令",
-      "system_settings": "系统设置",
+      "common_settings": "通用设置",
+      "admin_settings": "管理员设置",
+      "user_manage": "用户管理",
+      "account_manage": "账号管理",
       "clipboard": "剪贴板",
       "token_expired": "Token失效",
       "menulevel": {

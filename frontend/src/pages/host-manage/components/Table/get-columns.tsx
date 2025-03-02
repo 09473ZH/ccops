@@ -1,6 +1,6 @@
-import { Space, Input, Popconfirm, Progress, Tooltip } from 'antd';
+import { Space, Input, Popconfirm, Progress, Tooltip, Button } from 'antd';
 import { ColumnType } from 'antd/es/table';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import type { DiskInfo, HostInfo } from '@/api/services/host';
 import type { LabelInfo } from '@/api/services/label';
@@ -53,11 +53,20 @@ export const getColumnGroups = (): ColumnGroup[] => [
 
 const handleJumpServer = (record: HostInfo) => {
   const id = `${record.id}`;
-  window.open(`/host_manage/jump-server/${id}`, '_blank');
+  window.open(`/terminal/${id}`, '_blank');
 };
 
 const DISK_USAGE_WARNING_THRESHOLD = 80;
 const DISK_USAGE_DANGER_THRESHOLD = 90;
+
+function HostNameCell({ record }: { record: HostInfo }) {
+  const navigate = useNavigate();
+  return (
+    <Button type="link" onClick={() => navigate(`/host_manage/detail/${record.id}`)}>
+      {record.name}
+    </Button>
+  );
+}
 
 const renderHostName = (record: HostInfo, editing: EditingState, setEditingState: Function) => {
   if (editing.action === 'edit' && editing.id === record.id) {
@@ -74,7 +83,7 @@ const renderHostName = (record: HostInfo, editing: EditingState, setEditingState
       />
     );
   }
-  return <Link to={`/host_manage/detail/${record.id}`}>{record.name}</Link>;
+  return <HostNameCell record={record} />;
 };
 
 function renderDiskSpace(space: number, totalSpace: number, percent: number) {

@@ -24,11 +24,10 @@ func (UserApi) UserCreate(c *gin.Context) {
 
 	// 定义请求结构体
 	type CreateUserReq struct {
-		UserName string `json:"username"`
-		Email    string `json:"email"`
-		HostIds  []uint `json:"hostIds"`
-		Labels   []uint `json:"labels"` // 新增标签ID列表
-		Role     string `json:"role"`
+		UserName    string                `json:"username"`
+		Email       string                `json:"email"`
+		Role        string                `json:"role"`
+		Permissions models.UserPermission `json:"permissions"`
 	}
 
 	// 解析请求体
@@ -102,9 +101,9 @@ func (UserApi) UserCreate(c *gin.Context) {
 	}
 
 	// 分配主机权限
-	if len(req.HostIds) > 0 {
+	if len(req.Permissions.HostIds) > 0 {
 		var toAdd []models.HostPermission
-		for _, hostId := range req.HostIds {
+		for _, hostId := range req.Permissions.HostIds {
 			toAdd = append(toAdd, models.HostPermission{
 				UserId: newUser.ID,
 				HostId: hostId,
@@ -118,9 +117,9 @@ func (UserApi) UserCreate(c *gin.Context) {
 	}
 
 	// 分配标签权限
-	if len(req.Labels) > 0 {
+	if len(req.Permissions.LabelIds) > 0 {
 		var toAddLabels []models.UserLabels
-		for _, labelId := range req.Labels {
+		for _, labelId := range req.Permissions.LabelIds {
 			toAddLabels = append(toAddLabels, models.UserLabels{
 				UserID:  newUser.ID,
 				LabelID: labelId,

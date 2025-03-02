@@ -34,7 +34,7 @@ export const UserApi = {
   GetMe: `${ApiPath.Users}/me`, // 获取当前用户信息
   UpdateStatus: `${ApiPath.Users}/:id/status`, // 禁用/启用用户
   Initialize: `${ApiPath.Users}/me/initialize`, // 初始化用户密码
-  ResetPassword: `${ApiPath.Users}/:id/reset_password`, // 管理员重置用户密码
+  ResetPassword: `${ApiPath.Users}/:id/reset_password`, // 重置用户密码
   GetPermissions: `${ApiPath.Users}/:id/permissions`, // 获取用户权限信息
   UpdatePermissions: `${ApiPath.Users}/:id/permissions`, // 分配权限
 } as const;
@@ -43,7 +43,7 @@ export const UserApi = {
 export const LabelApi = {
   ...createCrudApi(ApiPath.Labels),
   AssignToHost: `${ApiPath.Hosts}/assign_labels`, // 分配标签到主机
-  UnlabelFromHost: `${ApiPath.Hosts}/:id/unlabel`, // 解除主机标签关联
+  UnlabelFromHost: `${ApiPath.Labels}/:id/unbind_all_hosts `, // 解除所有主机标签关联
 } as const;
 
 /** 文件相关接口 */
