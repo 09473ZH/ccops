@@ -76,14 +76,38 @@ func (UserApi) UserCreate(c *gin.Context) {
 	username := req.UserName
 
 	// 生成随机密码并哈希
-	passwordLetters := []rune("abcdefghijklmnopqrstuvwxyz0123456789")
-	b := make([]rune, 6)
-	for i := range b {
-		b[i] = passwordLetters[rand.Intn(len(passwordLetters))]
-	}
-	password := string(b)
+	const (
+		lowerLetters = "abcdefghijklmnopqrstuvwxyz"
+		upperLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		numbers      = "0123456789"
+		symbols      = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+		passLength   = 12
+	)
 
-	hashedPassword := pwd.HashPwd(password)
+	// 确保密码包含所有类型的字符
+	password := make([]rune, passLength)
+
+	// 先放入每种类型的至少一个字符
+	password[0] = rune(lowerLetters[rand.Intn(len(lowerLetters))])
+	password[1] = rune(upperLetters[rand.Intn(len(upperLetters))])
+	password[2] = rune(numbers[rand.Intn(len(numbers))])
+	password[3] = rune(symbols[rand.Intn(len(symbols))])
+
+	// 合并所有可能的字符
+	allChars := lowerLetters + upperLetters + numbers + symbols
+
+	// 填充剩余位置
+	for i := 4; i < passLength; i++ {
+		password[i] = rune(allChars[rand.Intn(len(allChars))])
+	}
+
+	// 打乱密码字符顺序
+	for i := len(password) - 1; i > 0; i-- {
+		j := rand.Intn(i + 1)
+		password[i], password[j] = password[j], password[i]
+	}
+
+	hashedPassword := pwd.HashPwd(string(password))
 
 	// 开启事务
 	tx := global.DB.Begin()
@@ -148,7 +172,7 @@ func (UserApi) UserCreate(c *gin.Context) {
 	}
 	var user userInfo
 	user.UserName = username
-	user.Password = password
+	user.Password = string(password)
 	user.Email = req.Email
 
 	res.Ok(user, "用户创建成功", c)
