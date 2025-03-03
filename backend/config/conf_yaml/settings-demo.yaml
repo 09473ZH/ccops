@@ -1,0 +1,23 @@
+system:
+  host: 0.0.0.0          # 监听地址
+  port: 8080             # 监听端口
+  env:  release          # # Gin 运行模式
+mysql:
+  host: localhost # 数据库主机
+  port: 3306              # 数据库端口
+  config: charset=utf8mb4&parseTime=True&loc=Local # 数据库配置
+  db: ccops          # 数据库名称
+  user: root      # 数据库用户名
+  password: 123456  # 数据库密码
+  log_level: info         # 日志级别
+logger:
+  level: info             # 日志级别
+  prefix: '[example]'     # 日志前缀
+  director: log           # 日志目录
+  show_line: true         # 显示行号
+  log_in_console: true    # 控制台输出日志
+jwt:
+  secret: xxx     # JWT 密钥
+  issuer: xx     # JWT 发行者
+  accessExpires: 360      # 访问令牌过期时间（小时）
+  refreshExpires: 1440     # 刷新令牌过期时间（小时）
