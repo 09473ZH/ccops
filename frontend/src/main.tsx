@@ -16,6 +16,7 @@ import App from '@/App';
 import './locales/i18n';
 // tailwind css
 import './theme/index.css';
+import { initSentry } from './utils/sentry';
 
 // 创建一个 client
 const queryClient = new QueryClient({
@@ -30,6 +31,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+initSentry();
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
