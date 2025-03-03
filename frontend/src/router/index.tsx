@@ -1,50 +1,56 @@
-import { lazy, Suspense } from 'react';
-import { Navigate, RouteObject, RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { ErrorBoundary } from 'react-error-boundary';
+import { Navigate, type RouteObject, createBrowserRouter } from 'react-router-dom';
+import { RouterProvider } from 'react-router-dom';
 
-import Layout from '@/layouts';
-import TerminalLayout from '@/layouts/TerminalLayout';
-import { usePermissionRoutes } from '@/router/hooks';
-import { ErrorRoutes } from '@/router/routes/error-routes';
+import Layout from '@/layouts/index';
+import PageError from '@/pages/sys/error/PageError';
+import Login from '@/pages/sys/login/Login';
+import ProtectedRoute from '@/router/components/protected-route';
+import { ERROR_ROUTE } from '@/router/routes/error-routes';
+import terminalRoutes from '@/router/routes/modules/terminal';
+import { getRoutesFromModules } from '@/router/utils';
 
-import { AppRouteObject } from '#/router';
+import type { AppRouteObject } from '#/router';
 
 const { VITE_APP_HOMEPAGE: HOMEPAGE } = import.meta.env;
 
-const JumpServer = lazy(() => import('@/pages/host-manage/jump-server/index'));
-
-const LoginRoute: AppRouteObject = {
+const PUBLIC_ROUTE: AppRouteObject = {
   path: '/login',
-  Component: lazy(() => import('@/pages/sys/login/Login')),
+  element: (
+    <ErrorBoundary FallbackComponent={PageError}>
+      <Login />
+    </ErrorBoundary>
+  ),
 };
 
-const PAGE_NOT_FOUND_ROUTE: AppRouteObject = {
+const NO_MATCHED_ROUTE: AppRouteObject = {
   path: '*',
   element: <Navigate to="/404" replace />,
 };
 
 export default function Router() {
-  const permissionRoutes = usePermissionRoutes();
-
-  const asyncRoutes: AppRouteObject = {
+  const PROTECTED_ROUTE: AppRouteObject = {
     path: '/',
-    element: <Layout />,
-    children: [{ index: true, element: <Navigate to={HOMEPAGE} replace /> }, ...permissionRoutes],
-  };
-
-  const jumpServerRoute: AppRouteObject = {
-    path: '/host_manage/jump-server/:id',
     element: (
-      <TerminalLayout>
-        <Suspense fallback={null}>
-          <JumpServer />
-        </Suspense>
-      </TerminalLayout>
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
     ),
+    children: [
+      { index: true, element: <Navigate to={HOMEPAGE} replace /> },
+      ...getRoutesFromModules().filter((route) => !route.path?.startsWith('terminal')),
+    ],
   };
 
-  const routes = [LoginRoute, jumpServerRoute, asyncRoutes, ErrorRoutes, PAGE_NOT_FOUND_ROUTE];
+  const routesArray = [
+    PUBLIC_ROUTE,
+    PROTECTED_ROUTE,
+    ...terminalRoutes,
+    ERROR_ROUTE,
+    NO_MATCHED_ROUTE,
+  ] as RouteObject[];
 
-  const router = createBrowserRouter(routes as unknown as RouteObject[]);
+  const router = createBrowserRouter(routesArray);
 
   return <RouterProvider router={router} />;
 }

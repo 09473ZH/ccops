@@ -63,3 +63,8 @@ func RemoveDuplicatesUint(slice []uint) []uint {
 
 	return result
 }
+
+type NameID struct {
+	Name string `json:"name"`
+	ID   uint   `json:"id"`
+}

@@ -7,15 +7,14 @@ import (
 	"ccops/models/res"
 	"ccops/utils/jwts"
 	"ccops/utils/permission"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AssignPermissionReq struct {
-	UserId   uint   `json:"userId"`
-	Role     string `json:"role"`
-	HostIds  []uint `json:"HostIds"`
-	LabelIds []uint `json:"LabelIds"`
+	Role        string                `json:"role"`
+	Permissions models.UserPermission `json:"permissions"`
 }
 
 func (UserApi) AssignPermission(c *gin.Context) {
@@ -25,13 +24,14 @@ func (UserApi) AssignPermission(c *gin.Context) {
 		res.FailWithMessage("权限不足", c)
 		return
 	}
+	userId, _ := strconv.Atoi(c.Param("id"))
 	var cr AssignPermissionReq
 	if err := c.ShouldBindJSON(&cr); err != nil {
 		res.FailWithMessage(err.Error(), c)
 		return
 	}
 	if cr.Role == ctype.PermissionAdmin {
-		global.DB.Model(&models.UserModel{}).Where("id = ?", cr.UserId).Update("role", ctype.PermissionAdmin)
+		global.DB.Model(&models.UserModel{}).Where("id = ?", userId).Update("role", ctype.PermissionAdmin)
 		res.OkWithMessage("分配权限成功", c)
 		return
 	} else if cr.Role == ctype.PermissionServiceManager {
@@ -41,7 +41,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 		// 处理主机权限
 		// 获取用户当前的权限列表
 		var currentPermissions []models.HostPermission
-		tx.Where("user_id = ?", cr.UserId).Find(&currentPermissions)
+		tx.Where("user_id = ?", userId).Find(&currentPermissions)
 
 		// 将当前权限转换为map，方便查找
 		currentMap := make(map[uint]bool)
@@ -51,7 +51,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 
 		// 将新权限转换为map
 		newMap := make(map[uint]bool)
-		for _, hostId := range cr.HostIds {
+		for _, hostId := range cr.Permissions.HostIds {
 			newMap[hostId] = true
 		}
 
@@ -68,7 +68,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 		for hostId := range newMap {
 			if !currentMap[hostId] {
 				toAdd = append(toAdd, models.HostPermission{
-					UserId: cr.UserId,
+					UserId: uint(userId),
 					HostId: hostId,
 				})
 			}
@@ -76,7 +76,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 
 		// 执行删除操作
 		if len(toDelete) > 0 {
-			if err := tx.Where("user_id = ? AND host_id IN ?", cr.UserId, toDelete).
+			if err := tx.Where("user_id = ? AND host_id IN ?", userId, toDelete).
 				Delete(&models.HostPermission{}).Error; err != nil {
 				tx.Rollback()
 				res.FailWithMessage("更新主机权限失败", c)
@@ -96,7 +96,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 		// 处理标签权限
 		// 获取用户当前的标签列表
 		var currentLabels []models.UserLabels
-		tx.Where("user_id = ?", cr.UserId).Find(&currentLabels)
+		tx.Where("user_id = ?", userId).Find(&currentLabels)
 
 		// 将当前标签转换为map
 		currentLabelMap := make(map[uint]bool)
@@ -106,7 +106,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 
 		// 将新标签转换为map
 		newLabelMap := make(map[uint]bool)
-		for _, labelId := range cr.LabelIds {
+		for _, labelId := range cr.Permissions.LabelIds {
 			newLabelMap[labelId] = true
 		}
 
@@ -123,7 +123,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 		for labelId := range newLabelMap {
 			if !currentLabelMap[labelId] {
 				toAddLabels = append(toAddLabels, models.UserLabels{
-					UserID:  cr.UserId,
+					UserID:  uint(userId),
 					LabelID: labelId,
 				})
 			}
@@ -131,7 +131,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 
 		// 执行标签删除操作
 		if len(toDeleteLabels) > 0 {
-			if err := tx.Where("user_id = ? AND label_id IN ?", cr.UserId, toDeleteLabels).
+			if err := tx.Where("user_id = ? AND label_id IN ?", userId, toDeleteLabels).
 				Delete(&models.UserLabels{}).Error; err != nil {
 				tx.Rollback()
 				res.FailWithMessage("更新标签权限失败", c)
@@ -150,7 +150,7 @@ func (UserApi) AssignPermission(c *gin.Context) {
 
 		// 更新用户角色
 		if err := tx.Model(&models.UserModel{}).
-			Where("id = ?", cr.UserId).
+			Where("id = ?", userId).
 			Update("role", ctype.PermissionServiceManager).Error; err != nil {
 			tx.Rollback()
 			res.FailWithMessage("更新权限失败", c)

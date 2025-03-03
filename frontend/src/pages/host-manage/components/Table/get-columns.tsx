@@ -53,7 +53,7 @@ export const getColumnGroups = (): ColumnGroup[] => [
 
 const handleJumpServer = (record: HostInfo) => {
   const id = `${record.id}`;
-  window.open(`/host_manage/jump-server/${id}`, '_blank');
+  window.open(`/terminal/${id}`, '_blank');
 };
 
 const DISK_USAGE_WARNING_THRESHOLD = 80;

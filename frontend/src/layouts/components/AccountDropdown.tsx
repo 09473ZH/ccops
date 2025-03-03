@@ -1,23 +1,23 @@
-import { Divider, MenuProps } from 'antd';
+import { App, Divider, MenuProps } from 'antd';
 import Dropdown, { DropdownProps } from 'antd/es/dropdown/dropdown';
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavLink } from 'react-router-dom';
 
 import { IconButton } from '@/components/Icon';
-import { useUserInfo } from '@/hooks/useUser';
+import { useUserInfo } from '@/hooks/use-user';
 import { useSettings } from '@/store/setting';
 import { useSignOut } from '@/store/user';
 import { useThemeToken } from '@/theme/hooks';
 
 const LoginStateProvider = lazy(() => import('@/pages/sys/login/providers/LoginStateProvider'));
-
+const AccountManageModal = lazy(() => import('@/components/AccountSettingModal'));
 // https://www.dicebear.com/
 const DEFAULT_AVATAR = 'https://api.dicebear.com/9.x/initials/svg?backgroundType=gradientLinear';
 
 // 把使用 context 的部分抽出来作为子组件
 function AccountDropdownContent() {
   const { userInfo } = useUserInfo();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { username, email, role } = userInfo || {};
   const signOut = useSignOut();
   const { t } = useTranslation();
@@ -27,7 +27,7 @@ function AccountDropdownContent() {
   const { colorBgElevated, borderRadiusLG } = useThemeToken();
   const { themeMode } = useSettings();
   const isDarkMode = themeMode === 'dark';
-
+  const { modal } = App.useApp();
   // 生成基于用户名的头像URL
   const avatarUrl = username
     ? `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
@@ -70,14 +70,12 @@ function AccountDropdownContent() {
   const items: MenuProps['items'] = [
     {
       label: (
-        <NavLink
-          to="/account_manage"
-          style={{ color: isDarkMode ? 'white' : 'black', textDecoration: 'none' }}
-        >
+        <button type="button" onClick={() => setIsModalOpen(true)}>
           {t('sys.menu.user.account')}
-        </NavLink>
+        </button>
       ),
       key: '0',
+      onClick: () => setIsModalOpen(true),
     },
     { type: 'divider' },
     {
@@ -87,24 +85,37 @@ function AccountDropdownContent() {
         </button>
       ),
       key: '1',
-      onClick: logout,
+      onClick: () => {
+        modal.confirm({
+          title: '确定要退出登录吗？',
+          content: '退出登录后，您将需要重新登录。',
+          onOk: logout,
+        });
+      },
     },
   ];
-
   return (
-    <Dropdown
-      menu={{
-        items,
-        theme: isDarkMode ? 'dark' : 'light',
-      }}
-      trigger={['click']}
-      dropdownRender={dropdownRender}
-      placement="bottomRight"
-    >
-      <IconButton className="h-9 w-9 transform-none px-0 transition-transform duration-200 hover:scale-105">
-        <img className="h-7 w-7 rounded-full ring-2" src={avatarUrl} alt={username || 'user'} />
-      </IconButton>
-    </Dropdown>
+    <>
+      <AccountManageModal
+        open={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+        }}
+      />
+      <Dropdown
+        menu={{
+          items,
+          theme: isDarkMode ? 'dark' : 'light',
+        }}
+        trigger={['click']}
+        dropdownRender={dropdownRender}
+        placement="bottomRight"
+      >
+        <IconButton className="h-9 w-9 transform-none px-0 transition-transform duration-200 hover:scale-105">
+          <img className="h-7 w-7 rounded-full ring-2" src={avatarUrl} alt={username || 'user'} />
+        </IconButton>
+      </Dropdown>
+    </>
   );
 }
 

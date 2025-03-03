@@ -143,6 +143,9 @@ importers:
       react-helmet-async:
         specifier: ^2.0.5
         version: 2.0.5(react@18.2.0)
+      react-hook-form:
+        specifier: ^7.54.2
+        version: 7.54.2(react@18.2.0)
       react-i18next:
         specifier: ^13.5.0
         version: 13.5.0(i18next@23.11.5)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -4675,6 +4678,12 @@ packages:
     resolution: {integrity: sha512-rYUYHeus+i27MvFE+Jaa4WsyBKGkL6qVgbJvSBoX8mbsWoABJXdEO0bZyi0F6i+4f0NuIb8AvqPMj3iXFHkMwg==}
     peerDependencies:
       react: ^16.6.0 || ^17.0.0 || ^18.0.0
+
+  react-hook-form@7.54.2:
+    resolution: {integrity: sha512-eHpAUgUjWbZocoQYUHposymRb4ZP6d0uwUnooL2uOybA9/3tPUvoAKqEWK1WaSiTxxOfTpffNZP7QwlnM3/gEg==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18 || ^19
 
   react-i18next@13.5.0:
     resolution: {integrity: sha512-CFJ5NDGJ2MUyBohEHxljOq/39NQ972rh1ajnadG9BjTk+UXbHLq4z5DKEbEQBDoIhUmmbuS/fIMJKo6VOax1HA==}
@@ -10887,6 +10896,10 @@ snapshots:
       react: 18.2.0
       react-fast-compare: 3.2.2
       shallowequal: 1.1.0
+
+  react-hook-form@7.54.2(react@18.2.0):
+    dependencies:
+      react: 18.2.0
 
   react-i18next@13.5.0(i18next@23.11.5)(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
     dependencies:
