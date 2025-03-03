@@ -38,6 +38,7 @@ func JwtUser() gin.HandlerFunc {
 
 func handleHandshakeError(c *gin.Context, message string) {
 	// 在WebSocket握手阶段返回HTTP错误响应
+
 	c.JSON(400, gin.H{"code": res.Error, "data": map[string]any{}, "msg": message})
 	c.Abort()
 }

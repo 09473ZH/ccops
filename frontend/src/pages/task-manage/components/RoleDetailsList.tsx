@@ -20,7 +20,7 @@ export default function RoleDetailsList({ roleDetails }: RoleDetailsListProps) {
     if (content === null || content === undefined) return false;
     if (Array.isArray(content)) return content.length > 0;
     if (typeof content === 'object') return Object.keys(content).length > 0;
-    return true;
+    return Boolean(content);
   };
 
   const renderVarContent = (content: RoleVarContent['content']) => {
@@ -29,20 +29,24 @@ export default function RoleDetailsList({ roleDetails }: RoleDetailsListProps) {
     let items: { key: string; value: string }[] = [];
 
     if (Array.isArray(content)) {
-      items = content.map((item) => ({
-        key: String(item.key),
-        value: String(item.value),
-      }));
+      items = content
+        .filter((item) => item && typeof item === 'object' && 'key' in item && 'value' in item)
+        .map((item) => ({
+          key: String(item.key),
+          value: String(item.value),
+        }));
     } else if (typeof content === 'object' && content !== null) {
-      items = Object.entries(content).map(([key, value]) => ({
-        key,
-        value: typeof value === 'object' ? JSON.stringify(value) : String(value),
-      }));
-    } else {
+      items = Object.entries(content)
+        .filter(([key, value]) => key != null && value != null)
+        .map(([key, value]) => ({
+          key,
+          value: typeof value === 'object' ? JSON.stringify(value) : String(value),
+        }));
+    } else if (content != null) {
       items = [{ key: '值', value: String(content) }];
     }
 
-    return (
+    return items.length > 0 ? (
       <Space direction="vertical" size="small">
         {items.map(({ key, value }, index) => (
           <Text key={`${key}-${index}`} type="secondary">
@@ -50,31 +54,33 @@ export default function RoleDetailsList({ roleDetails }: RoleDetailsListProps) {
           </Text>
         ))}
       </Space>
-    );
+    ) : null;
   };
 
   const roleDetailsWithId = roleDetails.roleIdList.map((roleId: number, index: number) => {
-    const matchingVarContent = roleDetails.roleVarContent?.filter(
-      (content) => content.roleId === roleId,
-    );
+    const matchingVarContent =
+      roleDetails.roleVarContent?.filter((content) => content && content.roleId === roleId) || [];
 
     return {
       id: `${roleId}-${index}`,
       roleId,
-      roleVarContent: matchingVarContent || [],
+      roleVarContent: matchingVarContent,
       roleName:
-        roleList?.list.find((role: RoleItem) => role.id === roleId)?.name || `软件 - ${roleId}`,
+        roleList?.list?.find((role: RoleItem) => role?.id === roleId)?.name || `软件 - ${roleId}`,
       customId: `${roleId}-${index}`,
     };
   });
 
   const renderRoleVarContent = (roleVarContent?: RoleVarContent[]) => {
-    if (!roleVarContent?.length) return undefined;
+    if (!Array.isArray(roleVarContent) || roleVarContent.length === 0) return undefined;
+
     return (
       <Space direction="vertical" size="small">
         {roleVarContent.map((varContent: RoleVarContent, index: number) => (
           <div key={index}>
-            {hasVarContent(varContent.content) && renderVarContent(varContent.content)}
+            {varContent &&
+              hasVarContent(varContent.content) &&
+              renderVarContent(varContent.content)}
           </div>
         ))}
       </Space>
@@ -91,7 +97,7 @@ export default function RoleDetailsList({ roleDetails }: RoleDetailsListProps) {
       itemPopover={renderItemPopover}
       labelField="roleName"
       maxCount={2}
-      color="#87d068"
+      color="green"
       expand={{
         type: 'modal',
         render: (roles) => (

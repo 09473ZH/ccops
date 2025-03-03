@@ -82,6 +82,33 @@ func FailWithCode(code ErrorCode, c *gin.Context) {
 	Result(Error, map[string]any{}, "未知错误", c)
 }
 
+func OkWithDataSSE(data any, c *gin.Context) {
+	content := Response{
+		Code: Success,
+		Data: data,
+		Msg:  "成功",
+	}.Json()
+	c.SSEvent("", content)
+}
+
+func OkWithSSE(data any, msg string, c *gin.Context) {
+	content := Response{
+		Code: Success,
+		Data: data,
+		Msg:  msg,
+	}.Json()
+	c.SSEvent("", content)
+}
+func FailWithMessageSSE(msg string, c *gin.Context) {
+	Result(Error, map[string]any{}, msg, c)
+	data := Response{
+		Code: Error,
+		Data: map[string]any{},
+		Msg:  msg,
+	}.Json()
+	c.SSEvent("", data)
+}
+
 // LoginResponse 登录响应结构体
 type LoginResponse struct {
 	AccessToken  string `json:"accessToken"`  // 访问令牌

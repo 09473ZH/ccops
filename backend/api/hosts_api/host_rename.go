@@ -39,7 +39,7 @@ func (HostsApi) HostRename(c *gin.Context) {
 
 	validHostName := regexp.MustCompile(`^[a-z0-9]+([-][a-z0-9]+)*$`)
 	if !validHostName.MatchString(cr.HostName) {
-		res.FailWithMessage("host_name 只能包含小写字母、数字和中划线，且不能以中划线开头或结尾", c)
+		res.FailWithMessage("hostname 只能包含小写字母、数字和中划线，且不能以中划线开头或结尾", c)
 		return
 	}
 

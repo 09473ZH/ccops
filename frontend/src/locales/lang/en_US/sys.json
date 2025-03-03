@@ -32,7 +32,7 @@
       "signUpFormTitle": "Sign up",
       "forgetFormTitle": "Reset password",
 
-      "signInPrimaryTitle": "Hi, Welcome Back",
+      "signInPrimaryTitle": "Welcome Back",
       "signInSecondTitle": "Backstage management system",
       "signInTitle": "",
       "signInDesc": "Enter your personal details and get started!",
@@ -61,7 +61,7 @@
       "policyPlaceholder": "Register after checking",
       "diffPwd": "The two passwords are inconsistent",
 
-      "userName": "Username",
+      "account": "Username / Email",
       "password": "Password",
       "confirmPassword": "Confirm Password",
       "email": "Email",
@@ -118,7 +118,9 @@
       "quick_command": "Quick Command",
       "software_manage": "Software Manage",
       "task_manage": "Task Manage",
-      "system_settings": "System Settings",
+      "common_settings": "Common Settings",
+      "admin_settings": "Admin Settings",
+      "user_manage": "User Manage",
       "clipboard": "Clipboard",
       "token_expired": "Token Expired",
       "menulevel": {

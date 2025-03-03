@@ -56,7 +56,7 @@ export function TaskOutputModal({
       width={800}
     >
       <div
-        className={`p-4 font-mono text-sm ${isDarkMode ? 'text-white bg-gray-800' : 'bg-gray-100'}`}
+        className={`p-4 font-mono text-sm ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100'}`}
       >
         {renderContent}
       </div>

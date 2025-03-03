@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom';
 
 import Layout from '@/layouts';
 
-import AuthGuard from '../components/auth-guard';
+import AuthGuard from '../components/protected-route';
 import { getRoutesFromModules } from '../utils';
 
 import { AppRouteObject } from '#/router';

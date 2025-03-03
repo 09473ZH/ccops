@@ -9,7 +9,6 @@ import (
 
 func (router RouterGroup) HostRouter(hostRouterGroup *gin.RouterGroup) {
 	app := api.ApiGroupApp.HostsApi
-
 	hostRouterGroup.Use(middleware.JwtUser())
 	hostRouterGroup.GET("/:id/terminal", app.HandleWebSocket)
 	hostRouterGroup.GET("", app.HostListView)
@@ -19,7 +18,7 @@ func (router RouterGroup) HostRouter(hostRouterGroup *gin.RouterGroup) {
 	hostRouterGroup.POST("refresh", app.HostFlushInfoView)
 	hostRouterGroup.POST("rename", app.HostRename)
 	hostRouterGroup.POST("assign_labels", app.AssignLabelsToHost)
-
 	hostRouterGroup.GET("me", app.PermissionHosts)
 	hostRouterGroup.GET("search", app.HostSearch)
+	hostRouterGroup.POST("command/help", app.CommandCompleteView)
 }

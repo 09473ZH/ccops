@@ -15,7 +15,10 @@ export interface UserInfo {
   isInit: boolean;
   password?: string;
   avatar?: string;
-  permissions?: Permission[];
+  permissions: {
+    hostIds: number[];
+    labelIds: number[];
+  };
 }
 
 export interface Organization {
