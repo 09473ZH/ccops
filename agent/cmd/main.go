@@ -5,9 +5,7 @@ import (
 	"agent/web/clglobal"
 	"agent/web/request"
 	"agent/web/router"
-	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"time"
 
@@ -21,7 +19,6 @@ var (
 	action  = flag.String("action", "", "Install or uninstall the service (use 'install' or 'uninstall' or 'run')")
 	server  = flag.String("server", "", "Server address")
 	version = flag.Bool("version", false, "Show version")
-	debug   = flag.Bool("debug", false, "Enable debug mode")
 )
 
 func (p *program) Start(s service.Service) error {
@@ -37,8 +34,7 @@ func (p *program) run() {
 	clglobal.Address = server
 	err := request.SendHostInfoRequest()
 	if err != nil {
-		log.Printf("查询主机信息时出错: %v", err)
-		return
+		log.Fatalf("查询主机信息时出错: %v", err)
 	}
 	request.CheckAndUpdatePublicKey() // 检查并更新公钥
 
@@ -112,18 +108,6 @@ func main() {
 	flag.Parse()
 	if *version {
 		log.Println("ccagent version：", query.GetAgnetVersion())
-		return
-	}
-	if *debug {
-		info, err := query.QueryHostDetailInfo()
-		if err != nil {
-			fmt.Println(err)
-		}
-		_, err = json.Marshal(info) // 确保发送正确的 JSON 数据
-		if err != nil {
-			fmt.Println(err)
-		}
-
 		return
 	}
 	if *action != "uninstall" {
