@@ -7,13 +7,16 @@
   "scripts": {
     "dev": "vite",
     "dev:local": "vite --mode localhost",
+    "dev:demo": "vite --mode demo",
     "dev:prod": "vite --mode production",
     "build": "npm run build:dev",
     "build:dev": "tsc && vite build --mode development",
+    "build:demo": "tsc && vite build --mode demo",
     "build:prod": "tsc && vite build --mode production",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview:dev": "vite preview --mode development",
-    "preview:prod": "vite preview --mode production"
+    "preview:prod": "vite preview --mode production",
+    "preview:demo": "vite preview --mode demo"
   },
   "dependencies": {
     "@ant-design/cssinjs": "^1.21.0",
