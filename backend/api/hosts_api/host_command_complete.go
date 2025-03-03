@@ -11,13 +11,12 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // CommandCompleteRequest 命令补全请求结构
 type CommandCompleteRequest struct {
-	Query       string    `json:"query" binding:"required" msg:"请输入命令描述"`
-	SystemType  string    `json:"systemType" binding:"required" msg:"请指定系统类型"` // linux/windows
-	History     []Message `json:"history"` // 添加历史记录字段
+	Query string `json:"query" binding:"required" msg:"请输入命令描述"`
 }
 
 // Message 对话消息结构
@@ -28,12 +27,15 @@ type Message struct {
 
 // 系统提示词
 const systemPrompt = `你是一个 Linux/Windows 命令行专家。用户会描述他们想要完成的任务或者记不完整的命令，
-你需要帮助他们补全或找到正确的命令。请确保：
-1. 给出完整的命令示例
-2. 简要解释命令的作用
-3. 如果命令有危险性，要特别说明
-4. 尽量提供命令的常用参数说明
-请用中文回答。`
+你需要帮助他们补全或找到正确的命令。请按以下格式回答：
+
+1. 首先给出完整的命令名称
+2. 然后提供具体的命令示例
+3. 解释命令的作用
+4. 列出常用参数说明
+5. 如果命令有危险性，要特别说明
+
+请用中文回答，回答要简洁明了。`
 
 // CommandCompleteView 处理命令补全的流式响应
 func (HostsApi) CommandCompleteView(c *gin.Context) {
@@ -54,36 +56,39 @@ func (HostsApi) CommandCompleteView(c *gin.Context) {
 		return
 	}
 
-	// 构建用户提示词
-	userPrompt := fmt.Sprintf("系统类型：%s\n用户需求：%s", cr.SystemType, cr.Query)
+	// 处理 baseUrl 格式
+	if !strings.HasPrefix(baseUrl, "http://") && !strings.HasPrefix(baseUrl, "https://") {
+		baseUrl = "https://" + baseUrl
+	}
 
-	// 构建消息列表
+	// 检查并修正 API 路径
+	if !strings.Contains(baseUrl, "/v1/") {
+		baseUrl = strings.TrimSuffix(baseUrl, "/") + "/v1"
+	}
+	baseUrl = strings.TrimSuffix(baseUrl, "/") + "/chat/completions"
+
+	// 构建消息列表，只包含系统提示词和当前用户问题
 	messages := []map[string]string{
 		{
 			"role":    "system",
 			"content": systemPrompt,
 		},
+		{
+			"role":    "user",
+			"content": cr.Query,
+		},
 	}
 
-	// 添加历史记录
-	for _, msg := range cr.History {
-		messages = append(messages, map[string]string{
-			"role":    msg.Role,
-			"content": msg.Content,
-		})
-	}
-
-	// 添加当前用户问题
-	messages = append(messages, map[string]string{
-		"role":    "user",
-		"content": userPrompt,
-	})
+	// 添加调试日志
+	global.Log.Info("最终请求URL:", baseUrl)
+	global.Log.Info("收到命令查询请求:", cr.Query)
 
 	// 构建请求体
 	requestBody := map[string]interface{}{
-		"model":    modelName,
-		"messages": messages,
-		"stream":   true,
+		"model":       modelName,
+		"messages":    messages,
+		"stream":      true,
+		"temperature": 0.7,
 	}
 
 	jsonBody, err := json.Marshal(requestBody)
@@ -108,13 +113,36 @@ func (HostsApi) CommandCompleteView(c *gin.Context) {
 	c.Header("Connection", "keep-alive")
 	c.Header("Transfer-Encoding", "chunked")
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	// 添加请求日志
+	global.Log.Info("准备发送AI请求")
+
 	resp, err := client.Do(req)
 	if err != nil {
+		global.Log.Error("AI请求失败:", err)
 		res.FailWithMessageSSE("AI请求失败", c)
 		return
 	}
+
+	// 响应状态日志
+	global.Log.Info("AI响应状态:", resp.Status)
+
 	defer resp.Body.Close()
+
+	// 在发送第一个响应前，先发送一个心跳确认连接建立
+	c.Writer.Write([]byte("event: ping\ndata: connected\n\n"))
+	c.Writer.Flush()
+
+	// 改进错误响应
+	if resp.StatusCode != http.StatusOK {
+		errMsg := fmt.Sprintf("AI服务响应错误(状态码:%d)", resp.StatusCode)
+		global.Log.Error(errMsg)
+		res.FailWithMessageSSE(errMsg, c)
+		return
+	}
 
 	// 读取并转发AI的流式响应
 	reader := bufio.NewReader(resp.Body)
@@ -122,13 +150,20 @@ func (HostsApi) CommandCompleteView(c *gin.Context) {
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
+				global.Log.Info("响应结束")
 				break
 			}
-			global.Log.Error("读取AI响应失败:", err)
+			global.Log.Error("读取响应失败:", err)
+			res.FailWithMessageSSE("读取响应失败", c)
 			break
 		}
 
-		// 处理数据行
+		// 确保响应行不为空
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
 		if strings.HasPrefix(line, "data: ") {
 			data := strings.TrimPrefix(line, "data: ")
 			if data == "[DONE]" {
@@ -136,22 +171,25 @@ func (HostsApi) CommandCompleteView(c *gin.Context) {
 			}
 
 			// 解析AI响应
-			var response map[string]interface{}
+			var response struct {
+				Choices []struct {
+					Delta struct {
+						Content string `json:"content"`
+					} `json:"delta"`
+				} `json:"choices"`
+			}
+
 			if err := json.Unmarshal([]byte(data), &response); err != nil {
+				global.Log.Error("解析响应失败:", err)
 				continue
 			}
 
-			// 提取内容
-			if choices, ok := response["choices"].([]interface{}); ok && len(choices) > 0 {
-				if choice, ok := choices[0].(map[string]interface{}); ok {
-					if delta, ok := choice["delta"].(map[string]interface{}); ok {
-						if content, ok := delta["content"].(string); ok {
-							// 使用已有的SSE响应方法发送内容
-							res.OkWithDataSSE(content, c)
-						}
-					}
-				}
+			// 提取内容并发送
+			if len(response.Choices) > 0 && response.Choices[0].Delta.Content != "" {
+				content := response.Choices[0].Delta.Content
+				// 使用封装好的 SSE 响应方法
+				res.OkWithDataSSE(content, c)
 			}
 		}
 	}
-} 
+}

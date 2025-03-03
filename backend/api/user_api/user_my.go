@@ -14,6 +14,10 @@ func (UserApi) UserMY(c *gin.Context) {
 
 	var my models.UserModel
 	global.DB.Model(&models.UserModel{}).First(&my, claims.UserID)
+	if my.ID == 0 {
+		res.FailWithMessage("用户不存在", c)
+		return
+	}
 	type MYInfo struct {
 		Id        uint   `json:"id"`
 		Username  string `json:"username"`
