@@ -41,6 +41,7 @@ func InitRouter() *gin.Engine {
 	taskRouterGroup := apiRouterGroup.Group("tasks")
 	revisionRouterGroup := apiRouterGroup.Group("role_revisions")
 	configurationRouterGroup := apiRouterGroup.Group("configurations")
+	AIAssistantRouterGroup := apiRouterGroup.Group("assistant")
 
 	routerGroupApp := RouterGroup{apiRouterGroup}
 
@@ -55,6 +56,7 @@ func InitRouter() *gin.Engine {
 	routerGroupApp.RevisionRouter(revisionRouterGroup)
 	routerGroupApp.ConfigurationRouter(configurationRouterGroup)
 	routerGroupApp.AuthRouter(authRouterGroup)
+	routerGroupApp.AIAssistantRouter(AIAssistantRouterGroup)
 
 	return router
 }

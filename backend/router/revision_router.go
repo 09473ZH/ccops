@@ -15,6 +15,5 @@ func (router RouterGroup) RevisionRouter(revisionRouterGroup *gin.RouterGroup) {
 	revisionRouterGroup.POST("/:id/active", app.RoleActiveSwitch)
 	revisionRouterGroup.GET("/:id", app.RoleRevisionInfo)
 	revisionRouterGroup.DELETE("/:id", app.RoleRevisionRemove)
-	revisionRouterGroup.POST("/ai", app.GenerateAnsibleRole)
 
 }

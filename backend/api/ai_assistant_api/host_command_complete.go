@@ -1,4 +1,4 @@
-package hosts_api
+package ai_assistant_api
 
 import (
 	"bufio"
@@ -26,7 +26,7 @@ type Message struct {
 }
 
 // 系统提示词
-const systemPrompt = `你是一个 Linux/Windows 命令行专家。用户会描述他们想要完成的任务或者记不完整的命令，
+const systemHostPrompt = `你是一个 Linux/Windows 命令行专家。用户会描述他们想要完成的任务或者记不完整的命令，
 你需要帮助他们补全或找到正确的命令。请按以下格式回答：
 
 1. 首先给出完整的命令名称
@@ -38,7 +38,7 @@ const systemPrompt = `你是一个 Linux/Windows 命令行专家。用户会描�
 请用中文回答，回答要简洁明了。`
 
 // CommandCompleteView 处理命令补全的流式响应
-func (HostsApi) CommandCompleteView(c *gin.Context) {
+func (AIAssistantApi) CommandCompleteView(c *gin.Context) {
 	var cr CommandCompleteRequest
 	if err := c.ShouldBindJSON(&cr); err != nil {
 		res.FailWithError(err, &cr, c)
@@ -71,7 +71,7 @@ func (HostsApi) CommandCompleteView(c *gin.Context) {
 	messages := []map[string]string{
 		{
 			"role":    "system",
-			"content": systemPrompt,
+			"content": systemHostPrompt,
 		},
 		{
 			"role":    "user",
