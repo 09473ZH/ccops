@@ -3,7 +3,9 @@ package query
 import (
 	"bytes"
 	"errors"
+	"log"
 	"os/exec"
+	"runtime"
 
 	"github.com/goccy/go-json"
 )
@@ -256,48 +258,59 @@ func QueryHostDetailInfo() (HostDetailInfo, error) {
 
 	systemInfo, err := QuerySystemInfo()
 	if err != nil {
+		log.Println("查询系统信息失败:", err)
 		return HostDetailInfo{}, err
 	}
 	info.SystemInfo = systemInfo
 
 	uptime, err := QueryUptime()
 	if err != nil {
+		log.Println("查询 uptime 失败:", err)
 		return HostDetailInfo{}, err
 	}
 	info.Uptime = uptime
 
 	diskInfo, err := QueryDiskSpaceUnix()
 	if err != nil {
+		log.Println("查询 disk_info 失败:", err)
 		return HostDetailInfo{}, err
 	}
 	info.DiskInfo = diskInfo
 
 	osInfo, err := QueryOsUnix()
 	if err != nil {
+		log.Println("查询 os_info 失败:", err)
 		return HostDetailInfo{}, err
 	}
 	info.OsInfo = osInfo
 
-	softwareInfo, err := QuerySoftwareList()
-	if err != nil {
-		return HostDetailInfo{}, err
+	// 判断是否为Linux系统
+	if runtime.GOOS == "linux" {
+		softwareInfo, err := QuerySoftwareList()
+		if err != nil {
+			log.Println("查询 software_info 失败:", err)
+			return HostDetailInfo{}, err
+		}
+		info.SoftwareInfo = softwareInfo
 	}
-	info.SoftwareInfo = softwareInfo
 
 	userInfo, err := QueryUserInfo()
 	if err != nil {
+		log.Println("查询 user_info 失败:", err)
 		return HostDetailInfo{}, err
 	}
 	info.UserInfo = userInfo
 
 	userAuthorizeKeysInfo, err := QueryUserAuthorizeKeys()
 	if err != nil {
+		log.Println("查询 user_authorize_keys_info 失败:", err)
 		return HostDetailInfo{}, err
 	}
 	info.UserAuthorizeKeysInfo = userAuthorizeKeysInfo
 
 	publicIPInfo, err := GetPublicIPInfo()
 	if err != nil {
+		log.Println("查询 public_ip_info 失败:", err)
 		return HostDetailInfo{}, err
 	}
 	info.PublicIPInfo = publicIPInfo
