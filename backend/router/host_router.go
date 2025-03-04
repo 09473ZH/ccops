@@ -20,5 +20,5 @@ func (router RouterGroup) HostRouter(hostRouterGroup *gin.RouterGroup) {
 	hostRouterGroup.POST("assign_labels", app.AssignLabelsToHost)
 	hostRouterGroup.GET("me", app.PermissionHosts)
 	hostRouterGroup.GET("search", app.HostSearch)
-	hostRouterGroup.POST("command/help", app.CommandCompleteView)
+
 }

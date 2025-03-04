@@ -1,4 +1,4 @@
-package role_revision_api
+package ai_assistant_api
 
 import (
 	"bytes"
@@ -91,7 +91,7 @@ func ensureValidBaseURL(baseURL string) string {
 }
 
 // GenerateAnsibleRole 处理生成Ansible role的请求
-func (RoleRevisionApi) GenerateAnsibleRole(c *gin.Context) {
+func (AIAssistantApi) GenerateAnsibleRole(c *gin.Context) {
 
 	// 从数据库获取OpenAI配置
 

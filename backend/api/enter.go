@@ -1,6 +1,7 @@
 package api
 
 import (
+	"ccops/api/ai_assistant_api"
 	"ccops/api/auth_api"
 	"ccops/api/client_api"
 	"ccops/api/configuration_api"
@@ -24,6 +25,7 @@ type ApiGroup struct {
 	TaskApi          task_api.TaskApi
 	ConfigurationApi configuration_api.ConfigurationApi
 	LabelApi         labels_api.LabelApi
+	AIAssistantApi   ai_assistant_api.AIAssistantApi
 }
 
 var ApiGroupApp = new(ApiGroup)
