@@ -46,9 +46,15 @@ export default defineConfig(({ mode }) => {
         project: 'ccops',
         authToken: env.SENTRY_AUTH_TOKEN,
         telemetry: false,
-        debug: true,
         sourcemaps: {
           assets: './dist/**',
+          ignore: ['**/node_modules/**', '**/antd/**', '**/@tanstack/**'],
+        },
+        release: {
+          name: process.env.npm_package_version,
+          setCommits: {
+            auto: true,
+          },
         },
       }),
     ],
@@ -68,14 +74,15 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      include: ['@monaco-editor/react', 'react', 'react-dom', '@ant-design/icons', 'antd'],
+      exclude: ['antd'],
+      include: ['@monaco-editor/react', 'react', 'react-dom', '@ant-design/icons'],
       force: false,
     },
     build: {
       target: 'esnext',
       chunkSizeWarningLimit: 3500,
       minify: 'esbuild',
-      sourcemap: true,
+      sourcemap: 'hidden',
       rollupOptions: {
         output: {
           manualChunks: {
@@ -107,6 +114,14 @@ export default defineConfig(({ mode }) => {
             }
             return 'assets/js/[name]-[hash].js';
           },
+          sourcemapExcludeSources: true,
+        },
+        // https://github.com/vitejs/vite/issues/15012
+        onwarn(warning, defaultHandler) {
+          if (warning.code === 'SOURCEMAP_ERROR') {
+            return;
+          }
+          defaultHandler(warning);
         },
       },
       cssCodeSplit: true,
