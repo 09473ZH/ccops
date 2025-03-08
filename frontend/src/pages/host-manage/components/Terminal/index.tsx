@@ -141,36 +141,23 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
       // 处理终端大小调整
       const handleResize = () => {
-        if (fitAddonRef.current) {
-          // 添加延时确保在 DOM 完全更新后再触发 resize
-          setTimeout(() => {
-            fitAddonRef.current?.fit();
-            if (wsRef.current?.readyState === WebSocket.OPEN) {
-              const dims = `${xtermRef.current?.rows},${xtermRef.current?.cols}`;
-              wsRef.current.send(`\x1b[8;${dims}`);
-            }
-          }, 0);
+        if (fitAddonRef.current && terminalRef.current?.offsetParent !== null) {
+          fitAddonRef.current.fit();
+          if (wsRef.current?.readyState === WebSocket.OPEN) {
+            const dims = `${xtermRef.current?.rows},${xtermRef.current?.cols}`;
+            wsRef.current.send(`\x1b[8;${dims}`);
+          }
         }
       };
 
       const resizeObserver = new ResizeObserver(() => {
-        handleResize();
-      });
-
-      if (terminalRef.current) {
-        resizeObserver.observe(terminalRef.current);
-      }
-
-      window.addEventListener('resize', handleResize);
-
-      // 添加标签页可见性变化的处理
-      const handleVisibilityChange = () => {
-        if (document.visibilityState === 'visible') {
+        if (terminalRef.current?.offsetParent !== null) {
           handleResize();
         }
-      };
+      });
 
-      document.addEventListener('visibilitychange', handleVisibilityChange);
+      resizeObserver.observe(terminalRef.current);
+      window.addEventListener('resize', handleResize);
 
       // 初始化 WebSocket 连接
       const { ws, cleanup } = setupWebSocket(term, hostId, onConnectionChange);
@@ -179,7 +166,6 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
       return () => {
         resizeObserver.disconnect();
         window.removeEventListener('resize', handleResize);
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
         cleanup();
       };
     }, [hostId, onConnectionChange, setupWebSocket]);
