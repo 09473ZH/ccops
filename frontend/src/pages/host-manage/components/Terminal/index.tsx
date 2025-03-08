@@ -29,6 +29,7 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
     const xtermRef = useRef<XTerm>();
     const wsRef = useRef<WebSocket>();
     const fitAddonRef = useRef<FitAddon>();
+    const isManualReconnectRef = useRef(false);
 
     const setupWebSocket = useCallback(
       (
@@ -47,28 +48,21 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
           )}?token=${accessToken}`,
         );
         let heartbeatInterval: NodeJS.Timeout;
-        let missedHeartbeats = 0;
-
-        const sendHeartbeat = () => {
-          if (ws.readyState === WebSocket.OPEN) {
-            missedHeartbeats += 1;
-            if (missedHeartbeats > 3) {
-              term.writeln('\r\n\x1b[33m连接似乎已断开，正在尝试重新连接...\x1b[0m\r\n');
-              ws.close();
-              return;
-            }
-            ws.send('\x00');
-          }
-        };
 
         ws.onopen = () => {
           onConnectionChange?.(true);
+          isManualReconnectRef.current = false;
+          
           if (isReconnect) {
             term.write('\x1b[2J\x1b[H');
           }
           const dims = `${term.rows},${term.cols}`;
           ws.send(`\x1b[8;${dims}`);
-          heartbeatInterval = setInterval(sendHeartbeat, 30000);
+          heartbeatInterval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send('\x00');
+            }
+          }, 30000);
         };
 
         ws.onmessage = (event) => {
@@ -76,7 +70,6 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
             event.data === '\x00' ||
             (event.data instanceof Uint8Array && event.data.length === 1 && event.data[0] === 0)
           ) {
-            missedHeartbeats = 0;
             return;
           }
           term.write(event.data);
@@ -84,11 +77,15 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
         ws.onerror = () => {
           onConnectionChange?.(false);
+          term.writeln('\r\n\x1b[33m连接出错，请点击"重新连接"按钮尝试重新连接\x1b[0m\r\n');
           clearInterval(heartbeatInterval);
         };
 
         ws.onclose = () => {
           onConnectionChange?.(false);
+          if (!isManualReconnectRef.current) {
+            term.writeln('\r\n\x1b[33m连接已关闭，请点击"重新连接"按钮重新连接\x1b[0m\r\n');
+          }
           clearInterval(heartbeatInterval);
         };
 
@@ -164,9 +161,14 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
       wsRef.current = ws;
 
       return () => {
+        // 简化的清理逻辑
         resizeObserver.disconnect();
         window.removeEventListener('resize', handleResize);
         cleanup();
+        
+        // 一步完成终端实例销毁
+        xtermRef.current?.dispose();
+        xtermRef.current = undefined;
       };
     }, [hostId, onConnectionChange, setupWebSocket]);
 
@@ -188,6 +190,9 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
         const term = xtermRef.current;
         if (!term) return;
 
+        // 设置手动重连标志，防止关闭旧连接时显示"连接已关闭"的提示
+        isManualReconnectRef.current = true;
+        
         // 关闭现有连接
         if (wsRef.current) {
           wsRef.current.close();
