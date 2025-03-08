@@ -1,5 +1,5 @@
 import { Button, Drawer, Form, FormInstance, Input, Select, Space, Row, Col, Tag } from 'antd';
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 
 import { RoleItem } from '@/api/services/software';
 import { PlaybookTaskReq } from '@/api/services/task';
@@ -30,20 +30,21 @@ export function CreateTaskModal({
 }: CreateTaskModalProps) {
   const { data: roleList } = useRoleList();
   const { list: hostList } = useHostList();
-  const [selectedHosts, setSelectedHosts] = useState<number[]>([]);
   const roleIdList = Form.useWatch('roleIdList', form);
   const hostIdList = Form.useWatch('hostIdList', form);
-
-  useEffect(() => {
-    if (hostIdList) {
-      setSelectedHosts(hostIdList);
-    }
-  }, [hostIdList]);
 
   const generatedTaskName = useMemo(
     () => generateTaskName(roleIdList || [], roleList?.list || []),
     [roleIdList, roleList],
   );
+
+  const roleOptions = useMemo(() => {
+    return (roleList?.list || []).map((role: RoleItem) => ({
+      label: role.existActiveRevision ? role.name : `${role.name}（请先激活版本后使用）`,
+      value: role.id,
+      disabled: !role.existActiveRevision,
+    }));
+  }, [roleList]);
 
   const handleSubmit = (values: any) => {
     const vars = Object.entries(values.vars || {})
@@ -84,15 +85,11 @@ export function CreateTaskModal({
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
         <Row gutter={16}>
           <Col span={24}>
-            <Form.Item
-              name="hostIdList"
-              label="主机列表"
-              rules={[{ required: true, message: '请选择主机' }]}
-            >
+            <Form.Item label="主机列表" required>
               <div className="mb-2 flex items-center gap-2">
                 <span className="text-xs text-gray-500">已选择：</span>
                 <div className="flex min-h-[22px] flex-wrap items-center gap-1.5">
-                  {selectedHosts.slice(0, MAX_HOST_COUNT).map((hostId) => {
+                  {(hostIdList || []).slice(0, MAX_HOST_COUNT).map((hostId: number) => {
                     const host = hostList?.find((h) => h.id === hostId);
                     return (
                       <Tag bordered={false} key={hostId}>
@@ -100,22 +97,21 @@ export function CreateTaskModal({
                       </Tag>
                     );
                   })}
-                  {selectedHosts.length > MAX_HOST_COUNT && (
-                    <span className="text-sm text-gray-400">等 {selectedHosts.length} 个主机</span>
+                  {(hostIdList || []).length > MAX_HOST_COUNT && (
+                    <span className="text-sm text-gray-400">等 {hostIdList.length} 个主机</span>
                   )}
-                  {selectedHosts.length === 0 && (
+                  {!hostIdList?.length && (
                     <span className="text-sm text-gray-400">未选择任何主机</span>
                   )}
                 </div>
               </div>
-              <HostSelector
-                className="max-h-[300px]"
-                defaultValue={selectedHosts}
-                onChange={(newSelected) => {
-                  setSelectedHosts(newSelected);
-                  form.setFieldValue('hostIdList', newSelected);
-                }}
-              />
+              <Form.Item
+                name="hostIdList"
+                rules={[{ required: true, message: '请选择主机' }]}
+                noStyle
+              >
+                <HostSelector className="max-h-[300px]" />
+              </Form.Item>
             </Form.Item>
           </Col>
         </Row>
@@ -127,29 +123,15 @@ export function CreateTaskModal({
               label="软件列表"
               rules={[{ required: true, message: '请选择软件' }]}
             >
-              <Select
-                mode="multiple"
-                placeholder="请选择软件"
-                options={roleList?.list.map((role: RoleItem) => ({
-                  label: role.existActiveRevision
-                    ? role.name
-                    : `${role.name}（请先激活版本后使用）`,
-                  value: role.id,
-                  disabled: !role.existActiveRevision,
-                }))}
-              />
+              <Select mode="multiple" placeholder="请选择软件" options={roleOptions} />
             </Form.Item>
           </Col>
         </Row>
 
         <Row gutter={16} align="middle">
           <Col span={24}>
-            <Form.Item label="任务名称">
-              <div className="flex items-center gap-4">
-                <Form.Item name="taskName" className="mb-0 flex-1" noStyle>
-                  <Input placeholder={generatedTaskName || '请输入任务名称'} />
-                </Form.Item>
-              </div>
+            <Form.Item label="任务名称" name="taskName">
+              <Input placeholder={generatedTaskName || '请输入任务名称'} />
             </Form.Item>
           </Col>
         </Row>
@@ -161,7 +143,7 @@ export function CreateTaskModal({
             return roleIdList.length > 0 ? (
               <div className="space-y-4">
                 {roleIdList.map((roleId: number) => {
-                  const role = roleList?.list.find((r: RoleItem) => r.id === roleId);
+                  const role = (roleList?.list || []).find((r: RoleItem) => r.id === roleId);
                   if (!role) return null;
 
                   return <RoleVarConfig key={role.id} role={role} form={form} />;

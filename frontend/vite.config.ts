@@ -74,7 +74,6 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      exclude: ['antd'],
       include: ['@monaco-editor/react', 'react', 'react-dom', '@ant-design/icons'],
       force: false,
     },
