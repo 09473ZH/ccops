@@ -153,7 +153,7 @@ function QuickCommand() {
         <div className="sticky top-0 h-full p-4">
           <div className="mb-3 text-sm font-medium text-gray-900 dark:text-gray-300">选择主机</div>
           <HostSelector
-            defaultValue={selectedHosts}
+            value={selectedHosts}
             onChange={(newSelected) => {
               setSelectedHosts(newSelected);
             }}

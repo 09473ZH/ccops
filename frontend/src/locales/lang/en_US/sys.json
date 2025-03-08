@@ -123,6 +123,7 @@
       "user_manage": "User Manage",
       "clipboard": "Clipboard",
       "token_expired": "Token Expired",
+      "host_terminal": "Host Terminal",
       "menulevel": {
         "index": "Menu Level",
         "1a": "Menu Level 1a",

@@ -9,7 +9,7 @@ import { useMyHosts } from '@/pages/host-manage/hooks';
 import { Iconify } from '../Icon';
 
 interface HostSelectorProps {
-  defaultValue?: number[];
+  value?: number[];
   onChange?: (value: number[]) => void;
   className?: string;
   style?: React.CSSProperties;
@@ -35,7 +35,6 @@ const GroupItem: React.FC<GroupItemProps> = function GroupItem({
   isExpanded,
   onExpandChange,
 }) {
-  const { t } = useTranslation();
   const allSelected = hosts.every((host) => selectedHosts.has(host.id));
   const someSelected = !allSelected && hosts.some((host) => selectedHosts.has(host.id));
 
@@ -59,7 +58,7 @@ const GroupItem: React.FC<GroupItemProps> = function GroupItem({
           <span className="flex-1 text-xs text-gray-700 dark:text-gray-200">{label}</span>
         </div>
         <span className="rounded px-1 text-xs text-gray-600 dark:text-gray-400">
-          {hosts.length} {t('台')}
+          {hosts.length} 台
         </span>
       </div>
       {isExpanded && (
@@ -98,7 +97,7 @@ const GroupItem: React.FC<GroupItemProps> = function GroupItem({
 };
 
 export default function HostSelector({
-  defaultValue = [],
+  value = [],
   onChange,
   className = '',
   style = {},
@@ -107,13 +106,7 @@ export default function HostSelector({
   const [searchText, setSearchText] = useState('');
   const { list: myHosts } = useMyHosts();
 
-  const [selectedHostIds, setSelectedHostIds] = useState<number[]>(defaultValue);
-
-  useEffect(() => {
-    setSelectedHostIds(defaultValue);
-  }, [defaultValue]);
-
-  const selectedHosts = useMemo(() => new Set(selectedHostIds), [selectedHostIds]);
+  const selectedHosts = useMemo(() => new Set(value), [value]);
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(() => {
     const noLabelGroup = myHosts.find((group) => group.labelId === 0);
     return noLabelGroup ? new Set([0]) : new Set();
@@ -206,7 +199,7 @@ export default function HostSelector({
       if (filteredNoLabelHosts.length > 0) {
         // 确保无标签组总是最后一个
         result.push({
-          label: t('无标签'),
+          label: '无标签',
           labelId: 0,
           hosts: filteredNoLabelHosts,
         });
@@ -214,7 +207,7 @@ export default function HostSelector({
     }
 
     return result;
-  }, [myHosts, searchText, t]);
+  }, [myHosts, searchText]);
 
   // 每次 groups 更新时，确保无标签组保持展开
   useEffect(() => {
@@ -225,19 +218,18 @@ export default function HostSelector({
   }, [groups]);
 
   const handleToggleHost = (hostId: number) => {
-    const newSelected = new Set(selectedHostIds);
+    const newSelected = new Set(value);
     if (newSelected.has(hostId)) {
       newSelected.delete(hostId);
     } else {
       newSelected.add(hostId);
     }
     const newSelectedArray = Array.from(newSelected);
-    setSelectedHostIds(newSelectedArray);
     onChange?.(newSelectedArray);
   };
 
   const handleToggleGroup = (hostIds: number[]) => {
-    const newSelected = new Set(selectedHostIds);
+    const newSelected = new Set(value);
     const allSelected = hostIds.every((id) => newSelected.has(id));
 
     if (allSelected) {
@@ -247,7 +239,6 @@ export default function HostSelector({
     }
 
     const newSelectedArray = Array.from(newSelected);
-    setSelectedHostIds(newSelectedArray);
     onChange?.(newSelectedArray);
   };
 
@@ -271,7 +262,7 @@ export default function HostSelector({
   const someSelected = !allSelected && allHostIds.some((id) => selectedHosts.has(id));
 
   return (
-    <div className={`flex flex-col gap-3 ${className}`} style={style}>
+    <div key={value.join(',')} className={`flex flex-col gap-3 ${className}`} style={style}>
       <div className="relative flex items-center gap-2">
         <Input
           size="small"
