@@ -134,7 +134,7 @@ export const getColumns = (
   handleDeleteHost: (ids: number[]) => void,
   setEditingState: (state: Partial<EditingState>) => void,
   hostList: HostInfo[],
-  hasSelected?: boolean,
+  selectedCount: number,
   batchActions?: React.ReactNode[],
 ): ColumnType<HostInfo>[] => {
   const columns = [
@@ -349,14 +349,14 @@ export const getColumns = (
     },
   ];
 
-  if (hasSelected && batchActions) {
+  if (selectedCount > 0 && batchActions) {
     return [
       {
         title: (
           <div className="flex w-full items-center">
             <div className="flex items-center gap-2 pl-2">
               <span className="text-xs text-gray-600 dark:text-gray-300">
-                已选择 {batchActions.length} 项
+                已选择 {selectedCount} 项
               </span>
               <div className="flex items-center gap-3">{batchActions}</div>
             </div>
