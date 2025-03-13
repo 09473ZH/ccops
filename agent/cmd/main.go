@@ -108,7 +108,7 @@ func runAction(s service.Service) {
 func main() {
 	flag.Parse()
 	if *version {
-		log.Println("ccagent version：", query.GetAgnetVersion())
+		log.Println("ccagent version：", query.GetAgentVersion())
 		return
 	}
 	if *action != "uninstall" {
