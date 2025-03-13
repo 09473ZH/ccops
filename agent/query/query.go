@@ -245,7 +245,7 @@ func GetPublicIPInfo() (map[string]string, error) {
 func QueryHostDetailInfo() (HostDetailInfo, error) {
 	hostname, _ := GetHostName()
 	info := HostDetailInfo{
-		AgentVersion:          GetAgnetVersion(),
+		AgentVersion:          GetAgentVersion(),
 		SystemInfo:            make(map[string]string),
 		Uptime:                make(map[string]string),
 		DiskInfo:              make(map[string]string),
