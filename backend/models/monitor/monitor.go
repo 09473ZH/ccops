@@ -13,17 +13,19 @@ type MetricPoint struct {
 	CPUUsage  float64 `json:"cpuUsage"`  // CPU使用率
 
 	// 内存信息
-	MemoryTotal       uint64  `json:"memoryTotal"`       // 总内存(字节)
-	MemoryUsed        uint64  `json:"memoryUsed"`        // 已用内存(字节)
-	MemoryFree        uint64  `json:"memoryFree"`        // 空闲内存(字节)
-	MemoryAvailable   uint64  `json:"memoryAvailable"`   // 可用内存(字节)
-	MemoryUsedPercent float64 `json:"memoryUsedPercent"` // 使用率(百分比)
-	SwapTotal         uint64  `json:"swapTotal"`         // Swap总大小
-	SwapUsed          uint64  `json:"swapUsed"`          // Swap已用
-	SwapFree          uint64  `json:"swapFree"`          // Swap空闲
-	SwapPercent       float64 `json:"swapPercent"`       // Swap使用率
-	MemoryBuffers     uint64  `json:"memoryBuffers"`     // 缓冲区大小
-	MemoryCached      uint64  `json:"memoryCached"`      // 缓存大小
+	Memory struct {
+		Total       uint64  `json:"memoryTotal"`       // 总内存(字节)
+		Used        uint64  `json:"memoryUsed"`        // 已用内存(字节)
+		Free        uint64  `json:"memoryFree"`        // 空闲内存(字节)
+		Available   uint64  `json:"memoryAvailable"`   // 可用内存(字节)
+		UsedPercent float64 `json:"memoryUsedPercent"` // 使用率(百分比)
+		SwapTotal   uint64  `json:"swapTotal"`         // Swap总大小
+		SwapUsed    uint64  `json:"swapUsed"`          // Swap已用
+		SwapFree    uint64  `json:"swapFree"`          // Swap空闲
+		SwapPercent float64 `json:"swapPercent"`       // Swap使用率
+		Buffers     uint64  `json:"memoryBuffers"`     // 缓冲区大小
+		Cached      uint64  `json:"memoryCached"`      // 缓存大小
+	} `json:"memory"`
 
 	// 磁盘信息
 	DiskUsages []DiskUsage `json:"diskUsages"` // 各磁盘使用情况
@@ -221,7 +223,7 @@ func (db *TimeSeriesDB) GetAllLatest() map[uint64]*MetricPoint {
 	fmt.Printf("[时序数据库] 获取所有主机最新数据: 主机数量=%d\n", len(result))
 	for hostID, point := range result {
 		fmt.Printf("  主机ID=%d: 时间戳=%d, CPU=%.2f%%, 内存=%.2f%%\n",
-			hostID, point.Timestamp, point.CPUUsage, point.MemoryUsedPercent)
+			hostID, point.Timestamp, point.CPUUsage, point.Memory.UsedPercent)
 	}
 	return result
 }
@@ -252,7 +254,7 @@ func (db *TimeSeriesDB) GetAllData(hostID uint64) []*MetricPoint {
 		fmt.Printf("[时序数据库] 获取主机所有数据: 主机ID=%d, 数据点数量=%d\n", hostID, len(result))
 		fmt.Printf("  时间范围: %d -> %d\n", lastPoint.Timestamp, firstPoint.Timestamp)
 		fmt.Printf("  最新数据: CPU=%.2f%%, 内存=%.2f%%\n",
-			firstPoint.CPUUsage, firstPoint.MemoryUsedPercent)
+			firstPoint.CPUUsage, firstPoint.Memory.UsedPercent)
 	}
 
 	return result

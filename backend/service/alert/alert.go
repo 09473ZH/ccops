@@ -55,7 +55,7 @@ func (s *AlertService) checkCycle(r *alert.Rule) bool {
 // CheckMetrics 检查监控指标是否触发告警
 func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 	log.Printf("开始检查告警，收到的指标数据：CPU使用率=%.2f%%, 内存使用率=%.2f%%, Swap使用率=%.2f%%, 磁盘数量=%d, 网卡数量=%d, 主机ID=%d",
-		metrics.CPUUsage, metrics.MemoryUsedPercent, metrics.SwapPercent,
+		metrics.CPUUsage, metrics.Memory.UsedPercent, metrics.Memory.SwapPercent,
 		len(metrics.DiskUsages), len(metrics.NetworkStatus), metrics.HostID)
 
 	// 开启GORM调试模式
@@ -203,9 +203,9 @@ func (s *AlertService) getMetricValue(metrics *monitor.MetricPoint, ruleType str
 	case alert.RuleTypeCPUUsage:
 		value = metrics.CPUUsage
 	case alert.RuleTypeMemoryUsage:
-		value = metrics.MemoryUsedPercent
+		value = metrics.Memory.UsedPercent
 	case alert.RuleTypeMemorySwap:
-		value = metrics.SwapPercent
+		value = metrics.Memory.SwapPercent
 	case alert.RuleTypeDiskUsage:
 		// 计算所有磁盘的平均使用率
 		if len(metrics.DiskUsages) == 0 {

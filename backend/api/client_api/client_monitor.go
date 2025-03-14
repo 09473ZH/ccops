@@ -38,14 +38,14 @@ func (ClientApi) ClientMetricsReceive(c *gin.Context) {
 	fmt.Printf("基础指标:\n")
 	fmt.Printf("  CPU使用率: %.2f%%\n", metrics.CPUUsage)
 	fmt.Printf("  内存使用: %.2f%% (总共: %.2f GB, 已用: %.2f GB, 可用: %.2f GB)\n",
-		metrics.MemoryUsedPercent,
-		float64(metrics.MemoryTotal)/(1024*1024*1024),
-		float64(metrics.MemoryUsed)/(1024*1024*1024),
-		float64(metrics.MemoryAvailable)/(1024*1024*1024))
+		metrics.Memory.UsedPercent,
+		float64(metrics.Memory.Total)/(1024*1024*1024),
+		float64(metrics.Memory.Used)/(1024*1024*1024),
+		float64(metrics.Memory.Available)/(1024*1024*1024))
 	fmt.Printf("  Swap使用: %.2f%% (总共: %.2f GB, 已用: %.2f GB)\n",
-		metrics.SwapPercent,
-		float64(metrics.SwapTotal)/(1024*1024*1024),
-		float64(metrics.SwapUsed)/(1024*1024*1024))
+		metrics.Memory.SwapPercent,
+		float64(metrics.Memory.SwapTotal)/(1024*1024*1024),
+		float64(metrics.Memory.SwapUsed)/(1024*1024*1024))
 
 	fmt.Printf("磁盘信息:\n")
 	for _, disk := range metrics.DiskUsages {
