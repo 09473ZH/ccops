@@ -40,6 +40,7 @@ func (p *program) run() {
 
 	// 启动 Gin 路由
 	router.StartGin() // 调用 web/router 包中的函数
+
 }
 
 func (p *program) Stop(s service.Service) error {

@@ -38,8 +38,8 @@ func GetUserPermissionHostIds(userId uint) []uint {
 	// 获取标签下的所有主机ID
 	var labelHostIds []uint
 	global.DB.Table("host_labels").
-		Where("label_id IN ?", labelIds).
-		Pluck("host_id", &labelHostIds)
+		Where("label_model_id IN ?", labelIds).
+		Pluck("host_model_id", &labelHostIds)
 
 	// 合并两个切片并去重
 	hostMap := make(map[uint]bool)

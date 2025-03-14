@@ -23,6 +23,7 @@ func StartGin() {
 
 	go cron_ser.StartOsqueryReport()
 	go cron_ser.StartPollingPublicKey()
+	go cron_ser.StartMetricsCollection()
 
 	if err := router.Run(":41541"); err != nil {
 		log.Fatalf("Gin 服务器启动失败: %v", err)
