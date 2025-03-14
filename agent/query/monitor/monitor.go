@@ -1,6 +1,9 @@
 package monitor
 
 import (
+	"agent/query/monitor/collectors"
+	"agent/query/monitor/config"
+	"agent/query/monitor/models"
 	"log"
 	"net"
 	"sync"
@@ -386,4 +389,127 @@ func CollectMetrics() (*SystemMetrics, error) {
 	}
 
 	return metrics, nil
+}
+
+// Monitor 系统监控器
+type Monitor struct {
+	config        *config.Config
+	cpuCollector  *collectors.CPUCollector
+	memCollector  *collectors.MemoryCollector
+	diskCollector *collectors.DiskCollector
+	netCollector  *collectors.NetworkCollector
+}
+
+// NewMonitor 创建新的监控器实例
+func NewMonitor(cfg *config.Config) *Monitor {
+	if cfg == nil {
+		cfg = config.DefaultConfig()
+	}
+
+	return &Monitor{
+		config:        cfg,
+		cpuCollector:  collectors.NewCPUCollector(),
+		memCollector:  collectors.NewMemoryCollector(),
+		diskCollector: collectors.NewDiskCollector(),
+		netCollector:  collectors.NewNetworkCollector(),
+	}
+}
+
+// CollectMetrics 采集系统指标
+func (m *Monitor) CollectMetrics() (*models.SystemMetrics, error) {
+	metrics := &models.SystemMetrics{
+		Timestamp: time.Now().Unix(),
+	}
+
+	// 采集CPU使用率
+	if m.config.CPUConfig.Enable {
+		cpuUsage, err := m.cpuCollector.Collect()
+		if err != nil {
+			log.Printf("CPU使用率采集失败: %v", err)
+		} else {
+			metrics.CPUUsage = cpuUsage
+		}
+	}
+
+	// 采集内存信息
+	if m.config.MemoryConfig.Enable {
+		memoryStatus, err := m.memCollector.Collect()
+		if err != nil {
+			log.Printf("内存信息采集失败: %v", err)
+		} else {
+			metrics.Memory = *memoryStatus
+		}
+	}
+
+	// 采集磁盘信息
+	if m.config.DiskConfig.Enable {
+		diskUsages, err := m.diskCollector.Collect()
+		if err != nil {
+			log.Printf("磁盘信息采集失败: %v", err)
+		} else {
+			metrics.DiskUsages = diskUsages
+		}
+	}
+
+	// 采集网络信息
+	if m.config.NetworkConfig.Enable {
+		networkStats, err := m.netCollector.Collect()
+		if err != nil {
+			log.Printf("网络信息采集失败: %v", err)
+		} else {
+			metrics.NetworkStatus = networkStats
+		}
+	}
+
+	// 打印详细的采集信息
+	log.Printf("系统指标采集完成:")
+	log.Printf("- CPU使用率: %.2f%%", metrics.CPUUsage)
+	log.Printf("- 内存使用: %.2f%% (总共: %.2f GB, 已用: %.2f GB, 可用: %.2f GB)",
+		metrics.Memory.UsedPercent,
+		float64(metrics.Memory.Total)/(1024*1024*1024),
+		float64(metrics.Memory.Used)/(1024*1024*1024),
+		float64(metrics.Memory.Available)/(1024*1024*1024))
+	log.Printf("- Swap使用: %.2f%% (总共: %.2f GB, 已用: %.2f GB)",
+		metrics.Memory.SwapPercent,
+		float64(metrics.Memory.SwapTotal)/(1024*1024*1024),
+		float64(metrics.Memory.SwapUsed)/(1024*1024*1024))
+
+	for _, disk := range metrics.DiskUsages {
+		log.Printf("- 磁盘 %s (%s): %.2f%% 已用 (总共: %.2f GB, 可用: %.2f GB)",
+			disk.Path, disk.FSType,
+			disk.UsedPercent,
+			float64(disk.Total)/(1024*1024*1024),
+			float64(disk.Free)/(1024*1024*1024))
+	}
+
+	for _, net := range metrics.NetworkStatus {
+		log.Printf("- 网卡 %s:", net.Name)
+		log.Printf("  MAC: %s, IPv4: %s, IPv6: %s", net.MAC, net.IPv4, net.IPv6)
+		log.Printf("  实时速率: 入站 %.2f MB/s, 出站 %.2f MB/s",
+			net.BytesRecvRate/(1024*1024),
+			net.BytesSentRate/(1024*1024))
+		log.Printf("  错误统计: 入站错误 %d, 出站错误 %d, 入站丢包 %d, 出站丢包 %d",
+			net.Errin, net.Errout, net.Dropin, net.Dropout)
+		log.Printf("  TCP连接数: %d", len(net.TCPConnections))
+	}
+
+	return metrics, nil
+}
+
+// Start 启动监控
+func (m *Monitor) Start(metricsChan chan<- *models.SystemMetrics) {
+	ticker := time.NewTicker(m.config.CollectInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			metrics, err := m.CollectMetrics()
+			if err != nil {
+				log.Printf("采集系统指标时出错: %v", err)
+				continue
+			}
+			metricsChan <- metrics
+		}
+	}
 }

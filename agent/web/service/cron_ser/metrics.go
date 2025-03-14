@@ -9,7 +9,7 @@ import (
 
 // startMetricsCollection 启动系统指标采集定时任务
 func StartMetricsCollection() {
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for {
