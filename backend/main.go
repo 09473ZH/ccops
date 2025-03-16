@@ -4,6 +4,7 @@ import (
 	"ccops/core"
 	"ccops/flags"
 	"ccops/global"
+	"ccops/models/monitor"
 	"ccops/router"
 	utils "ccops/utils"
 	"fmt"
@@ -28,6 +29,8 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	// 添加 TimeSeriesDB 实例
+	global.TimeSeriesDB = monitor.NewTimeSeriesDB()
 	// 初始化路由
 	router := router.InitRouter()
 
