@@ -14,6 +14,7 @@ type AlertRuleInfo struct {
 	Rules               []alert.Rule `json:"rules"`               // 具体规则列表
 	HostIDs             []uint64     `json:"hostIds"`             // 绑定的主机ID列表
 	LabelIDs            []uint64     `json:"labelIds"`            // 绑定的主机标签ID列表
+	IgnoreHostIDs       []uint64     `json:"ignoreHostIds"`       // 忽略的主机ID列表
 	NotificationGroupID uint64       `json:"notificationGroupId"` // 通知组ID
 	Tags                []string     `json:"tags"`                // 规则标签
 	CreatedAt           time.Time    `json:"createdAt"`           // 创建时间

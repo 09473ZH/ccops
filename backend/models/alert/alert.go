@@ -10,27 +10,27 @@ type AlertRule struct {
 	ID                  uint64    `json:"id" gorm:"primarykey"`
 	CreatedAt           time.Time `json:"createdAt"`
 	UpdatedAt           time.Time `json:"updatedAt"`
-	Name                string    `json:"name" gorm:"size:100"`            // 告警规则名称
-	Description         string    `json:"description" gorm:"size:500"`     // 告警规则描述
-	Enable              bool      `json:"enable"`                          // 是否启用
-	Rules               []Rule    `json:"rules" gorm:"serializer:json"`    // 具体规则列表
-	HostIDs             []uint64  `json:"hostIds" gorm:"serializer:json"`  // 绑定的主机ID列表(白名单)
-	LabelIDs            []uint64  `json:"labelIds" gorm:"serializer:json"` // 绑定的主机标签ID列表
-	NotificationGroupID uint64    `json:"notificationGroupId"`             // 通知组ID
-	Tags                []string  `json:"tags" gorm:"serializer:json"`     // 规则标签
+	Name                string    `json:"name" gorm:"size:100"`                 // 告警规则名称
+	Description         string    `json:"description" gorm:"size:500"`          // 告警规则描述
+	Enable              bool      `json:"enable"`                               // 是否启用
+	Rules               []Rule    `json:"rules" gorm:"serializer:json"`         // 具体规则列表
+	HostIDs             []uint64  `json:"hostIds" gorm:"serializer:json"`       // 适用的主机ID列表(白名单)
+	LabelIDs            []uint64  `json:"labelIds" gorm:"serializer:json"`      // 适用的主机标签ID列表(白名单)
+	IgnoreHostIDs       []uint64  `json:"ignoreHostIds" gorm:"serializer:json"` // 忽略的主机ID列表(黑名单)
+	NotificationGroupID uint64    `json:"notificationGroupId"`                  // 通知组ID
+	Tags                []string  `json:"tags" gorm:"serializer:json"`          // 规则标签
 }
 
 // Rule 具体告警规则
 type Rule struct {
-	Type          string     `json:"type"`          // 规则类型
-	Duration      int        `json:"duration"`      // 持续时间(秒)
-	CycleInterval int        `json:"cycleInterval"` // 循环间隔(分钟)
-	CycleStart    *time.Time `json:"cycleStart"`    // 循环开始时间
-	MinValue      float64    `json:"minValue"`      // 最小阈值
-	MaxValue      float64    `json:"maxValue"`      // 最大阈值
-	IgnoreHosts   []uint64   `json:"ignoreHosts"`   // 忽略的主机ID列表(黑名单)
-	Severity      string     `json:"severity"`      // 告警级别(info/warning/error/critical)
-	RecoverNotify bool       `json:"recoverNotify"` // 是否发送恢复通知
+	Type          string     `json:"type" binding:"required"`     // 规则类型
+	Duration      int        `json:"duration" binding:"required"` // 持续时间(秒)
+	CycleInterval int        `json:"cycleInterval"`               // 循环间隔(分钟)
+	CycleStart    *time.Time `json:"cycleStart"`                  // 循环开始时间
+	MinValue      float64    `json:"minValue"`                    // 最小阈值
+	MaxValue      float64    `json:"maxValue"`                    // 最大阈值
+	Severity      string     `json:"severity" binding:"required"` // 告警级别
+	RecoverNotify bool       `json:"recoverNotify"`               // 是否发送恢复通知
 }
 
 // AlertRecord 告警记录
