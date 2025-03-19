@@ -7,13 +7,8 @@ import (
 	"ccops/models"
 	"ccops/models/alert"
 	"ccops/models/res"
-	"errors"
-
 	"fmt"
-	"time"
-
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 // CreateAlertRule 创建告警规则
@@ -42,7 +37,6 @@ func (AlertApi) CreateAlertRule(c *gin.Context) {
 			CycleStart:    r.CycleStart,
 			MinValue:      r.MinValue,
 			MaxValue:      r.MaxValue,
-			IgnoreHosts:   r.IgnoreHosts,
 			Severity:      r.Severity,
 			RecoverNotify: r.RecoverNotify,
 		}
@@ -55,6 +49,7 @@ func (AlertApi) CreateAlertRule(c *gin.Context) {
 		Rules:               rules,
 		HostIDs:             req.HostIDs,
 		LabelIDs:            req.LabelIDs,
+		IgnoreHostIDs:       req.IgnoreHostIDs,
 		NotificationGroupID: req.NotificationGroupID,
 		Tags:                req.Tags,
 	}
@@ -67,6 +62,12 @@ func (AlertApi) CreateAlertRule(c *gin.Context) {
 
 	// 验证主机ID和标签ID是否存在
 	if err := validateHostsAndLabels(rule.HostIDs, rule.LabelIDs); err != nil {
+		res.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	// 验证忽略的主机ID是否存在
+	if err := validateHostsAndLabels(rule.IgnoreHostIDs, nil); err != nil {
 		res.FailWithMessage(err.Error(), c)
 		return
 	}
@@ -121,7 +122,6 @@ func (AlertApi) UpdateAlertRule(c *gin.Context) {
 				CycleStart:    r.CycleStart,
 				MinValue:      r.MinValue,
 				MaxValue:      r.MaxValue,
-				IgnoreHosts:   r.IgnoreHosts,
 				Severity:      r.Severity,
 				RecoverNotify: r.RecoverNotify,
 			}
@@ -133,6 +133,9 @@ func (AlertApi) UpdateAlertRule(c *gin.Context) {
 	}
 	if req.LabelIDs != nil {
 		rule.LabelIDs = req.LabelIDs
+	}
+	if req.IgnoreHostIDs != nil {
+		rule.IgnoreHostIDs = req.IgnoreHostIDs
 	}
 	if req.NotificationGroupID > 0 {
 		rule.NotificationGroupID = req.NotificationGroupID
@@ -149,6 +152,12 @@ func (AlertApi) UpdateAlertRule(c *gin.Context) {
 
 	// 验证主机ID和标签ID是否存在
 	if err := validateHostsAndLabels(rule.HostIDs, rule.LabelIDs); err != nil {
+		res.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	// 验证忽略的主机ID是否存在
+	if err := validateHostsAndLabels(rule.IgnoreHostIDs, nil); err != nil {
 		res.FailWithMessage(err.Error(), c)
 		return
 	}
@@ -277,8 +286,8 @@ func (AlertApi) GetAlertRuleList(c *gin.Context) {
 
 	// 查询列表
 	var rules []alert.AlertRule
-	if err := db.Offset((query.Page - 1) * query.PageSize).
-		Limit(query.PageSize).
+	if err := db.Offset((query.Page - 1) * query.Limit).
+		Limit(query.Limit).
 		Order("created_at DESC").
 		Find(&rules).Error; err != nil {
 		res.FailWithMessage("查询失败", c)
@@ -332,8 +341,8 @@ func (AlertApi) GetAlertRecordList(c *gin.Context) {
 	}
 
 	// 构建查询条件
-	db := global.DB.Model(&alert.AlertRecord{})
-	if query.Status >= 0 {
+	db := global.DB.Debug().Model(&alert.AlertRecord{})
+	if query.Status != 0 {
 		db = db.Where("status = ?", query.Status)
 	}
 	if query.RuleID > 0 {
@@ -358,8 +367,8 @@ func (AlertApi) GetAlertRecordList(c *gin.Context) {
 
 	// 查询列表
 	var records []alert.AlertRecord
-	if err := db.Offset((query.Page - 1) * query.PageSize).
-		Limit(query.PageSize).
+	if err := db.Offset((query.Page - 1) * query.Limit).
+		Limit(query.Limit).
 		Order("created_at DESC").
 		Find(&records).Error; err != nil {
 		res.FailWithMessage("查询失败", c)
@@ -500,31 +509,4 @@ func (AlertApi) GetActiveAlerts(c *gin.Context) {
 	}
 
 	res.OkWithData(list, c)
-}
-
-// resolveAlert 解除告警
-func (AlertApi) resolveAlert(ruleID uint64, hostID uint64) error {
-	// 查找未解决的告警记录
-	var record alert.AlertRecord
-	err := global.DB.Where("rule_id = ? AND host_id = ? AND status = ?",
-		ruleID, hostID, alert.AlertStatusAlerting).
-		First(&record).Error
-
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil
-		}
-		return fmt.Errorf("查询告警记录失败: %v", err)
-	}
-
-	// 更新告警状态为已恢复
-	record.Status = alert.AlertStatusResolved
-	endTime := time.Now()
-	record.EndTime = &endTime
-
-	if err := global.DB.Save(&record).Error; err != nil {
-		return fmt.Errorf("更新告警状态失败: %v", err)
-	}
-
-	return nil
 }
