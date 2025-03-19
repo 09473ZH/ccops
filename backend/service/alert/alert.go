@@ -78,6 +78,7 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 
 	// 检查每个规则
 	for _, rule := range rules {
+
 		// 获取规则适用的所有主机ID
 		applicableHostIDs := make(map[uint64]struct{})
 
@@ -202,6 +203,7 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 			}
 		} else {
 			log.Printf("规则 %s (ID=%d) 不适用于主机 %d，跳过检查", rule.Name, rule.ID, metrics.HostID)
+
 		}
 	}
 
@@ -212,6 +214,7 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 func (s *AlertService) isHostApplicable(hostID uint64, applicableHosts map[uint64]struct{}) bool {
 	_, exists := applicableHosts[hostID]
 	return exists
+
 }
 
 // getMetricValue 获取指定类型的指标值
@@ -317,6 +320,7 @@ func (s *AlertService) checkDuration(ruleKey string, duration uint64) bool {
 	}
 
 	return isDurationMet
+
 }
 
 // resetTriggerCount 重置触发计数器

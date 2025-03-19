@@ -1,5 +1,4 @@
 import { Typography, Space, Table } from 'antd';
-import React from 'react';
 
 import { RoleItem } from '@/api/services/software';
 import { RoleDetails, RoleVarContent } from '@/api/services/task';
@@ -59,20 +58,21 @@ export default function RoleDetailsList({ roleDetails }: RoleDetailsListProps) {
 
   const roleDetailsWithId = roleDetails.roleIdList.map((roleId: number, index: number) => {
     const matchingVarContent =
-      roleDetails.roleVarContent?.filter((content) => content && content.roleId === roleId) || [];
+      roleDetails.roleVarContent?.filter((content) => content?.roleId === roleId) ?? [];
 
     return {
       id: `${roleId}-${index}`,
       roleId,
       roleVarContent: matchingVarContent,
-      roleName:
-        roleList?.list?.find((role: RoleItem) => role?.id === roleId)?.name || `软件 - ${roleId}`,
+      roleName: roleList?.list?.length
+        ? roleList.list.find((role: RoleItem) => role?.id === roleId)?.name || `软件 - ${roleId}`
+        : `软件 - ${roleId}`,
       customId: `${roleId}-${index}`,
     };
   });
 
   const renderRoleVarContent = (roleVarContent?: RoleVarContent[]) => {
-    if (!Array.isArray(roleVarContent) || roleVarContent.length === 0) return undefined;
+    if (!roleVarContent?.length) return undefined;
 
     return (
       <Space direction="vertical" size="small">

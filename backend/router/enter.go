@@ -42,7 +42,6 @@ func InitRouter() *gin.Engine {
 	revisionRouterGroup := apiRouterGroup.Group("role_revisions")
 	configurationRouterGroup := apiRouterGroup.Group("configurations")
 	ruleRouterGroup := apiRouterGroup.Group("alert/rules")
-
 	routerGroupApp := RouterGroup{apiRouterGroup}
 
 	// 使用不同的路由组

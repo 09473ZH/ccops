@@ -49,7 +49,6 @@ func (AlertApi) CreateAlertRule(c *gin.Context) {
 		Rules:               rules,
 		HostIDs:             req.HostIDs,
 		LabelIDs:            req.LabelIDs,
-		IgnoreHostIDs:       req.IgnoreHostIDs,
 		NotificationGroupID: req.NotificationGroupID,
 		Tags:                req.Tags,
 	}
@@ -134,9 +133,11 @@ func (AlertApi) UpdateAlertRule(c *gin.Context) {
 	if req.LabelIDs != nil {
 		rule.LabelIDs = req.LabelIDs
 	}
+
 	if req.IgnoreHostIDs != nil {
 		rule.IgnoreHostIDs = req.IgnoreHostIDs
 	}
+
 	if req.NotificationGroupID > 0 {
 		rule.NotificationGroupID = req.NotificationGroupID
 	}
@@ -286,6 +287,7 @@ func (AlertApi) GetAlertRuleList(c *gin.Context) {
 
 	// 查询列表
 	var rules []alert.AlertRule
+
 	if err := db.Offset((query.Page - 1) * query.Limit).
 		Limit(query.Limit).
 		Order("created_at DESC").
@@ -341,6 +343,7 @@ func (AlertApi) GetAlertRecordList(c *gin.Context) {
 	}
 
 	// 构建查询条件
+
 	db := global.DB.Debug().Model(&alert.AlertRecord{})
 	if query.Status != 0 {
 		db = db.Where("status = ?", query.Status)
@@ -367,6 +370,7 @@ func (AlertApi) GetAlertRecordList(c *gin.Context) {
 
 	// 查询列表
 	var records []alert.AlertRecord
+
 	if err := db.Offset((query.Page - 1) * query.Limit).
 		Limit(query.Limit).
 		Order("created_at DESC").

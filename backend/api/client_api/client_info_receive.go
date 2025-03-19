@@ -5,9 +5,10 @@ import (
 	"ccops/models"
 	"ccops/models/res"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type QueryResponse []map[string]string
@@ -35,9 +36,12 @@ func (ClientApi) ClientInfoReceive(c *gin.Context) {
 	}
 
 	if cr.IP == "" {
-		// 用户没指定-i，直接传来源 IP
-		cr.IP = c.ClientIP()
-
+		// 优先使用 X-Real-IP
+		cr.IP = c.GetHeader("X-Real-IP")
+		if cr.IP == "" {
+			// 如果没有 X-Real-IP，才使用 ClientIP
+			cr.IP = c.ClientIP()
+		}
 	}
 
 	// 检查是否注册过

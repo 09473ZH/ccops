@@ -3,10 +3,23 @@ package update
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 )
 
 func AddRootPublicKey(pubKey string) error {
+	// 确保 /root/.ssh 目录存在
+	sshDir := "/root/.ssh"
+	if err := os.MkdirAll(sshDir, 0700); err != nil {
+		return fmt.Errorf("创建 .ssh 目录失败：%s", err)
+	}
+
+	// 确保 authorized_keys 文件存在
+	authKeysFile := sshDir + "/authorized_keys"
+	if _, err := os.OpenFile(authKeysFile, os.O_CREATE, 0600); err != nil {
+		return fmt.Errorf("创建 authorized_keys 文件失败：%s", err)
+	}
+
 	// 检查公钥是否已经存在
 	checkCmd := fmt.Sprintf("grep -q '%s' /root/.ssh/authorized_keys", pubKey)
 	checkErr := exec.Command("sh", "-c", checkCmd).Run()

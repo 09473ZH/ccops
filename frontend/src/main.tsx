@@ -2,7 +2,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 // react
-import { Analytics } from '@vercel/analytics/react';
 import { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 // react helmet
@@ -16,6 +15,7 @@ import App from '@/App';
 import './locales/i18n';
 // tailwind css
 import './theme/index.css';
+import { initSentry } from './utils/sentry';
 
 // 创建一个 client
 const queryClient = new QueryClient({
@@ -31,6 +31,8 @@ const queryClient = new QueryClient({
   },
 });
 
+initSentry();
+
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
 root.render(
@@ -38,7 +40,6 @@ root.render(
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={false} />
       <Suspense>
-        <Analytics />
         <App />
       </Suspense>
     </QueryClientProvider>

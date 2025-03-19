@@ -37,7 +37,7 @@ export function CreateHostModal({ open, onClose }: CreateHostModalProps) {
     onClose();
     setIsAccordion(false);
     setActiveKeys(['system-config']);
-    navigate('/system_settings#system-config');
+    navigate('/admin_settings/common_settings#system-config');
   };
 
   const renderCommandContent = (command: string) => (

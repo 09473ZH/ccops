@@ -123,6 +123,7 @@
       "account_manage": "账号管理",
       "clipboard": "剪贴板",
       "token_expired": "Token失效",
+      "host_terminal": "主机终端",
       "menulevel": {
         "index": "多级菜单",
         "1a": "多级菜单 1a",

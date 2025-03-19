@@ -37,7 +37,6 @@ function HostManage() {
   const { editing, setEditing, resetEditing, setLabelAssign, resetLabelAssign } = useHostStore();
 
   const columnGroups = getColumnGroups();
-  const hasSelected = table.selectedRows.length > 0;
 
   const handleEditName = (record: HostInfo) => {
     setEditing({
@@ -70,7 +69,7 @@ function HostManage() {
       key="ssh"
       type="text"
       size="small"
-      className="hover:bg-white/10 flex items-center"
+      className="flex items-center hover:bg-white/10"
       icon={<Iconify icon="flowbite:code-outline" />}
       onClick={() => open(ModalName.SshConfig)}
     >
@@ -81,7 +80,7 @@ function HostManage() {
       type="text"
       danger
       size="small"
-      className="hover:bg-white/10 flex items-center"
+      className="flex items-center hover:bg-white/10"
       icon={<Iconify icon="flowbite:trash-bin-outline" />}
       onClick={() => {
         Modal.confirm({
@@ -106,7 +105,7 @@ function HostManage() {
     actions.deleteHosts.mutate,
     setEditing,
     hostList,
-    hasSelected,
+    table.selectedRows.length,
     batchActions,
   );
 

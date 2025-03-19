@@ -25,6 +25,7 @@ type Rule struct {
 	CycleStart    *time.Time `json:"cycleStart"`                  // 循环开始时间
 	MinValue      float64    `json:"minValue"`                    // 最小阈值
 	MaxValue      float64    `json:"maxValue"`                    // 最大阈值
+	IgnoreHosts   []uint64   `json:"ignoreHosts"`                 // 忽略的主机ID列表
 	Severity      string     `json:"severity" binding:"required"` // 告警级别
 	RecoverNotify bool       `json:"recoverNotify"`               // 是否发送恢复通知
 }
@@ -49,6 +50,7 @@ type AlertRuleListQuery struct {
 	Limit  int    `form:"limit" binding:"required,min=1"` // 每页数量
 	Name   string `form:"name"`                           // 规则名称（模糊查询）
 	Enable *bool  `form:"enable"`                         // 是否启用
+
 }
 
 // AlertRecordListQuery 告警记录列表查询参数
@@ -60,4 +62,5 @@ type AlertRecordListQuery struct {
 	HostID    uint64    `form:"hostId"`                         // 主机ID
 	StartTime time.Time `form:"startTime"`                      // 开始时间
 	EndTime   time.Time `form:"endTime"`                        // 结束时间
+
 }

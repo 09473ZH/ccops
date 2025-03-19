@@ -39,7 +39,7 @@ export function parseRole(role) {
 }
 
 const roleObject = parseRole(roleContent);
-console.log(JSON.stringify(roleObject, null, 2));
+// console.log(JSON.stringify(roleObject, null, 2));
 
 // 输入的 JSON 对象
 const jsonContent = [
@@ -154,5 +154,5 @@ const loopExample = `
 `;
 
 const variables = extractVariables(loopExample);
-console.log('发现的变量：', variables);
+// console.log('发现的变量：', variables);
 // 输出: ['fruit_name', 'fruit_color', 'version_number', 'my_variable', 'system_info']
