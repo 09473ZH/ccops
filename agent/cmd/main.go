@@ -34,7 +34,7 @@ func (p *program) run() {
 	clglobal.Address = server
 	err := request.SendHostInfoRequest()
 	if err != nil {
-		log.Fatalf("查询主机信息时出错: %v", err)
+		log.Panic("查询主机信息时出错: %v", err)
 	}
 	request.CheckAndUpdatePublicKey() // 检查并更新公钥
 
@@ -108,7 +108,7 @@ func runAction(s service.Service) {
 func main() {
 	flag.Parse()
 	if *version {
-		log.Println("ccagent version：", query.GetAgnetVersion())
+		log.Println("ccagent version：", query.GetAgentVersion())
 		return
 	}
 	if *action != "uninstall" {
