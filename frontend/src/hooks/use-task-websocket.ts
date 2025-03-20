@@ -35,7 +35,7 @@ export function useTaskWebSocket({
 
   const socketUrl =
     taskId && accessToken
-      ? `${import.meta.env.VITE_APP_WS_API}/api/task/${taskId}/message?token=${accessToken}`
+      ? `${import.meta.env.VITE_APP_WS_API}/api/tasks/${taskId}/message?token=${accessToken}`
       : null;
 
   const handleError = useCallback((errorMessage: string) => {

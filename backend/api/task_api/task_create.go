@@ -527,7 +527,6 @@ pipelining = True
 
 				jsonBytes, _ := json.Marshal(jsonData)
 				if err := client.WriteMessage(websocket.TextMessage, jsonBytes); err != nil {
-					fmt.Printf("发送消息失败: %v\n", err)
 					client.Close()
 					delete(t.ActiveClients, client)
 				}
@@ -607,17 +606,10 @@ func (t *Task) ExecuteShortcutScript(req TaskCreateRequest, taskID uint) error {
 
 	// 在 goroutine 中逐行读取输出
 	go func() {
-		// 添加日志
-		fmt.Println("开始读取命令输出")
-
 		for scanner.Scan() {
 			line := scanner.Text()
 			t.Mutex.Lock()
 			t.Output = append(t.Output, line)
-
-			// 添加日志
-			fmt.Printf("收到新的输出行: %s\n", line)
-			fmt.Printf("当前活跃客户端数: %d\n", len(t.ActiveClients))
 
 			for client := range t.ActiveClients {
 				jsonData := map[string]interface{}{
@@ -628,7 +620,6 @@ func (t *Task) ExecuteShortcutScript(req TaskCreateRequest, taskID uint) error {
 
 				jsonBytes, _ := json.Marshal(jsonData)
 				if err := client.WriteMessage(websocket.TextMessage, jsonBytes); err != nil {
-					fmt.Printf("发送消息失败: %v\n", err)
 					client.Close()
 					delete(t.ActiveClients, client)
 				}
@@ -684,9 +675,13 @@ func (t *Task) ExecuteShortcutScript(req TaskCreateRequest, taskID uint) error {
 // 1.只有hostIdList，没有hostLabelList，2.只有hostLabelList，没有hostIdList，3.都有
 // 有hostLabelList的时候，需要多查一层，根据这个查到hostID 并根据hostID查到HostServerUrl 这个就是最终写入文件的地址
 func CreateInventoryFile(req TaskCreateRequest) error {
-	// 用于存储最终的主机地址
-	var hostServerUrls []string
-	hostServerUrlSet := make(map[string]struct{})
+	// 用于存储最终的主机信息
+	type HostInfo struct {
+		IP       string
+		Hostname string
+	}
+	var hostInfos []HostInfo
+	hostInfoSet := make(map[string]HostInfo)
 
 	// 处理 hostIdList
 	if len(req.HostIdList) > 0 {
@@ -695,7 +690,10 @@ func CreateInventoryFile(req TaskCreateRequest) error {
 			return fmt.Errorf("获取主机信息失败: %w", err)
 		}
 		for _, host := range hosts {
-			hostServerUrlSet[host.HostServerUrl] = struct{}{}
+			hostInfoSet[host.HostServerUrl] = HostInfo{
+				IP:       host.HostServerUrl,
+				Hostname: host.Name,
+			}
 		}
 	}
 
@@ -716,20 +714,26 @@ func CreateInventoryFile(req TaskCreateRequest) error {
 			return fmt.Errorf("获取主机信息失败: %w", err)
 		}
 		for _, host := range hosts {
-			hostServerUrlSet[host.HostServerUrl] = struct{}{}
+			hostInfoSet[host.HostServerUrl] = HostInfo{
+				IP:       host.HostServerUrl,
+				Hostname: host.Name,
+			}
 		}
 	}
 
-	// 将去重后的主机地址添加到列表中
-	for url := range hostServerUrlSet {
-		hostServerUrls = append(hostServerUrls, url)
+	// 将去重后的主机信息添加到列表中
+	for _, info := range hostInfoSet {
+		hostInfos = append(hostInfos, info)
 	}
 
 	// 创建 inventory 文件
 	inventoryContent := "[tmp]\n"
-	for _, url := range hostServerUrls {
-		inventoryContent += fmt.Sprintf("%s ansible_user=root ansible_ssh_private_key_file=~/.ssh/ccops\n", url)
+	for _, info := range hostInfos {
+		inventoryContent += fmt.Sprintf("%s ansible_host=%s ansible_user=root ansible_ssh_private_key_file=~/.ssh/ccops\n",
+			info.Hostname,
+			info.IP)
 	}
+
 	inventoryFilePath := "./targets"
 	if err := ioutil.WriteFile(inventoryFilePath, []byte(inventoryContent), 0644); err != nil {
 		return fmt.Errorf("写入 inventory 文件失败: %w", err)
