@@ -1,4 +1,4 @@
-import { get, put } from '../client';
+import { get, put, post } from '../client';
 import { SystemConfigApi } from '../constants';
 
 export interface ConfigItem {
@@ -72,7 +72,7 @@ const configService = {
     }, {});
   },
 
-  updateConfig: (params: UpdateConfigParams) => put(SystemConfigApi.Update, params),
+  batchUpdateConfig: (params: UpdateConfigParams) => post(SystemConfigApi.BatchUpdate, params),
 
   getAuthorizedKeys: () => get<string>(SystemConfigApi.GetAuthorizedKeys),
 };

@@ -98,6 +98,6 @@ export const TaskApi = {
 /** 系统配置相关接口 */
 export const SystemConfigApi = {
   List: ApiPath.Configurations, // 配置列表
-  Update: ApiPath.Configurations, // 更新配置
+  BatchUpdate: `${ApiPath.Configurations}/batch_update`, // 批量更新配置
   GetAuthorizedKeys: `${ApiPath.Configurations}/authorized_keys`, // 获取用户密钥信息
 } as const;

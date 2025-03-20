@@ -19,7 +19,7 @@ export function useSystemConfig(form: FormInstance<any>) {
   });
 
   const updateConfig = useMutation({
-    mutationFn: configService.updateConfig,
+    mutationFn: configService.batchUpdateConfig,
     onSuccess: () => {
       toast.success('更新配置成功');
       queryClient.invalidateQueries({ queryKey: ['configList'] });
