@@ -113,16 +113,46 @@ func (HostsApi) HostListView(c *gin.Context) {
 		return
 	}
 
-	// 预加载关联数据（非外键关联，单独查询）
+	// 获取所有主机ID
+	hostIDs := make([]uint, len(hosts))
 	for i := range hosts {
-		var diskListInfo []models.DiskModel
-		global.DB.Model(models.DiskModel{}).Where("host_id = ?", hosts[i].ID).Find(&diskListInfo)
-		hosts[i].Disk = diskListInfo
+		hostIDs[i] = hosts[i].ID
+	}
 
-		var labelListInfo []models.LabelModel
-		global.DB.Model(&models.LabelModel{}).Joins("JOIN host_labels ON host_labels.label_model_id = label_models.id").
-			Where("host_labels.host_model_id = ?", hosts[i].ID).Find(&labelListInfo)
-		hosts[i].Label = labelListInfo
+	// 批量查询磁盘信息
+	var allDisks []models.DiskModel
+	if len(hostIDs) > 0 {
+		global.DB.Model(models.DiskModel{}).Where("host_id IN ?", hostIDs).Find(&allDisks)
+	}
+
+	// 批量查询标签信息
+	var allLabels []struct {
+		HostModelID uint              `gorm:"column:host_model_id"`
+		LabelModel  models.LabelModel `gorm:"embedded"`
+	}
+	if len(hostIDs) > 0 {
+		global.DB.Model(&models.LabelModel{}).
+			Select("host_labels.host_model_id, label_models.*").
+			Joins("JOIN host_labels ON host_labels.label_model_id = label_models.id").
+			Where("host_labels.host_model_id IN ?", hostIDs).
+			Find(&allLabels)
+	}
+
+	// 构建映射关系
+	diskMap := make(map[uint][]models.DiskModel)
+	for _, disk := range allDisks {
+		diskMap[disk.HostID] = append(diskMap[disk.HostID], disk)
+	}
+
+	labelMap := make(map[uint][]models.LabelModel)
+	for _, label := range allLabels {
+		labelMap[label.HostModelID] = append(labelMap[label.HostModelID], label.LabelModel)
+	}
+
+	// 为每个主机赋值关联数据
+	for i := range hosts {
+		hosts[i].Disk = diskMap[hosts[i].ID]
+		hosts[i].Label = labelMap[hosts[i].ID]
 
 		// 如果请求包含监控数据，则获取最新的监控数据
 		if cr.WithMetrics {
