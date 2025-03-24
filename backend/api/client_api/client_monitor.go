@@ -36,36 +36,20 @@ func (ClientApi) ClientMetricsReceive(c *gin.Context) {
 	global.DB.Model(&models.HostModel{}).Where("host_server_url = ?", ip).Select("id").First(&metrics.HostID)
 	fmt.Printf("\n[接收到新的监控数据] 主机ID: %d, IP: %s\n", metrics.HostID, ip)
 	fmt.Printf("基础指标:\n")
-	fmt.Printf("  CPU使用率: %.2f%%\n", metrics.CPUUsage)
-	fmt.Printf("  内存使用: %.2f%% (总共: %.2f GB, 已用: %.2f GB, 可用: %.2f GB)\n",
-		metrics.Memory.UsedPercent,
-		float64(metrics.Memory.Total)/(1024*1024*1024),
-		float64(metrics.Memory.Used)/(1024*1024*1024),
-		float64(metrics.Memory.Available)/(1024*1024*1024))
-	fmt.Printf("  Swap使用: %.2f%% (总共: %.2f GB, 已用: %.2f GB)\n",
-		metrics.Memory.SwapPercent,
-		float64(metrics.Memory.SwapTotal)/(1024*1024*1024),
-		float64(metrics.Memory.SwapUsed)/(1024*1024*1024))
-
-	fmt.Printf("磁盘信息:\n")
-	for _, disk := range metrics.DiskUsages {
-		fmt.Printf("  %s (%s): %.2f%% 已用 (总共: %.2f GB, 可用: %.2f GB)\n",
-			disk.Path, disk.FSType,
-			disk.UsedPercent,
-			float64(disk.Total)/(1024*1024*1024),
-			float64(disk.Free)/(1024*1024*1024))
-	}
+	fmt.Printf("  CPU使用率: %.2f%%\n", metrics.CPU.UsagePercent)
+	fmt.Printf("  内存使用: %.2f%% (总共: %.2f GB, 已用: %.2f GB, 剩余: %.2f GB)\n",
+		metrics.Memory.UsagePercent,
+		float64(metrics.Memory.TotalBytes)/(1024*1024*1024),
+		float64(metrics.Memory.UsedBytes)/(1024*1024*1024),
+		float64(metrics.Memory.FreeBytes)/(1024*1024*1024))
 
 	fmt.Printf("网络信息:\n")
-	for _, net := range metrics.NetworkStatus {
+	for _, net := range metrics.Network.Interfaces {
 		fmt.Printf("  网卡 %s:\n", net.Name)
-		fmt.Printf("    MAC: %s, IPv4: %s, IPv6: %s\n", net.MAC, net.IPv4, net.IPv6)
+		fmt.Printf("    MAC: %s, IPv4: %s\n", net.MacAddress, net.IPv4Address)
 		fmt.Printf("    实时速率: 入站 %.2f MB/s, 出站 %.2f MB/s\n",
-			net.BytesRecvRate/(1024*1024),
-			net.BytesSentRate/(1024*1024))
-		fmt.Printf("    错误统计: 入站错误 %d, 出站错误 %d, 入站丢包 %d, 出站丢包 %d\n",
-			net.Errin, net.Errout, net.Dropin, net.Dropout)
-		fmt.Printf("    TCP连接数: %d\n", len(net.TCPConnections))
+			net.RecvRate/(1024*1024),
+			net.SendRate/(1024*1024))
 	}
 
 	// 将指标数据插入到时序数据库中
@@ -80,7 +64,7 @@ func (ClientApi) ClientMetricsReceive(c *gin.Context) {
 	// 获取该主机的最新数据
 	latestData := global.TimeSeriesDB.GetLatest(metrics.HostID)
 	if latestData != nil {
-		fmt.Printf("\n[时序数据库] 最新数据点时间戳: %d\n", latestData.Timestamp)
+		fmt.Printf("\n[时序数据库] 最新数据点时间戳: %d\n", latestData.CollectedAt)
 	}
 
 	// 获取该主机的所有数据并打印统计信息

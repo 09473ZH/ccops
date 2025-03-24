@@ -6,43 +6,65 @@ import (
 )
 
 // MetricPoint 单个指标数据点
-
 type MetricPoint struct {
-	Timestamp int64   `json:"timestamp"` // 时间戳
-	HostID    uint64  `json:"hostId"`    // 主机ID
-	CPUUsage  float64 `json:"cpuUsage"`  // CPU使用率
+	CollectedAt int64  `json:"collectedAt"` // 采集时间戳（Unix时间戳，秒）
+	HostID      uint64 `json:"hostId"`      // 主机ID
+
+	// CPU信息
+	CPU struct {
+		UsagePercent float64 `json:"usagePercent"` // CPU使用率（百分比）
+		Load1m       float64 `json:"load1m"`       // 1分钟负载
+		Load5m       float64 `json:"load5m"`       // 5分钟负载
+		Load15m      float64 `json:"load15m"`      // 15分钟负载
+	} `json:"cpu"`
 
 	// 内存信息
 	Memory struct {
-		Total       uint64  `json:"memoryTotal"`       // 总内存(字节)
-		Used        uint64  `json:"memoryUsed"`        // 已用内存(字节)
-		Free        uint64  `json:"memoryFree"`        // 空闲内存(字节)
-		Available   uint64  `json:"memoryAvailable"`   // 可用内存(字节)
-		UsedPercent float64 `json:"memoryUsedPercent"` // 使用率(百分比)
-		SwapTotal   uint64  `json:"swapTotal"`         // Swap总大小
-		SwapUsed    uint64  `json:"swapUsed"`          // Swap已用
-		SwapFree    uint64  `json:"swapFree"`          // Swap空闲
-		SwapPercent float64 `json:"swapPercent"`       // Swap使用率
-		Buffers     uint64  `json:"memoryBuffers"`     // 缓冲区大小
-		Cached      uint64  `json:"memoryCached"`      // 缓存大小
+		TotalBytes     uint64  `json:"totalBytes"`     // 总内存(字节)
+		UsedBytes      uint64  `json:"usedBytes"`      // 已用内存(字节)
+		FreeBytes      uint64  `json:"freeBytes"`      // 空闲内存(字节)
+		AvailableBytes uint64  `json:"availableBytes"` // 可用内存(字节)
+		UsagePercent   float64 `json:"usagePercent"`   // 使用率(百分比)
 	} `json:"memory"`
 
 	// 磁盘信息
-	DiskUsages []DiskUsage `json:"diskUsages"` // 各磁盘使用情况
+	Disk struct {
+		AvailableBytes float64     `json:"availableBytes"` // 可用空间(GB)
+		TotalBytes     float64     `json:"totalBytes"`     // 总空间(GB)
+		UsagePercent   string      `json:"usagePercent"`   // 使用率(百分比)
+		ReadRate       uint64      `json:"readRate"`       // 读取速率(B/s)
+		WriteRate      uint64      `json:"writeRate"`      // 写入速率(B/s)
+		Volumes        []DiskUsage `json:"volumes"`        // 磁盘详情列表
+	} `json:"disk"`
 
 	// 网络信息
-	NetworkStatus []NetworkStatus `json:"networkStatus"` // 各网卡状态
+	Network struct {
+		RecvRate   float64          `json:"recvRate"`   // 总接收速率(B/s)
+		SendRate   float64          `json:"sendRate"`   // 总发送速率(B/s)
+		Interfaces []InterfaceStats `json:"interfaces"` // 网卡列表
+	} `json:"network"`
 }
 
-// DiskUsage 磁盘使用情况
+// DiskUsage 单个磁盘使用情况
 type DiskUsage struct {
-	Path        string  `json:"path"`        // 挂载点路径
-	Device      string  `json:"device"`      // 设备名称
-	Total       uint64  `json:"total"`       // 总空间(字节)
-	Used        uint64  `json:"used"`        // 已用空间(字节)
-	Free        uint64  `json:"free"`        // 剩余空间(字节)
-	UsedPercent float64 `json:"usedPercent"` // 使用率(百分比)
-	FSType      string  `json:"fsType"`      // 文件系统类型
+	MountPoint   string  `json:"mountPoint"`   // 挂载点路径
+	DeviceName   string  `json:"deviceName"`   // 设备名称
+	TotalBytes   uint64  `json:"totalBytes"`   // 总空间(字节)
+	UsedBytes    uint64  `json:"usedBytes"`    // 已用空间(字节)
+	FreeBytes    uint64  `json:"freeBytes"`    // 剩余空间(字节)
+	UsagePercent float64 `json:"usagePercent"` // 使用率(百分比)
+	FSType       string  `json:"fsType"`       // 文件系统类型
+}
+
+// InterfaceStats 网卡统计信息
+type InterfaceStats struct {
+	Name           string  `json:"name"`           // 网卡名称
+	MacAddress     string  `json:"macAddress"`     // MAC地址
+	IPv4Address    string  `json:"ipv4Address"`    // IPv4地址
+	TotalRecvBytes uint64  `json:"totalRecvBytes"` // 总接收字节数
+	TotalSentBytes uint64  `json:"totalSentBytes"` // 总发送字节数
+	RecvRate       float64 `json:"recvRate"`       // 接收速率（字节/秒）
+	SendRate       float64 `json:"sendRate"`       // 发送速率（字节/秒）
 }
 
 // NetworkStatus 网络监控数据结构
@@ -51,29 +73,12 @@ type NetworkStatus struct {
 	Name string `json:"name"` // 网卡名称
 	MAC  string `json:"mac"`  // MAC地址
 	IPv4 string `json:"ipv4"` // IPv4地址
-	IPv6 string `json:"ipv6"` // IPv6地址
-	MTU  int    `json:"mtu"`  // MTU大小
 
 	// 流量统计
-	BytesRecv   uint64 `json:"bytesRecv"`   // 接收字节数
-	BytesSent   uint64 `json:"bytesSent"`   // 发送字节数
-	PacketsRecv uint64 `json:"packetsRecv"` // 接收包数
-	PacketsSent uint64 `json:"packetsSent"` // 发送包数
-
-	// 错误统计
-	Errin   uint64 `json:"errin"`   // 接收错误数
-	Errout  uint64 `json:"errout"`  // 发送错误数
-	Dropin  uint64 `json:"dropin"`  // 接收丢包数
-	Dropout uint64 `json:"dropout"` // 发送丢包数
-
-	// 速率计算(每秒)
-	BytesRecvRate   float64 `json:"bytesRecvRate"`   // 接收速率
-	BytesSentRate   float64 `json:"bytesSentRate"`   // 发送速率
-	PacketsRecvRate float64 `json:"packetsRecvRate"` // 接收包速率
-	PacketsSentRate float64 `json:"packetsSentRate"` // 发送包速率
-
-	// TCP连接状态
-	TCPConnections map[string]int `json:"tcpConnections"` // 各状态连接数
+	BytesRecv     uint64  `json:"bytesRecv"`     // 接收字节数
+	BytesSent     uint64  `json:"bytesSent"`     // 发送字节数
+	BytesRecvRate float64 `json:"bytesRecvRate"` // 接收速率（字节/秒）
+	BytesSentRate float64 `json:"bytesSentRate"` // 发送速率（字节/秒）
 }
 
 // HostTimeData 单个主机的时序数据
@@ -120,7 +125,7 @@ func (db *TimeSeriesDB) Insert(point *MetricPoint) {
 	defer db.Unlock()
 
 	// 对齐时间戳
-	point.Timestamp = alignTimestamp(point.Timestamp)
+	point.CollectedAt = alignTimestamp(point.CollectedAt)
 
 	// 获取或创建主机的时间序列数据
 	hostData, exists := db.hostPoints[point.HostID]
@@ -151,7 +156,7 @@ func (db *TimeSeriesDB) Insert(point *MetricPoint) {
 	}
 
 	fmt.Printf("[时序数据库] 插入数据点: 主机ID=%d, 时间戳=%d, 总数据点=%d\n",
-		point.HostID, point.Timestamp, hostData.count)
+		point.HostID, point.CollectedAt, hostData.count)
 }
 
 // Query 查询指定主机在指定时间范围的数据
@@ -173,7 +178,7 @@ func (db *TimeSeriesDB) Query(hostID uint64, start, end int64) []*MetricPoint {
 		if point == nil {
 			continue
 		}
-		if point.Timestamp >= start && point.Timestamp <= end {
+		if point.CollectedAt >= start && point.CollectedAt <= end {
 			result = append(result, point)
 		}
 	}
@@ -199,7 +204,7 @@ func (db *TimeSeriesDB) GetLatest(hostID uint64) *MetricPoint {
 	point := hostData.points[lastIdx]
 	if point != nil {
 		fmt.Printf("[时序数据库] 获取最新数据: 主机ID=%d, 时间戳=%d\n",
-			hostID, point.Timestamp)
+			hostID, point.CollectedAt)
 	}
 	return point
 }
@@ -222,8 +227,20 @@ func (db *TimeSeriesDB) GetAllLatest() map[uint64]*MetricPoint {
 
 	fmt.Printf("[时序数据库] 获取所有主机最新数据: 主机数量=%d\n", len(result))
 	for hostID, point := range result {
-		fmt.Printf("  主机ID=%d: 时间戳=%d, CPU=%.2f%%, 内存=%.2f%%\n",
-			hostID, point.Timestamp, point.CPUUsage, point.Memory.UsedPercent)
+		fmt.Printf("  主机ID=%d: 时间戳=%d\n", hostID, point.CollectedAt)
+		fmt.Printf("    CPU使用率: %.2f%%\n", point.CPU.UsagePercent)
+		fmt.Printf("    内存使用率: %.2f%% (总共: %.2f GB, 已用: %.2f GB, 剩余: %.2f GB)\n",
+			point.Memory.UsagePercent,
+			float64(point.Memory.TotalBytes)/(1024*1024*1024),
+			float64(point.Memory.UsedBytes)/(1024*1024*1024),
+			float64(point.Memory.FreeBytes)/(1024*1024*1024))
+
+		for _, net := range point.Network.Interfaces {
+			fmt.Printf("    网卡 %s: MAC=%s, IPv4=%s\n", net.Name, net.MacAddress, net.IPv4Address)
+			fmt.Printf("      流量: 入站=%.2f MB/s, 出站=%.2f MB/s\n",
+				net.RecvRate/(1024*1024),
+				net.SendRate/(1024*1024))
+		}
 	}
 	return result
 }
@@ -252,9 +269,9 @@ func (db *TimeSeriesDB) GetAllData(hostID uint64) []*MetricPoint {
 		firstPoint := result[0]
 		lastPoint := result[len(result)-1]
 		fmt.Printf("[时序数据库] 获取主机所有数据: 主机ID=%d, 数据点数量=%d\n", hostID, len(result))
-		fmt.Printf("  时间范围: %d -> %d\n", lastPoint.Timestamp, firstPoint.Timestamp)
+		fmt.Printf("  时间范围: %d -> %d\n", lastPoint.CollectedAt, firstPoint.CollectedAt)
 		fmt.Printf("  最新数据: CPU=%.2f%%, 内存=%.2f%%\n",
-			firstPoint.CPUUsage, firstPoint.Memory.UsedPercent)
+			firstPoint.CPU.UsagePercent, firstPoint.Memory.UsagePercent)
 	}
 
 	return result

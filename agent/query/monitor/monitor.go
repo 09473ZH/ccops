@@ -4,6 +4,7 @@ import (
 	"agent/query/monitor/collectors"
 	"agent/query/monitor/config"
 	"agent/query/monitor/models"
+	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -11,260 +12,158 @@ import (
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
+	"github.com/shirou/gopsutil/v3/load"
 	"github.com/shirou/gopsutil/v3/mem"
 	psnet "github.com/shirou/gopsutil/v3/net"
 )
 
-// MemoryStatus 内存监控数据结构
-type MemoryStatus struct {
-	// 物理内存
-	Total       uint64  `json:"memoryTotal"`       // 总内存(字节)
-	Used        uint64  `json:"memoryUsed"`        // 已用内存(字节)
-	Free        uint64  `json:"memoryFree"`        // 空闲内存(字节)
-	Available   uint64  `json:"memoryAvailable"`   // 可用内存(字节)
-	UsedPercent float64 `json:"memoryUsedPercent"` // 使用率(百分比)
-
-	// 交换分区(Swap)
-	SwapTotal   uint64  `json:"swapTotal"`   // Swap总大小
-	SwapUsed    uint64  `json:"swapUsed"`    // Swap已用
-	SwapFree    uint64  `json:"swapFree"`    // Swap空闲
-	SwapPercent float64 `json:"swapPercent"` // Swap使用率
-
-	// 内存详细信息
-	Buffers uint64 `json:"memoryBuffers"` // 缓冲区大小
-	Cached  uint64 `json:"memoryCached"`  // 缓存大小
-}
-
-// DiskUsage 磁盘使用情况
-type DiskUsage struct {
-	Path        string  `json:"path"`        // 挂载点路径
-	Device      string  `json:"device"`      // 设备名称
-	Total       uint64  `json:"total"`       // 总空间(字节)
-	Used        uint64  `json:"used"`        // 已用空间(字节)
-	Free        uint64  `json:"free"`        // 剩余空间(字节)
-	UsedPercent float64 `json:"usedPercent"` // 使用率(百分比)
-	FSType      string  `json:"fsType"`      // 文件系统类型
-}
-
-// NetworkStatus 网络监控数据结构
-type NetworkStatus struct {
-	// 基础信息
-	Name string `json:"name"` // 网卡名称
-	MAC  string `json:"mac"`  // MAC地址
-	IPv4 string `json:"ipv4"` // IPv4地址
-	IPv6 string `json:"ipv6"` // IPv6地址
-	MTU  int    `json:"mtu"`  // MTU大小
-
-	// 流量统计
-	BytesRecv   uint64 `json:"bytesRecv"`   // 接收字节数
-	BytesSent   uint64 `json:"bytesSent"`   // 发送字节数
-	PacketsRecv uint64 `json:"packetsRecv"` // 接收包数
-	PacketsSent uint64 `json:"packetsSent"` // 发送包数
-
-	// 错误统计
-	Errin   uint64 `json:"errin"`   // 接收错误数
-	Errout  uint64 `json:"errout"`  // 发送错误数
-	Dropin  uint64 `json:"dropin"`  // 接收丢包数
-	Dropout uint64 `json:"dropout"` // 发送丢包数
-
-	// 速率计算(每秒)
-	BytesRecvRate   float64 `json:"bytesRecvRate"`   // 接收速率
-	BytesSentRate   float64 `json:"bytesSentRate"`   // 发送速率
-	PacketsRecvRate float64 `json:"packetsRecvRate"` // 接收包速率
-	PacketsSentRate float64 `json:"packetsSentRate"` // 发送包速率
-
-	// TCP连接状态
-	TCPConnections map[string]int `json:"tcpConnections"` // 各状态连接数
-}
-
 // NetworkCalculator 网络速率计算器
 type NetworkCalculator struct {
-	prevStats map[string]*NetworkStatus
+	prevStats map[string]*models.InterfaceStats
 	prevTime  time.Time
 	mutex     sync.Mutex
 }
 
-// Clone 克隆网络状态对象
-func (ns *NetworkStatus) Clone() *NetworkStatus {
-	clone := *ns
-	clone.TCPConnections = make(map[string]int)
-	for k, v := range ns.TCPConnections {
-		clone.TCPConnections[k] = v
-	}
-	return &clone
+// DiskIOCalculator 磁盘IO速率计算器
+type DiskIOCalculator struct {
+	prevReadBytes  uint64
+	prevWriteBytes uint64
+	prevTime       time.Time
+	mutex          sync.Mutex
 }
 
 // NewNetworkCalculator 创建新的网络速率计算器
 func NewNetworkCalculator() *NetworkCalculator {
 	return &NetworkCalculator{
-		prevStats: make(map[string]*NetworkStatus),
+		prevStats: make(map[string]*models.InterfaceStats),
 		prevTime:  time.Now(),
 	}
 }
 
-// CalculateRates 计算网络速率
-func (nc *NetworkCalculator) CalculateRates(current *NetworkStatus) {
+// NewDiskIOCalculator 创建新的磁盘IO速率计算器
+func NewDiskIOCalculator() *DiskIOCalculator {
+	return &DiskIOCalculator{
+		prevTime: time.Now(),
+	}
+}
+
+// CalculateNetworkRates 计算网络速率
+func (nc *NetworkCalculator) CalculateNetworkRates(current *models.InterfaceStats) {
 	nc.mutex.Lock()
 	defer nc.mutex.Unlock()
 
 	if prev, exists := nc.prevStats[current.Name]; exists {
 		duration := time.Since(nc.prevTime).Seconds()
 		if duration > 0 {
-			// 处理计数器溢出
-			if current.BytesRecv >= prev.BytesRecv {
-				current.BytesRecvRate = float64(current.BytesRecv-prev.BytesRecv) / duration
+			// 计算字节速率
+			if current.TotalRecvBytes >= prev.TotalRecvBytes {
+				current.RecvRate = float64(current.TotalRecvBytes-prev.TotalRecvBytes) / duration
 			}
-			if current.BytesSent >= prev.BytesSent {
-				current.BytesSentRate = float64(current.BytesSent-prev.BytesSent) / duration
-			}
-			if current.PacketsRecv >= prev.PacketsRecv {
-				current.PacketsRecvRate = float64(current.PacketsRecv-prev.PacketsRecv) / duration
-			}
-			if current.PacketsSent >= prev.PacketsSent {
-				current.PacketsSentRate = float64(current.PacketsSent-prev.PacketsSent) / duration
-			}
-
-			// 处理丢包计数器溢出
-			if current.Dropin < prev.Dropin {
-				current.Dropin = 0 // 重置计数器
-			}
-			if current.Dropout < prev.Dropout {
-				current.Dropout = 0 // 重置计数器
+			if current.TotalSentBytes >= prev.TotalSentBytes {
+				current.SendRate = float64(current.TotalSentBytes-prev.TotalSentBytes) / duration
 			}
 		}
 	}
 
-	// 保存当前状态的副本
-	nc.prevStats[current.Name] = current.Clone()
+	// 保存当前状态
+	clone := *current
+	nc.prevStats[current.Name] = &clone
 	nc.prevTime = time.Now()
 }
 
-// GetMemoryUsage 获取内存使用情况
-func GetMemoryUsage() (*MemoryStatus, error) {
-	// 获取物理内存信息
-	vm, err := mem.VirtualMemory()
-	if err != nil {
-		return nil, err
+// CalculateDiskRates 计算磁盘IO速率
+func (dc *DiskIOCalculator) CalculateDiskRates(readBytes, writeBytes uint64) (float64, float64) {
+	dc.mutex.Lock()
+	defer dc.mutex.Unlock()
+
+	var readRate, writeRate float64
+	duration := time.Since(dc.prevTime).Seconds()
+
+	if duration > 0 {
+		if readBytes >= dc.prevReadBytes {
+			readRate = float64(readBytes-dc.prevReadBytes) / duration
+		}
+		if writeBytes >= dc.prevWriteBytes {
+			writeRate = float64(writeBytes-dc.prevWriteBytes) / duration
+		}
 	}
 
-	// 获取Swap信息
-	swap, err := mem.SwapMemory()
-	if err != nil {
-		return nil, err
-	}
+	// 保存当前状态
+	dc.prevReadBytes = readBytes
+	dc.prevWriteBytes = writeBytes
+	dc.prevTime = time.Now()
 
-	return &MemoryStatus{
-		// 物理内存
-		Total:       vm.Total,
-		Used:        vm.Used,
-		Free:        vm.Free,
-		Available:   vm.Available,
-		UsedPercent: vm.UsedPercent,
-
-		// Swap
-		SwapTotal:   swap.Total,
-		SwapUsed:    swap.Used,
-		SwapFree:    swap.Free,
-		SwapPercent: swap.UsedPercent,
-
-		// 详细信息
-		Buffers: vm.Buffers,
-		Cached:  vm.Cached,
-	}, nil
+	return readRate, writeRate
 }
 
-// GetDiskUsage 获取磁盘使用情况
-func GetDiskUsage() ([]DiskUsage, error) {
-	var diskUsages []DiskUsage
+// 全局速率计算器
+var (
+	networkCalculator = NewNetworkCalculator()
+	diskIOCalculator  = NewDiskIOCalculator()
+)
 
-	// 获取所有分区
-	partitions, err := disk.Partitions(false)
-	if err != nil {
-		return nil, err
+// CollectMetrics 采集系统指标
+func CollectMetrics() (*models.SystemMetrics, error) {
+	metrics := &models.SystemMetrics{
+		CollectedAt: time.Now().Unix(),
 	}
 
-	// 遍历处理每个分区
-	for _, partition := range partitions {
-		// 跳过特殊文件系统
-		if isIgnoredFSType(partition.Fstype) {
-			continue
+	// 采集 CPU 信息
+	if cpuPercent, err := cpu.Percent(0, false); err == nil && len(cpuPercent) > 0 {
+		metrics.CPU.UsagePercent = cpuPercent[0]
+	}
+	if loadAvg, err := load.Avg(); err == nil {
+		metrics.CPU.Load1m = loadAvg.Load1
+		metrics.CPU.Load5m = loadAvg.Load5
+		metrics.CPU.Load15m = loadAvg.Load15
+	}
+
+	// 采集内存信息
+	if vm, err := mem.VirtualMemory(); err == nil {
+		metrics.Memory.TotalBytes = vm.Total
+		metrics.Memory.UsedBytes = vm.Used
+		metrics.Memory.FreeBytes = vm.Free
+		metrics.Memory.AvailableBytes = vm.Available
+		metrics.Memory.UsagePercent = vm.UsedPercent
+	}
+
+	// 采集根目录磁盘信息
+	rootPath := "/"
+	if usage, err := disk.Usage(rootPath); err == nil {
+		diskUsage := models.DiskUsage{
+			MountPoint:   rootPath,
+			DeviceName:   "", // 需要另外获取
+			TotalBytes:   usage.Total,
+			UsedBytes:    usage.Used,
+			FreeBytes:    usage.Free,
+			UsagePercent: usage.UsedPercent,
+			FSType:       usage.Fstype,
 		}
 
-		usage, err := disk.Usage(partition.Mountpoint)
-		if err != nil {
-			continue
+		// 获取磁盘IO统计
+		if diskIO, err := disk.IOCounters(); err == nil {
+			for _, io := range diskIO {
+				metrics.Disk.ReadRate = io.ReadBytes
+				metrics.Disk.WriteRate = io.WriteBytes
+				break // 只取第一个磁盘的IO数据
+			}
 		}
 
-		diskUsage := DiskUsage{
-			Path:        partition.Mountpoint,
-			Device:      partition.Device,
-			Total:       usage.Total,
-			Used:        usage.Used,
-			Free:        usage.Free,
-			UsedPercent: usage.UsedPercent,
-			FSType:      partition.Fstype,
-		}
-		diskUsages = append(diskUsages, diskUsage)
+		metrics.Disk.AvailableBytes = float64(usage.Free)
+		metrics.Disk.TotalBytes = float64(usage.Total)
+		metrics.Disk.UsagePercent = fmt.Sprintf("%.0f", usage.UsedPercent)
+		metrics.Disk.Volumes = []models.DiskUsage{diskUsage}
 	}
 
-	return diskUsages, nil
-}
+	// 采集网络信息
+	interfaces, _ := net.Interfaces()
+	netIOCounters, _ := psnet.IOCounters(true)
 
-// 忽略的文件系统类型
-var ignoredFSTypes = map[string]bool{
-	"tmpfs":    true,
-	"devtmpfs": true,
-	"devfs":    true,
-	"overlay":  false, // 允许overlay文件系统
-	"squashfs": false, // 允许squashfs文件系统
-	"rootfs":   false, // 允许rootfs
-}
-
-// isIgnoredFSType 检查是否是需要忽略的文件系统类型
-func isIgnoredFSType(fsType string) bool {
-	return ignoredFSTypes[fsType]
-}
-
-// GetNetworkStatus 获取网络状态
-func GetNetworkStatus() ([]NetworkStatus, error) {
-	var networkStats []NetworkStatus
-
-	// 获取网卡信息
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		return nil, err
-	}
-
-	// 获取网卡统计信息
-	netIOCounters, err := psnet.IOCounters(true)
-	if err != nil {
-		return nil, err
-	}
-
-	// 获取TCP连接状态
-	connections, err := psnet.Connections("tcp")
-	if err != nil {
-		return nil, err
-	}
-
-	// 统计TCP连接状态
-	tcpStates := make(map[string]int)
-	for _, conn := range connections {
-		tcpStates[conn.Status]++
-	}
-
-	// 处理每个网卡
+	// 遍历网卡，找到第一块物理网卡
 	for _, iface := range interfaces {
-		// 跳过本地回环和非活动接口
-		if iface.Flags&net.FlagLoopback != 0 || iface.Flags&net.FlagUp == 0 {
+		// 跳过非物理网卡
+		if iface.Flags&net.FlagLoopback != 0 || iface.HardwareAddr == nil || len(iface.HardwareAddr) == 0 {
 			continue
-		}
-
-		stat := NetworkStatus{
-			Name:           iface.Name,
-			MAC:            iface.HardwareAddr.String(),
-			MTU:            iface.MTU,
-			TCPConnections: tcpStates,
 		}
 
 		// 获取IP地址
@@ -272,120 +171,49 @@ func GetNetworkStatus() ([]NetworkStatus, error) {
 		if err != nil {
 			continue
 		}
+
+		// 找到IPv4地址
+		var ipv4 string
 		for _, addr := range addrs {
 			if ipnet, ok := addr.(*net.IPNet); ok {
 				if ip4 := ipnet.IP.To4(); ip4 != nil {
-					stat.IPv4 = ip4.String()
-				} else if ipnet.IP.To16() != nil {
-					stat.IPv6 = ipnet.IP.String()
+					ipv4 = ip4.String()
+					break
 				}
 			}
 		}
 
+		// 如果没有找到IPv4地址，跳过这个网卡
+		if ipv4 == "" {
+			continue
+		}
+
 		// 获取网卡统计信息
+		var ioStat psnet.IOCountersStat
 		for _, counter := range netIOCounters {
 			if counter.Name == iface.Name {
-				stat.BytesRecv = counter.BytesRecv
-				stat.BytesSent = counter.BytesSent
-				stat.PacketsRecv = counter.PacketsRecv
-				stat.PacketsSent = counter.PacketsSent
-				stat.Errin = counter.Errin
-				stat.Errout = counter.Errout
-				stat.Dropin = counter.Dropin
-				stat.Dropout = counter.Dropout
+				ioStat = counter
 				break
 			}
 		}
 
-		networkStats = append(networkStats, stat)
-	}
-
-	return networkStats, nil
-}
-
-// SystemMetrics 包含系统指标数据
-type SystemMetrics struct {
-	CPUUsage      float64         `json:"cpuUsage"`      // CPU使用率
-	Memory        MemoryStatus    `json:"memory"`        // 内存状态
-	DiskUsages    []DiskUsage     `json:"diskUsages"`    // 磁盘使用情况
-	NetworkStatus []NetworkStatus `json:"networkStatus"` // 网络状态
-	Timestamp     int64           `json:"timestamp"`     // 时间戳
-}
-
-// 全局网络速率计算器
-var networkCalculator = NewNetworkCalculator()
-
-// CollectMetrics 采集系统指标
-func CollectMetrics() (*SystemMetrics, error) {
-	metrics := &SystemMetrics{}
-
-	// 采集 CPU 使用率
-	cpuPercent, err := cpu.Percent(0, false)
-	if err == nil && len(cpuPercent) > 0 {
-		metrics.CPUUsage = cpuPercent[0]
-	} else {
-		log.Printf("CPU使用率采集失败: %v", err)
-	}
-
-	// 采集内存信息
-	memoryStatus, err := GetMemoryUsage()
-	if err == nil {
-		metrics.Memory = *memoryStatus
-	} else {
-		log.Printf("内存信息采集失败: %v", err)
-	}
-
-	// 采集磁盘信息
-	diskUsages, err := GetDiskUsage()
-	if err == nil {
-		metrics.DiskUsages = diskUsages
-	} else {
-		log.Printf("磁盘信息采集失败: %v", err)
-	}
-
-	// 采集网络信息
-	networkStats, err := GetNetworkStatus()
-	if err == nil {
-		// 计算网络速率
-		for i := range networkStats {
-			networkCalculator.CalculateRates(&networkStats[i])
+		// 创建网卡统计对象
+		ifaceStat := models.InterfaceStats{
+			Name:           iface.Name,
+			MacAddress:     iface.HardwareAddr.String(),
+			IPv4Address:    ipv4,
+			TotalRecvBytes: ioStat.BytesRecv,
+			TotalSentBytes: ioStat.BytesSent,
 		}
-		metrics.NetworkStatus = networkStats
-	} else {
-		log.Printf("网络信息采集失败: %v", err)
-	}
 
-	metrics.Timestamp = time.Now().Unix()
+		// 计算速率
+		networkCalculator.CalculateNetworkRates(&ifaceStat)
 
-	// 打印详细的采集信息
-	log.Printf("系统指标采集完成:")
-	log.Printf("- CPU使用率: %.2f%%", metrics.CPUUsage)
-	log.Printf("- 内存使用: %.2f%% (总共: %.2f GB, 已用: %.2f GB, 可用: %.2f GB)",
-		metrics.Memory.UsedPercent,
-		float64(metrics.Memory.Total)/(1024*1024*1024),
-		float64(metrics.Memory.Used)/(1024*1024*1024),
-		float64(metrics.Memory.Available)/(1024*1024*1024))
-	log.Printf("- Swap使用: %.2f%% (总共: %.2f GB, 已用: %.2f GB)",
-		metrics.Memory.SwapPercent,
-		float64(metrics.Memory.SwapTotal)/(1024*1024*1024),
-		float64(metrics.Memory.SwapUsed)/(1024*1024*1024))
-
-	for _, disk := range metrics.DiskUsages {
-		log.Printf("- 磁盘 %s (%s): %.2f%% 已用 (总共: %.2f GB, 可用: %.2f GB)",
-			disk.Path, disk.FSType,
-			disk.UsedPercent,
-			float64(disk.Total)/(1024*1024*1024),
-			float64(disk.Free)/(1024*1024*1024))
-	}
-
-	for _, net := range metrics.NetworkStatus {
-		log.Printf("- 网卡 %s:", net.Name)
-		log.Printf("  MAC: %s, IPv4: %s, IPv6: %s", net.MAC, net.IPv4, net.IPv6)
-		log.Printf("  速率: 入站 %.2f MB/s, 出站 %.2f MB/s",
-			net.BytesRecvRate/(1024*1024),
-			net.BytesSentRate/(1024*1024))
-		log.Printf("  错误: 入站错误 %d, 出站错误 %d, 入站丢包 %d, 出站丢包 %d",
-			net.Errin, net.Errout, net.Dropin, net.Dropout)
+		// 更新网络总数据
+		metrics.Network.RecvRate = ifaceStat.RecvRate
+		metrics.Network.SendRate = ifaceStat.SendRate
+		metrics.Network.Interfaces = []models.InterfaceStats{ifaceStat}
+		break // 只取第一块物理网卡
 	}
 
 	return metrics, nil
@@ -418,79 +246,166 @@ func NewMonitor(cfg *config.Config) *Monitor {
 // CollectMetrics 采集系统指标
 func (m *Monitor) CollectMetrics() (*models.SystemMetrics, error) {
 	metrics := &models.SystemMetrics{
-		Timestamp: time.Now().Unix(),
+		CollectedAt: time.Now().Unix(),
 	}
 
 	// 采集CPU使用率
 	if m.config.CPUConfig.Enable {
-		cpuUsage, err := m.cpuCollector.Collect()
-		if err != nil {
-			log.Printf("CPU使用率采集失败: %v", err)
-		} else {
-			metrics.CPUUsage = cpuUsage
+		if cpuPercent, err := cpu.Percent(0, false); err == nil && len(cpuPercent) > 0 {
+			metrics.CPU.UsagePercent = cpuPercent[0]
+		}
+		if loadAvg, err := load.Avg(); err == nil {
+			metrics.CPU.Load1m = loadAvg.Load1
+			metrics.CPU.Load5m = loadAvg.Load5
+			metrics.CPU.Load15m = loadAvg.Load15
 		}
 	}
 
 	// 采集内存信息
 	if m.config.MemoryConfig.Enable {
-		memoryStatus, err := m.memCollector.Collect()
-		if err != nil {
-			log.Printf("内存信息采集失败: %v", err)
-		} else {
-			metrics.Memory = *memoryStatus
+		if vm, err := mem.VirtualMemory(); err == nil {
+			metrics.Memory.TotalBytes = vm.Total
+			metrics.Memory.UsedBytes = vm.Used
+			metrics.Memory.FreeBytes = vm.Free
+			metrics.Memory.AvailableBytes = vm.Available
+			metrics.Memory.UsagePercent = vm.UsedPercent
 		}
 	}
 
-	// 采集磁盘信息
+	// 采集根目录磁盘信息
 	if m.config.DiskConfig.Enable {
-		diskUsages, err := m.diskCollector.Collect()
-		if err != nil {
-			log.Printf("磁盘信息采集失败: %v", err)
-		} else {
-			metrics.DiskUsages = diskUsages
+		rootPath := "/"
+		if usage, err := disk.Usage(rootPath); err == nil {
+			// 获取设备名称
+			var deviceName string
+			if partitions, err := disk.Partitions(false); err == nil {
+				for _, part := range partitions {
+					if part.Mountpoint == rootPath {
+						deviceName = part.Device
+						break
+					}
+				}
+			}
+
+			diskUsage := models.DiskUsage{
+				MountPoint:   rootPath,
+				DeviceName:   deviceName,
+				TotalBytes:   usage.Total,
+				UsedBytes:    usage.Used,
+				FreeBytes:    usage.Free,
+				UsagePercent: usage.UsedPercent,
+				FSType:       usage.Fstype,
+			}
+
+			// 获取磁盘IO统计
+			if diskIO, err := disk.IOCounters(); err == nil {
+				for _, io := range diskIO {
+					// 计算IO速率
+					readRate, writeRate := diskIOCalculator.CalculateDiskRates(io.ReadBytes, io.WriteBytes)
+					metrics.Disk.ReadRate = uint64(readRate)
+					metrics.Disk.WriteRate = uint64(writeRate)
+					break // 只取第一个磁盘的IO数据
+				}
+			}
+
+			metrics.Disk.AvailableBytes = float64(usage.Free) / (1024 * 1024 * 1024)
+			metrics.Disk.TotalBytes = float64(usage.Total) / (1024 * 1024 * 1024)
+			metrics.Disk.UsagePercent = fmt.Sprintf("%.0f", usage.UsedPercent)
+			metrics.Disk.Volumes = []models.DiskUsage{diskUsage}
 		}
 	}
 
 	// 采集网络信息
 	if m.config.NetworkConfig.Enable {
-		networkStats, err := m.netCollector.Collect()
-		if err != nil {
-			log.Printf("网络信息采集失败: %v", err)
-		} else {
-			metrics.NetworkStatus = networkStats
+		interfaces, _ := net.Interfaces()
+		netIOCounters, _ := psnet.IOCounters(true)
+
+		// 遍历网卡，找到第一块物理网卡
+		for _, iface := range interfaces {
+			// 跳过非物理网卡
+			if iface.Flags&net.FlagLoopback != 0 || iface.HardwareAddr == nil || len(iface.HardwareAddr) == 0 {
+				continue
+			}
+
+			// 获取IP地址
+			addrs, err := iface.Addrs()
+			if err != nil {
+				continue
+			}
+
+			// 找到IPv4地址
+			var ipv4 string
+			for _, addr := range addrs {
+				if ipnet, ok := addr.(*net.IPNet); ok {
+					if ip4 := ipnet.IP.To4(); ip4 != nil {
+						ipv4 = ip4.String()
+						break
+					}
+				}
+			}
+
+			// 如果没有找到IPv4地址，跳过这个网卡
+			if ipv4 == "" {
+				continue
+			}
+
+			// 获取网卡统计信息
+			var ioStat psnet.IOCountersStat
+			for _, counter := range netIOCounters {
+				if counter.Name == iface.Name {
+					ioStat = counter
+					break
+				}
+			}
+
+			// 创建网卡统计对象
+			ifaceStat := models.InterfaceStats{
+				Name:           iface.Name,
+				MacAddress:     iface.HardwareAddr.String(),
+				IPv4Address:    ipv4,
+				TotalRecvBytes: ioStat.BytesRecv,
+				TotalSentBytes: ioStat.BytesSent,
+			}
+
+			// 计算速率
+			networkCalculator.CalculateNetworkRates(&ifaceStat)
+
+			// 更新网络总数据
+			metrics.Network.RecvRate = ifaceStat.RecvRate
+			metrics.Network.SendRate = ifaceStat.SendRate
+			metrics.Network.Interfaces = []models.InterfaceStats{ifaceStat}
+			break // 只取第一块物理网卡
 		}
 	}
 
 	// 打印详细的采集信息
 	log.Printf("系统指标采集完成:")
-	log.Printf("- CPU使用率: %.2f%%", metrics.CPUUsage)
+	log.Printf("- CPU使用率: %.2f%%, 1分钟负载: %.2f, 5分钟负载: %.2f, 15分钟负载: %.2f",
+		metrics.CPU.UsagePercent, metrics.CPU.Load1m, metrics.CPU.Load5m, metrics.CPU.Load15m)
 	log.Printf("- 内存使用: %.2f%% (总共: %.2f GB, 已用: %.2f GB, 可用: %.2f GB)",
-		metrics.Memory.UsedPercent,
-		float64(metrics.Memory.Total)/(1024*1024*1024),
-		float64(metrics.Memory.Used)/(1024*1024*1024),
-		float64(metrics.Memory.Available)/(1024*1024*1024))
-	log.Printf("- Swap使用: %.2f%% (总共: %.2f GB, 已用: %.2f GB)",
-		metrics.Memory.SwapPercent,
-		float64(metrics.Memory.SwapTotal)/(1024*1024*1024),
-		float64(metrics.Memory.SwapUsed)/(1024*1024*1024))
+		metrics.Memory.UsagePercent,
+		float64(metrics.Memory.TotalBytes)/(1024*1024*1024),
+		float64(metrics.Memory.UsedBytes)/(1024*1024*1024),
+		float64(metrics.Memory.AvailableBytes)/(1024*1024*1024))
 
-	for _, disk := range metrics.DiskUsages {
-		log.Printf("- 磁盘 %s (%s): %.2f%% 已用 (总共: %.2f GB, 可用: %.2f GB)",
-			disk.Path, disk.FSType,
-			disk.UsedPercent,
-			float64(disk.Total)/(1024*1024*1024),
-			float64(disk.Free)/(1024*1024*1024))
+	if len(metrics.Disk.Volumes) > 0 {
+		disk := metrics.Disk.Volumes[0]
+		log.Printf("- 根目录磁盘: %.2f%% 已用 (总共: %.2f GB, 可用: %.2f GB)",
+			disk.UsagePercent,
+			float64(disk.TotalBytes)/(1024*1024*1024),
+			float64(disk.FreeBytes)/(1024*1024*1024))
+		log.Printf("  IO速率: 读取 %.2f MB/s, 写入 %.2f MB/s",
+			float64(metrics.Disk.ReadRate)/(1024*1024),
+			float64(metrics.Disk.WriteRate)/(1024*1024))
 	}
 
-	for _, net := range metrics.NetworkStatus {
+	if len(metrics.Network.Interfaces) > 0 {
+		net := metrics.Network.Interfaces[0]
 		log.Printf("- 网卡 %s:", net.Name)
-		log.Printf("  MAC: %s, IPv4: %s, IPv6: %s", net.MAC, net.IPv4, net.IPv6)
-		log.Printf("  实时速率: 入站 %.2f MB/s, 出站 %.2f MB/s",
-			net.BytesRecvRate/(1024*1024),
-			net.BytesSentRate/(1024*1024))
-		log.Printf("  错误统计: 入站错误 %d, 出站错误 %d, 入站丢包 %d, 出站丢包 %d",
-			net.Errin, net.Errout, net.Dropin, net.Dropout)
-		log.Printf("  TCP连接数: %d", len(net.TCPConnections))
+		log.Printf("  MAC: %s, IPv4: %s", net.MacAddress, net.IPv4Address)
+		log.Printf("  流量速率: 入站 %.2f MB/s, 出站 %.2f MB/s",
+			net.RecvRate/(1024*1024),
+			net.SendRate/(1024*1024))
 	}
 
 	return metrics, nil

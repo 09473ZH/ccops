@@ -54,9 +54,9 @@ func (s *AlertService) checkCycle(r *alert.Rule) bool {
 
 // CheckMetrics 检查监控指标是否触发告警
 func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
-	log.Printf("开始检查告警，收到的指标数据：CPU使用率=%.2f%%, 内存使用率=%.2f%%, Swap使用率=%.2f%%, 磁盘数量=%d, 网卡数量=%d, 主机ID=%d",
-		metrics.CPUUsage, metrics.Memory.UsedPercent, metrics.Memory.SwapPercent,
-		len(metrics.DiskUsages), len(metrics.NetworkStatus), metrics.HostID)
+	log.Printf("开始检查告警，收到的指标数据：CPU使用率=%.2f%%, 内存使用率=%.2f%%, 网卡数量=%d, 主机ID=%d",
+		metrics.CPU.UsagePercent, metrics.Memory.UsagePercent,
+		len(metrics.Network.Interfaces), metrics.HostID)
 
 	// 开启GORM调试模式
 	tx := global.DB.Debug()
@@ -222,76 +222,26 @@ func (s *AlertService) getMetricValue(metrics *monitor.MetricPoint, ruleType str
 	var value float64
 	switch ruleType {
 	case alert.RuleTypeCPUUsage:
-		value = metrics.CPUUsage
+		value = metrics.CPU.UsagePercent
 	case alert.RuleTypeMemoryUsage:
-		value = metrics.Memory.UsedPercent
-	case alert.RuleTypeMemorySwap:
-		value = metrics.Memory.SwapPercent
-	case alert.RuleTypeDiskUsage:
-		// 计算所有磁盘的平均使用率
-		if len(metrics.DiskUsages) == 0 {
-			return 0, fmt.Errorf("没有可用的磁盘数据")
-		}
-		var totalPercent float64
-		for _, disk := range metrics.DiskUsages {
-			totalPercent += disk.UsedPercent
-		}
-		value = totalPercent / float64(len(metrics.DiskUsages))
+		value = metrics.Memory.UsagePercent
 	case alert.RuleTypeNetInSpeed:
 		// 计算所有网卡的总入站速率
 		var totalSpeed float64
-		for _, net := range metrics.NetworkStatus {
-			totalSpeed += net.BytesRecvRate
+		for _, net := range metrics.Network.Interfaces {
+			totalSpeed += net.RecvRate
 		}
 		value = totalSpeed
 	case alert.RuleTypeNetOutSpeed:
 		// 计算所有网卡的总出站速率
 		var totalSpeed float64
-		for _, net := range metrics.NetworkStatus {
-			totalSpeed += net.BytesSentRate
+		for _, net := range metrics.Network.Interfaces {
+			totalSpeed += net.SendRate
 		}
 		value = totalSpeed
-	case alert.RuleTypeNetInTransfer:
-		// 计算所有网卡的总入站流量
-		var totalTransfer uint64
-		for _, net := range metrics.NetworkStatus {
-			totalTransfer += net.BytesRecv
-		}
-		value = float64(totalTransfer)
-	case alert.RuleTypeNetOutTransfer:
-		// 计算所有网卡的总出站流量
-		var totalTransfer uint64
-		for _, net := range metrics.NetworkStatus {
-			totalTransfer += net.BytesSent
-		}
-		value = float64(totalTransfer)
-	case alert.RuleTypeNetError:
-		// 计算所有网卡的总错误数
-		var totalErrors uint64
-		for _, net := range metrics.NetworkStatus {
-			totalErrors += net.Errin + net.Errout
-		}
-		value = float64(totalErrors)
-	case alert.RuleTypeNetDrop:
-		// 计算所有网卡的总丢包数
-		var totalDrops uint64
-		for _, net := range metrics.NetworkStatus {
-			totalDrops += net.Dropin + net.Dropout
-		}
-		value = float64(totalDrops)
-	case alert.RuleTypeTCPConn:
-		// 计算所有网卡的总TCP连接数
-		var totalConnections int
-		for _, net := range metrics.NetworkStatus {
-			for _, count := range net.TCPConnections {
-				totalConnections += count
-			}
-		}
-		value = float64(totalConnections)
 	default:
-		return 0, fmt.Errorf("未知的规则类型: %s", ruleType)
+		return 0, fmt.Errorf("不支持的规则类型: %s", ruleType)
 	}
-	log.Printf("获取指标值: 类型=%s, 值=%.2f", ruleType, value)
 	return value, nil
 }
 

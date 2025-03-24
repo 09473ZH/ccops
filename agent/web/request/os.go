@@ -2,7 +2,7 @@ package request
 
 import (
 	"agent/query"
-	"agent/query/monitor"
+	"agent/query/monitor/models"
 	"agent/web/clglobal"
 	"bytes"
 	"encoding/json"
@@ -42,7 +42,7 @@ func SendHostInfoRequest() error {
 }
 
 // SendMetrics 发送系统指标数据到服务端
-func SendMetrics(metrics *monitor.SystemMetrics) error {
+func SendMetrics(metrics *models.SystemMetrics) error {
 	url := fmt.Sprintf("%s/api/client/metrics", *clglobal.Address)
 	jsonData, err := json.Marshal(metrics)
 	if err != nil {
@@ -61,12 +61,11 @@ func SendMetrics(metrics *monitor.SystemMetrics) error {
 	}
 
 	// 记录网络状态
-	for _, netStat := range metrics.NetworkStatus {
-		log.Printf("网卡 %s 状态: 入站速率 %.2f MB/s, 出站速率 %.2f MB/s, TCP连接数 %d",
+	for _, netStat := range metrics.Network.Interfaces {
+		log.Printf("网卡 %s 状态: 入站速率 %.2f MB/s, 出站速率 %.2f MB/s",
 			netStat.Name,
-			netStat.BytesRecvRate/1024/1024,
-			netStat.BytesSentRate/1024/1024,
-			len(netStat.TCPConnections))
+			netStat.RecvRate/1024/1024,
+			netStat.SendRate/1024/1024)
 	}
 
 	return nil

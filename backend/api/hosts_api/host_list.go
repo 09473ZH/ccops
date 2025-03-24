@@ -14,8 +14,9 @@ import (
 type HostListRequest struct {
 	models.PageInfo
 
-	LabelIDs []uint `form:"labelIds"`
-	Logic    string `form:"logic"` // "and" 表示交集, "or" 表示并集
+	LabelIDs    []uint `form:"labelIds"`
+	Logic       string `form:"logic"`       // "and" 表示交集, "or" 表示并集
+	WithMetrics bool   `form:"withMetrics"` // 是否包含监控指标数据
 }
 
 type HostListResponse struct {
@@ -32,7 +33,7 @@ type HostListResponse struct {
 	StartTime       time.Time           `gorm:"comment:主机启动时间" json:"startTime"`               // 主机启动时间
 	PhysicalMemory  string              `gorm:"size:64;comment:物理内存" json:"physicalMemory"`    // 物理内存
 	KernelVersion   string              `gorm:"size:64;comment:内核版本" json:"kernelVersion"`     // 内核版本，例如 "23.6.0"
-
+	Metrics         interface{}         `gorm:"-" json:"metrics,omitempty"`                    // 监控指标数据
 }
 
 func (HostsApi) HostListView(c *gin.Context) {
@@ -122,6 +123,13 @@ func (HostsApi) HostListView(c *gin.Context) {
 		global.DB.Model(&models.LabelModel{}).Joins("JOIN host_labels ON host_labels.label_model_id = label_models.id").
 			Where("host_labels.host_model_id = ?", hosts[i].ID).Find(&labelListInfo)
 		hosts[i].Label = labelListInfo
+
+		// 如果请求包含监控数据，则获取最新的监控数据
+		if cr.WithMetrics {
+			if metrics := global.TimeSeriesDB.GetLatest(uint64(hosts[i].ID)); metrics != nil {
+				hosts[i].Metrics = metrics
+			}
+		}
 	}
 
 	res.OkWithList(hosts, count, c)

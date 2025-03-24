@@ -50,23 +50,12 @@ type AlertRecord struct {
 // 告警规则类型常量
 const (
 	// 系统指标
-	RuleTypeCPUUsage    = "cpu"         // CPU使用率
-	RuleTypeLoad1       = "load1"       // 1分钟负载
-	RuleTypeLoad5       = "load5"       // 5分钟负载
-	RuleTypeLoad15      = "load15"      // 15分钟负载
-	RuleTypeMemoryUsage = "memory"      // 内存使用率
-	RuleTypeMemorySwap  = "memory_swap" // Swap使用率
-	RuleTypeDiskUsage   = "disk"        // 磁盘使用率
+	RuleTypeCPUUsage    = "cpu"    // CPU使用率
+	RuleTypeMemoryUsage = "memory" // 内存使用率
 
 	// 网络指标
-	RuleTypeNetInSpeed     = "network_in"       // 网络入站速度
-	RuleTypeNetOutSpeed    = "network_out"      // 网络出站速度
-	RuleTypeNetInTransfer  = "net_transfer_in"  // 入站流量累计
-	RuleTypeNetOutTransfer = "net_transfer_out" // 出站流量累计
-	RuleTypeNetError       = "net_error"        // 网络错误数
-	RuleTypeNetDrop        = "net_drop"         // 网络丢包数
-	RuleTypeTCPConn        = "tcp_conn"         // TCP连接数
-	RuleTypeNetworkDelay   = "network_delay"    // 网络延迟
+	RuleTypeNetInSpeed  = "network_in"  // 网络入站速度
+	RuleTypeNetOutSpeed = "network_out" // 网络出站速度
 
 	// 状态指标
 	RuleTypeOnline  = "online"  // 在线状态
@@ -101,24 +90,13 @@ const (
 // ValidateRule 验证告警规则
 func ValidateRule(rule *AlertRule) error {
 	validTypes := map[string]bool{
-		RuleTypeCPUUsage:       true,
-		RuleTypeLoad1:          true,
-		RuleTypeLoad5:          true,
-		RuleTypeLoad15:         true,
-		RuleTypeMemoryUsage:    true,
-		RuleTypeMemorySwap:     true,
-		RuleTypeDiskUsage:      true,
-		RuleTypeNetInSpeed:     true,
-		RuleTypeNetOutSpeed:    true,
-		RuleTypeNetInTransfer:  true,
-		RuleTypeNetOutTransfer: true,
-		RuleTypeNetError:       true,
-		RuleTypeNetDrop:        true,
-		RuleTypeTCPConn:        true,
-		RuleTypeNetworkDelay:   true,
-		RuleTypeOnline:         true,
-		RuleTypeSSL:            true,
-		RuleTypeProcess:        true,
+		RuleTypeCPUUsage:    true,
+		RuleTypeMemoryUsage: true,
+		RuleTypeNetInSpeed:  true,
+		RuleTypeNetOutSpeed: true,
+		RuleTypeOnline:      true,
+		RuleTypeSSL:         true,
+		RuleTypeProcess:     true,
 	}
 
 	validSeverity := map[string]bool{
