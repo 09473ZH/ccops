@@ -2,7 +2,6 @@ package collectors
 
 import (
 	"agent/query/monitor/models"
-
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
@@ -22,28 +21,11 @@ func (mc *MemoryCollector) Collect() (*models.MemoryStatus, error) {
 		return nil, err
 	}
 
-	// 获取Swap信息
-	swap, err := mem.SwapMemory()
-	if err != nil {
-		return nil, err
-	}
-
 	return &models.MemoryStatus{
-		// 物理内存
-		Total:       vm.Total,
-		Used:        vm.Used,
-		Free:        vm.Free,
-		Available:   vm.Available,
-		UsedPercent: vm.UsedPercent,
-
-		// Swap
-		SwapTotal:   swap.Total,
-		SwapUsed:    swap.Used,
-		SwapFree:    swap.Free,
-		SwapPercent: swap.UsedPercent,
-
-		// 详细信息
-		Buffers: vm.Buffers,
-		Cached:  vm.Cached,
+		TotalBytes:     vm.Total,
+		UsedBytes:      vm.Used,
+		FreeBytes:      vm.Free,
+		AvailableBytes: vm.Available,
+		UsagePercent:   vm.UsedPercent,
 	}, nil
 }

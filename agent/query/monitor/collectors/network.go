@@ -21,8 +21,8 @@ func NewNetworkCollector() *NetworkCollector {
 }
 
 // Collect 收集网络状态
-func (nc *NetworkCollector) Collect() ([]models.NetworkStatus, error) {
-	var networkStats []models.NetworkStatus
+func (nc *NetworkCollector) Collect() ([]models.InterfaceStats, error) {
+	var networkStats []models.InterfaceStats
 
 	// 获取网卡信息
 	interfaces, err := net.Interfaces()
@@ -36,18 +36,6 @@ func (nc *NetworkCollector) Collect() ([]models.NetworkStatus, error) {
 		return nil, err
 	}
 
-	// 获取TCP连接状态
-	connections, err := psnet.Connections("tcp")
-	if err != nil {
-		return nil, err
-	}
-
-	// 统计TCP连接状态
-	tcpStates := make(map[string]int)
-	for _, conn := range connections {
-		tcpStates[conn.Status]++
-	}
-
 	// 处理每个网卡
 	for _, iface := range interfaces {
 		// 跳过本地回环和非活动接口
@@ -55,11 +43,9 @@ func (nc *NetworkCollector) Collect() ([]models.NetworkStatus, error) {
 			continue
 		}
 
-		stat := models.NetworkStatus{
-			Name:           iface.Name,
-			MAC:            iface.HardwareAddr.String(),
-			MTU:            iface.MTU,
-			TCPConnections: tcpStates,
+		stat := models.InterfaceStats{
+			Name:       iface.Name,
+			MacAddress: iface.HardwareAddr.String(),
 		}
 
 		// 获取IP地址
@@ -70,9 +56,8 @@ func (nc *NetworkCollector) Collect() ([]models.NetworkStatus, error) {
 		for _, addr := range addrs {
 			if ipnet, ok := addr.(*net.IPNet); ok {
 				if ip4 := ipnet.IP.To4(); ip4 != nil {
-					stat.IPv4 = ip4.String()
-				} else if ipnet.IP.To16() != nil {
-					stat.IPv6 = ipnet.IP.String()
+					stat.IPv4Address = ip4.String()
+					break // 只保留IPv4地址
 				}
 			}
 		}
@@ -80,20 +65,14 @@ func (nc *NetworkCollector) Collect() ([]models.NetworkStatus, error) {
 		// 获取网卡统计信息
 		for _, counter := range netIOCounters {
 			if counter.Name == iface.Name {
-				stat.BytesRecv = counter.BytesRecv
-				stat.BytesSent = counter.BytesSent
-				stat.PacketsRecv = counter.PacketsRecv
-				stat.PacketsSent = counter.PacketsSent
-				stat.Errin = counter.Errin
-				stat.Errout = counter.Errout
-				stat.Dropin = counter.Dropin
-				stat.Dropout = counter.Dropout
+				stat.TotalRecvBytes = counter.BytesRecv
+				stat.TotalSentBytes = counter.BytesSent
 				break
 			}
 		}
 
 		// 计算网络速率
-		nc.calculator.CalculateRates(&stat)
+		nc.calculator.CalculateNetworkRates(&stat)
 
 		networkStats = append(networkStats, stat)
 	}

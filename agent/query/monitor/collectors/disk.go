@@ -54,13 +54,13 @@ func (dc *DiskCollector) Collect() ([]models.DiskUsage, error) {
 		}
 
 		diskUsage := models.DiskUsage{
-			Path:        partition.Mountpoint,
-			Device:      partition.Device,
-			Total:       usage.Total,
-			Used:        usage.Used,
-			Free:        usage.Free,
-			UsedPercent: usage.UsedPercent,
-			FSType:      partition.Fstype,
+			MountPoint:   partition.Mountpoint,
+			DeviceName:   partition.Device,
+			TotalBytes:   usage.Total,
+			UsedBytes:    usage.Used,
+			FreeBytes:    usage.Free,
+			UsagePercent: usage.UsedPercent,
+			FSType:       partition.Fstype,
 		}
 		diskUsages = append(diskUsages, diskUsage)
 	}
