@@ -6,6 +6,7 @@ import (
 	"ccops/global"
 	"ccops/models/monitor"
 	"ccops/router"
+	"ccops/service/alert"
 	utils "ccops/utils"
 	"fmt"
 )
@@ -31,6 +32,10 @@ func main() {
 	}
 	// 添加 TimeSeriesDB 实例
 	global.TimeSeriesDB = monitor.NewTimeSeriesDB()
+
+	// 启动告警定时任务
+	alert.StartCronTasks()
+
 	// 初始化路由
 	router := router.InitRouter()
 
