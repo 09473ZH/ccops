@@ -49,7 +49,6 @@ export function ColumnSelector({
     setTableState({
       visibleColumns: [...FIXED_COLUMNS, ...newChecked] as string[],
     });
-    console.log('State updated with visible columns:', [...FIXED_COLUMNS, ...newChecked]);
   };
 
   const handleToggleAll = () => {
