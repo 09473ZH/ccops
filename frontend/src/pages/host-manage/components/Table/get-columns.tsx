@@ -128,6 +128,7 @@ const getDiskInfo = (disk: DiskInfo[]) => {
 
 export const getColumns = (
   editing: EditingState,
+  visibleColumns: string[],
   handleEditName: (record: HostInfo) => void,
   handleSaveName: () => void,
   handleAssignLabels: (record: HostInfo) => void,
@@ -178,7 +179,7 @@ export const getColumns = (
       filterMultiple: true,
       render: (label: LabelInfo[]) => (
         <ShowMoreTags
-          dataSource={label.map((label) => ({ id: label.id, name: label.name }))}
+          dataSource={(label || []).map((label) => ({ id: label.id, name: label.name }))}
           labelField="name"
           color="blue"
         />
@@ -376,5 +377,8 @@ export const getColumns = (
     ];
   }
 
-  return columns;
+  return columns.map((item) => ({
+    ...item,
+    hidden: !visibleColumns.includes(item.key as string),
+  }));
 };

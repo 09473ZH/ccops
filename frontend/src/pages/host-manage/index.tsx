@@ -99,6 +99,7 @@ function HostManage() {
 
   const columns = getColumns(
     editing,
+    table.visibleColumns,
     handleEditName,
     handleSaveName,
     handleAssignLabels,
