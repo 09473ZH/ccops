@@ -20,7 +20,7 @@ func (router RouterGroup) RulesRouter(rulesRouterGroup *gin.RouterGroup) {
 	recordGroup := rulesRouterGroup.Group("/records")
 	{
 		recordGroup.GET("", app.GetAlertRecordList)              // 获取告警记录列表（支持统计视图）
-		recordGroup.GET("/active", app.GetActiveAlerts)          // 获取当前活跃的告警
+		recordGroup.GET("/activation", app.GetActiveAlerts)      // 获取当前活跃的告警
 		recordGroup.GET("/aggregation", app.GetAlertAggregation) // 获取告警聚合信息
 		recordGroup.GET("/statistics", app.GetAlertStatistics)
 	}
