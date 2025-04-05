@@ -49,18 +49,32 @@ func (AlertApi) CreateAlertRule(c *gin.Context) {
 		}
 	}()
 
+	// 验证通知配置是否存在
+	var notifyCount int64
+	if err := tx.Model(&alert.Notification{}).Where("id = ?", req.NotificationId).Count(&notifyCount).Error; err != nil {
+		tx.Rollback()
+		res.FailWithMessage("验证通知配置失败", c)
+		return
+	}
+	if notifyCount == 0 {
+		tx.Rollback()
+		res.FailWithMessage("指定的通知配置不存在", c)
+		return
+	}
+
 	// 创建告警规则
 	rule := &alert.AlertRule{
-		Name:          req.Name,
-		Description:   req.Description,
-		Universal:     req.Universal,
-		Enabled:       req.Enabled,
-		Priority:      req.Priority,
-		Type:          req.Type,
-		Duration:      req.Duration,
-		Operator:      req.Operator,
-		Threshold:     req.Threshold,
-		RecoverNotify: req.RecoverNotify,
+		Name:           req.Name,
+		Description:    req.Description,
+		Universal:      req.Universal,
+		Enabled:        req.Enabled,
+		Priority:       req.Priority,
+		Type:           req.Type,
+		Duration:       req.Duration,
+		Operator:       req.Operator,
+		Threshold:      req.Threshold,
+		RecoverNotify:  req.RecoverNotify,
+		NotificationId: req.NotificationId,
 	}
 
 	// 保存规则
@@ -217,6 +231,22 @@ func (AlertApi) UpdateAlertRule(c *gin.Context) {
 		tx.Rollback()
 		res.FailWithMessage("告警规则不存在", c)
 		return
+	}
+
+	// 如果更新了通知配置，验证新的通知配置是否存在
+	if req.NotificationId != 0 && req.NotificationId != rule.NotificationId {
+		var notifyCount int64
+		if err := tx.Model(&alert.Notification{}).Where("id = ?", req.NotificationId).Count(&notifyCount).Error; err != nil {
+			tx.Rollback()
+			res.FailWithMessage("验证通知配置失败", c)
+			return
+		}
+		if notifyCount == 0 {
+			tx.Rollback()
+			res.FailWithMessage("指定的通知配置不存在", c)
+			return
+		}
+		rule.NotificationId = req.NotificationId
 	}
 
 	// 更新字段
@@ -440,19 +470,20 @@ func (AlertApi) GetAlertRule(c *gin.Context) {
 
 	// 初始化响应结构
 	info := response.AlertRuleInfo{
-		ID:            rule.ID,
-		Name:          rule.Name,
-		Description:   rule.Description,
-		Universal:     rule.Universal,
-		Enabled:       rule.Enabled,
-		Priority:      rule.Priority,
-		Type:          rule.Type,
-		Duration:      rule.Duration,
-		Operator:      rule.Operator,
-		Threshold:     rule.Threshold,
-		RecoverNotify: rule.RecoverNotify,
-		CreatedAt:     rule.CreatedAt,
-		UpdatedAt:     rule.UpdatedAt,
+		ID:             rule.ID,
+		Name:           rule.Name,
+		Description:    rule.Description,
+		Universal:      rule.Universal,
+		Enabled:        rule.Enabled,
+		Priority:       rule.Priority,
+		Type:           rule.Type,
+		Duration:       rule.Duration,
+		Operator:       rule.Operator,
+		Threshold:      rule.Threshold,
+		RecoverNotify:  rule.RecoverNotify,
+		NotificationId: rule.NotificationId,
+		CreatedAt:      rule.CreatedAt,
+		UpdatedAt:      rule.UpdatedAt,
 	}
 
 	// 收集所有主机和标签ID
@@ -597,19 +628,20 @@ func (AlertApi) GetAlertRuleList(c *gin.Context) {
 	list := make([]response.AlertRuleInfo, len(rules))
 	for i, rule := range rules {
 		list[i] = response.AlertRuleInfo{
-			ID:            rule.ID,
-			Name:          rule.Name,
-			Description:   rule.Description,
-			Universal:     rule.Universal,
-			Enabled:       rule.Enabled,
-			Priority:      rule.Priority,
-			Type:          rule.Type,
-			Duration:      rule.Duration,
-			Operator:      rule.Operator,
-			Threshold:     rule.Threshold,
-			RecoverNotify: rule.RecoverNotify,
-			CreatedAt:     rule.CreatedAt,
-			UpdatedAt:     rule.UpdatedAt,
+			ID:             rule.ID,
+			Name:           rule.Name,
+			Description:    rule.Description,
+			Universal:      rule.Universal,
+			Enabled:        rule.Enabled,
+			Priority:       rule.Priority,
+			Type:           rule.Type,
+			Duration:       rule.Duration,
+			Operator:       rule.Operator,
+			Threshold:      rule.Threshold,
+			RecoverNotify:  rule.RecoverNotify,
+			NotificationId: rule.NotificationId,
+			CreatedAt:      rule.CreatedAt,
+			UpdatedAt:      rule.UpdatedAt,
 		}
 	}
 

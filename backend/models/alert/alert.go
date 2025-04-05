@@ -7,19 +7,20 @@ import (
 
 // AlertRule 告警规则主表
 type AlertRule struct {
-	ID            uint64    `json:"id" gorm:"primarykey"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
-	Name          string    `json:"name" gorm:"size:255"`           // 告警规则名称
-	Description   string    `json:"description" gorm:"size:500"`    // 告警规则描述
-	Universal     bool      `json:"universal" gorm:"default:false"` // 是否对全部主机生效
-	Enabled       bool      `json:"enabled" gorm:"default:true"`    // 是否启用
-	Priority      string    `json:"priority" gorm:"size:2"`         // 告警等级(P0-P3)
-	Type          string    `json:"type"`                           // 规则类型
-	Duration      int       `json:"duration"`                       // 持续时间(秒)
-	Operator      string    `json:"operator" gorm:"size:2"`         // 运算符(>, <, >=, <=, ==)
-	Threshold     float64   `json:"threshold"`                      // 阈值
-	RecoverNotify bool      `json:"recoverNotify"`                  // 是否发送恢复通知
+	ID             uint64    `json:"id" gorm:"primarykey"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+	Name           string    `json:"name" gorm:"size:255"`           // 告警规则名称
+	Description    string    `json:"description" gorm:"size:500"`    // 告警规则描述
+	Universal      bool      `json:"universal" gorm:"default:false"` // 是否对全部主机生效
+	Enabled        bool      `json:"enabled" gorm:"default:true"`    // 是否启用
+	Priority       string    `json:"priority" gorm:"size:2"`         // 告警等级(P0-P3)
+	Type           string    `json:"type"`                           // 规则类型
+	Duration       int       `json:"duration"`                       // 持续时间(秒)
+	Operator       string    `json:"operator" gorm:"size:2"`         // 运算符(>, <, >=, <=, ==)
+	Threshold      float64   `json:"threshold"`                      // 阈值
+	RecoverNotify  bool      `json:"recoverNotify"`                  // 是否发送恢复通知
+	NotificationId uint64    `json:"notificationId"`                 // 通知ID
 }
 
 // AlertRuleTarget 告警规则与目标(主机/主机组)的关联表

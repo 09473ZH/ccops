@@ -336,22 +336,32 @@ func (s *AlertService) createOrUpdateAlert(tx *gorm.DB, rule *alert.AlertRule, h
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 创建新的告警记录
+			now := time.Now()
 			record = alert.AlertRecord{
 				RuleID:      rule.ID,
 				HostID:      hostID,
 				Status:      alert.AlertStatusAlerting,
 				Value:       value,
-				StartTime:   time.Now(),
+				StartTime:   now,
 				Description: fmt.Sprintf("触发告警：%s，当前值：%.2f", rule.Name, value),
 			}
-			return tx.Create(&record).Error
+			if err := tx.Create(&record).Error; err != nil {
+				return err
+			}
+
+			// 发送告警通知
+			if err := WebhookNotification(uint(rule.ID), uint(hostID), value, NotificationTypeAlert, now); err != nil {
+				log.Printf("发送告警通知失败: %v", err)
+			}
+			return nil
 		}
 		return err
 	}
 
 	// 更新现有记录
+	now := time.Now()
 	record.Value = value
-	record.UpdatedAt = time.Now()
+	record.UpdatedAt = now
 	record.Description = fmt.Sprintf("触发告警：%s，当前值：%.2f", rule.Name, value)
 	return tx.Save(&record).Error
 }
@@ -375,8 +385,8 @@ func (s *AlertService) resolveAlert(ruleID uint64, hostID uint64) error {
 
 	// 更新告警状态为已恢复
 	record.Status = alert.AlertStatusResolved
-	endTime := time.Now()
-	record.EndTime = &endTime
+	now := time.Now()
+	record.EndTime = &now
 	if err := tx.Save(&record).Error; err != nil {
 		return fmt.Errorf("更新告警记录失败: %v", err)
 	}
@@ -387,9 +397,12 @@ func (s *AlertService) resolveAlert(ruleID uint64, hostID uint64) error {
 		return fmt.Errorf("获取告警规则失败: %v", err)
 	}
 
-	// TODO: 调用通知服务发送恢复通知
-	log.Printf("发送告警恢复通知: 规则=%s, 主机ID=%d",
-		rule.Name, hostID)
+	// 如果配置了恢复通知，则发送恢复通知
+	if rule.RecoverNotify {
+		if err := WebhookNotification(uint(rule.ID), uint(hostID), record.Value, NotificationTypeRecover, now); err != nil {
+			log.Printf("发送恢复通知失败: %v", err)
+		}
+	}
 
 	return nil
 }

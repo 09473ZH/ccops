@@ -6,16 +6,17 @@ import (
 
 // CreateAlertRule 创建告警规则请求
 type CreateAlertRule struct {
-	Name          string  `json:"name" binding:"required"`     // 告警规则名称
-	Description   string  `json:"description"`                 // 告警规则描述
-	Universal     bool    `json:"universal"`                   // 是否对全部主机生效
-	Enabled       bool    `json:"enabled"`                     // 是否启用
-	Priority      string  `json:"priority" binding:"required"` // 告警等级(P0-P3)
-	Type          string  `json:"type" binding:"required"`     // 规则类型
-	Duration      int     `json:"duration" binding:"required"` // 持续时间(秒)
-	Operator      string  `json:"operator" binding:"required"` // 运算符(>, <, >=, <=, ==)
-	Threshold     float64 `json:"threshold"`                   // 阈值
-	RecoverNotify bool    `json:"recoverNotify"`               // 是否发送恢复通知
+	Name           string  `json:"name" binding:"required"`           // 告警规则名称
+	Description    string  `json:"description"`                       // 告警规则描述
+	Universal      bool    `json:"universal"`                         // 是否对全部主机生效
+	Enabled        bool    `json:"enabled"`                           // 是否启用
+	Priority       string  `json:"priority" binding:"required"`       // 告警等级(P0-P3)
+	Type           string  `json:"type" binding:"required"`           // 规则类型
+	Duration       int     `json:"duration" binding:"required"`       // 持续时间(秒)
+	Operator       string  `json:"operator" binding:"required"`       // 运算符(>, <, >=, <=, ==)
+	Threshold      float64 `json:"threshold"`                         // 阈值
+	RecoverNotify  bool    `json:"recoverNotify"`                     // 是否发送恢复通知
+	NotificationId uint64  `json:"notificationId" binding:"required"` // 通知配置ID
 
 	// 白名单配置（选传）
 	WhitelistHostIDs  []uint64 `json:"whitelistHostIds"`  // 白名单主机ID列表
@@ -28,17 +29,18 @@ type CreateAlertRule struct {
 
 // UpdateAlertRule 更新告警规则请求
 type UpdateAlertRule struct {
-	ID            uint64  `json:"id" binding:"required"` // 规则ID
-	Name          string  `json:"name"`                  // 告警规则名称
-	Description   string  `json:"description"`           // 告警规则描述
-	Universal     bool    `json:"universal"`             // 是否对全部主机生效
-	Enabled       bool    `json:"enabled"`               // 是否启用
-	Priority      string  `json:"priority"`              // 告警等级(P0-P3)
-	Type          string  `json:"type"`                  // 规则类型
-	Duration      int     `json:"duration"`              // 持续时间(秒)
-	Operator      string  `json:"operator"`              // 运算符(>, <, >=, <=, ==)
-	Threshold     float64 `json:"threshold"`             // 阈值
-	RecoverNotify bool    `json:"recoverNotify"`         // 是否发送恢复通知
+	ID             uint64  `json:"id" binding:"required"` // 规则ID
+	Name           string  `json:"name"`                  // 告警规则名称
+	Description    string  `json:"description"`           // 告警规则描述
+	Universal      bool    `json:"universal"`             // 是否对全部主机生效
+	Enabled        bool    `json:"enabled"`               // 是否启用
+	Priority       string  `json:"priority"`              // 告警等级(P0-P3)
+	Type           string  `json:"type"`                  // 规则类型
+	Duration       int     `json:"duration"`              // 持续时间(秒)
+	Operator       string  `json:"operator"`              // 运算符(>, <, >=, <=, ==)
+	Threshold      float64 `json:"threshold"`             // 阈值
+	RecoverNotify  bool    `json:"recoverNotify"`         // 是否发送恢复通知
+	NotificationId uint64  `json:"notificationId"`        // 通知配置ID
 
 	// 白名单配置（选传）
 	WhitelistHostIDs  []uint64 `json:"whitelistHostIds"`  // 白名单主机ID列表

@@ -1,9 +1,10 @@
 package models
 
 var (
-	ConfigurationTypeSystem = "system"
-	ConfigurationTypeKey    = "key"
-	ConfigurationTypeLlm    = "llm"
+	ConfigurationTypeSystem       = "system"
+	ConfigurationTypeKey          = "key"
+	ConfigurationTypeLlm          = "llm"
+	ConfigurationTypeNotification = "notification"
 )
 
 type Configuration struct {
