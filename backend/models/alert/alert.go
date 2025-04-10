@@ -34,16 +34,17 @@ type AlertRuleTarget struct {
 
 // AlertRecord 告警记录表
 type AlertRecord struct {
-	ID          uint64     `json:"id" gorm:"primarykey"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
-	RuleID      uint64     `json:"ruleId" gorm:"index"`                   // 告警规则ID
-	HostID      uint64     `json:"hostId" gorm:"index"`                   // 触发告警的主机ID
-	Status      int        `json:"status" gorm:"type:int"`                // 告警状态: 0-正常, 1-告警中, 2-已恢复
-	Value       float64    `json:"value"`                                 // 触发告警时的值
-	StartTime   time.Time  `json:"startTime"`                             // 告警开始时间
-	EndTime     *time.Time `json:"endTime"`                               // 告警结束时间
-	Description string     `json:"description" gorm:"type:varchar(1000)"` // 告警描述
+	ID           uint64     `json:"id" gorm:"primarykey"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
+	RuleID       uint64     `json:"ruleId" gorm:"index"`                   // 告警规则ID
+	HostID       uint64     `json:"hostId" gorm:"index"`                   // 触发告警的主机ID
+	Status       int        `json:"status" gorm:"type:int"`                // 告警状态: 0-正常, 1-告警中, 2-已恢复
+	Value        float64    `json:"value"`                                 // 触发告警时的值
+	RecoverValue float64    `json:"recoverValue"`                          // 恢复时的值
+	StartTime    time.Time  `json:"startTime"`                             // 告警开始时间
+	EndTime      *time.Time `json:"endTime"`                               // 告警结束时间
+	Description  string     `json:"description" gorm:"type:varchar(1000)"` // 告警描述
 }
 
 // 告警规则类型常量

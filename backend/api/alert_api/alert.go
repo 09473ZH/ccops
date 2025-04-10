@@ -798,19 +798,20 @@ func (AlertApi) GetAlertRecordList(c *gin.Context) {
 		}
 
 		list[i] = response.AlertRecordInfo{
-			ID:          record.ID,
-			RuleID:      record.RuleID,
-			RuleName:    ruleName,
-			Priority:    priority,
-			HostID:      record.HostID,
-			HostName:    hostMap[record.HostID],
-			Status:      statusStr,
-			StatusCode:  record.Status,
-			Value:       record.Value,
-			StartTime:   record.StartTime,
-			EndTime:     record.EndTime,
-			Description: record.Description,
-			CreatedAt:   record.CreatedAt,
+			ID:           record.ID,
+			RuleID:       record.RuleID,
+			RuleName:     ruleName,
+			Priority:     priority,
+			HostID:       record.HostID,
+			HostName:     hostMap[record.HostID],
+			Status:       statusStr,
+			StatusCode:   record.Status,
+			Value:        record.Value,
+			RecoverValue: record.RecoverValue,
+			StartTime:    record.StartTime,
+			EndTime:      record.EndTime,
+			Description:  record.Description,
+			CreatedAt:    record.CreatedAt,
 		}
 	}
 
@@ -1004,17 +1005,18 @@ func (AlertApi) GetActiveAlerts(c *gin.Context) {
 		}
 
 		list[i] = response.AlertRecordInfo{
-			ID:          record.ID,
-			RuleID:      record.RuleID,
-			RuleName:    ruleMap[record.RuleID],
-			HostID:      record.HostID,
-			Status:      statusStr,
-			StatusCode:  record.Status,
-			Value:       record.Value,
-			StartTime:   record.StartTime,
-			EndTime:     record.EndTime,
-			Description: record.Description,
-			CreatedAt:   record.CreatedAt,
+			ID:           record.ID,
+			RuleID:       record.RuleID,
+			RuleName:     ruleMap[record.RuleID],
+			HostID:       record.HostID,
+			Status:       statusStr,
+			StatusCode:   record.Status,
+			Value:        record.Value,
+			RecoverValue: record.RecoverValue,
+			StartTime:    record.StartTime,
+			EndTime:      record.EndTime,
+			Description:  record.Description,
+			CreatedAt:    record.CreatedAt,
 		}
 	}
 

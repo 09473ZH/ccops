@@ -6,12 +6,13 @@ import (
 
 // Notification 通知配置表
 type Notification struct {
-	ID        uint64    `json:"id" gorm:"primarykey"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-	Name      string    `json:"name" gorm:"size:255"`        // 通知名称
-	Message   string    `json:"message" gorm:"size:1000"`    // 通知消息模板
-	Enabled   bool      `json:"enabled" gorm:"default:true"` // 是否启用
+	ID         uint64    `json:"id" gorm:"primarykey"`
+	CreatedAt  time.Time `json:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+	WebhookUrl string    `json:"webhookUrl" gorm:"size:255"`  // 通知Webhook地址
+	Name       string    `json:"name" gorm:"size:255"`        // 通知名称
+	Message    string    `json:"message" gorm:"size:1000"`    // 通知消息模板
+	Enabled    bool      `json:"enabled" gorm:"default:true"` // 是否启用
 }
 
 // NotificationRequest 通知请求相关结构体

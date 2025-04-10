@@ -144,21 +144,31 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 			// 只有在配置了恢复通知时才检查是否需要解除告警
 			if rule.RecoverNotify {
 				// 检查是否存在告警记录
-				var count int64
-				if err := global.DB.Model(&alert.AlertRecord{}).
-					Where("rule_id = ? AND host_id = ? AND status = ?",
-						rule.ID, metrics.HostID, alert.AlertStatusAlerting).
-					Count(&count).Error; err != nil {
-					log.Printf("检查告警记录失败: %v", err)
+				var record alert.AlertRecord
+				if err := global.DB.Where("rule_id = ? AND host_id = ? AND status = ?",
+					rule.ID, metrics.HostID, alert.AlertStatusAlerting).
+					First(&record).Error; err != nil {
+					if !errors.Is(err, gorm.ErrRecordNotFound) {
+						log.Printf("检查告警记录失败: %v", err)
+					}
 					continue
 				}
 
-				// 只有存在告警记录时才尝试解除告警
-				if count > 0 {
-					log.Printf("检查是否需要解除告警并发送恢复通知")
-					if err := s.resolveAlert(rule.ID, metrics.HostID); err != nil {
-						log.Printf("解除告警失败: %v", err)
-					}
+				// 发现告警记录，且当前值已恢复正常，则更新状态
+				log.Printf("检查是否需要解除告警并发送恢复通知，当前值: %.2f", value)
+				now := time.Now()
+				record.Status = alert.AlertStatusResolved
+				record.EndTime = &now
+				record.RecoverValue = value // 使用当前值作为恢复值
+
+				if err := global.DB.Save(&record).Error; err != nil {
+					log.Printf("更新告警记录失败: %v", err)
+					continue
+				}
+
+				// 发送恢复通知
+				if err := WebhookNotification(uint(rule.ID), uint(metrics.HostID), value, NotificationTypeRecover, now); err != nil {
+					log.Printf("发送恢复通知失败: %v", err)
 				}
 			}
 		}
@@ -364,45 +374,4 @@ func (s *AlertService) createOrUpdateAlert(tx *gorm.DB, rule *alert.AlertRule, h
 	record.UpdatedAt = now
 	record.Description = fmt.Sprintf("触发告警：%s，当前值：%.2f", rule.Name, value)
 	return tx.Save(&record).Error
-}
-
-// resolveAlert 解除告警状态并发送恢复通知
-func (s *AlertService) resolveAlert(ruleID uint64, hostID uint64) error {
-	tx := global.DB.Debug()
-
-	// 查找处于告警状态的记录
-	var record alert.AlertRecord
-	err := tx.Where("rule_id = ? AND host_id = ? AND status = ?",
-		ruleID, hostID, alert.AlertStatusAlerting).
-		First(&record).Error
-
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil // 没有需要解除的告警
-		}
-		return fmt.Errorf("查询告警记录失败: %v", err)
-	}
-
-	// 更新告警状态为已恢复
-	record.Status = alert.AlertStatusResolved
-	now := time.Now()
-	record.EndTime = &now
-	if err := tx.Save(&record).Error; err != nil {
-		return fmt.Errorf("更新告警记录失败: %v", err)
-	}
-
-	// 获取告警规则详情用于通知
-	var rule alert.AlertRule
-	if err := tx.First(&rule, ruleID).Error; err != nil {
-		return fmt.Errorf("获取告警规则失败: %v", err)
-	}
-
-	// 如果配置了恢复通知，则发送恢复通知
-	if rule.RecoverNotify {
-		if err := WebhookNotification(uint(rule.ID), uint(hostID), record.Value, NotificationTypeRecover, now); err != nil {
-			log.Printf("发送恢复通知失败: %v", err)
-		}
-	}
-
-	return nil
 }

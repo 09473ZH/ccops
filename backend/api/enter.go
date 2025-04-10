@@ -27,7 +27,7 @@ type ApiGroup struct {
 	ConfigurationApi configuration_api.ConfigurationApi
 	LabelApi         labels_api.LabelApi
 	AlertApi         alert_api.AlertApi
-	Notification     notification_api.NotificationApi
+	NotificationApi  notification_api.NotificationApi
 }
 
 var ApiGroupApp = new(ApiGroup)

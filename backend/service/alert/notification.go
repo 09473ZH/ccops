@@ -25,10 +25,9 @@ const (
 
 func WebhookNotification(alertId uint, hostId uint, value float64, notifyType NotificationType, notifyTime time.Time) error {
 	var (
-		rule          alert.AlertRule
-		notify        alert.Notification
-		webhookConfig models.Configuration
-		host          models.HostModel
+		rule   alert.AlertRule
+		notify alert.Notification
+		host   models.HostModel
 	)
 	type notifyBody struct {
 		MsgType string `json:"msgtype"`
@@ -39,11 +38,6 @@ func WebhookNotification(alertId uint, hostId uint, value float64, notifyType No
 
 	// 使用事务处理所有数据库查询
 	err := global.DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&models.Configuration{}).
-			Where("field_name = ?", "WebhookUrl").
-			First(&webhookConfig).Error; err != nil {
-			return fmt.Errorf("获取webhook URL失败: %w", err)
-		}
 
 		if err := tx.Model(&alert.AlertRule{}).
 			Where("id = ?", alertId).
@@ -70,10 +64,6 @@ func WebhookNotification(alertId uint, hostId uint, value float64, notifyType No
 		return err
 	}
 
-	if webhookConfig.FieldValue == "" {
-		return fmt.Errorf("webhook URL is empty")
-	}
-
 	// 格式化时间为易读格式
 	timeStr := notifyTime.Format("2006-01-02 15:04:05")
 
@@ -81,11 +71,13 @@ func WebhookNotification(alertId uint, hostId uint, value float64, notifyType No
 	var info string
 	switch notifyType {
 	case NotificationTypeAlert:
-		info = fmt.Sprintf("ccops告警通知:\n时间:%s\n主机名:%s\nIP:%s\n告警规则:%s-%s%s%f\n告警值:%f\n告警等级:%s\n%s",
-			timeStr, host.Name, host.HostServerUrl, rule.Name, rule.Type, rule.Operator, rule.Threshold, value, rule.Priority, notify.Message)
+		info = fmt.Sprintf("【ccops告警通知】:\n时间:%s\n主机名:%s\nIP:%s\n告警规则:%s-%s%s%.2f\n告警值:%.2f\n告警等级:%s\n%s",
+			timeStr, host.Name, host.HostServerUrl, rule.Name, rule.Type, rule.Operator, rule.Threshold,
+			value, rule.Priority, notify.Message)
 	case NotificationTypeRecover:
-		info = fmt.Sprintf("ccops告警恢复通知:\n时间:%s\n主机名:%s\nIP:%s\n告警规则:%s-%s%s%f\n最终值:%f\n告警等级:%s\n%s",
-			timeStr, host.Name, host.HostServerUrl, rule.Name, rule.Type, rule.Operator, rule.Threshold, value, rule.Priority, notify.Message)
+		info = fmt.Sprintf("【ccops告警恢复通知】:\n时间:%s\n主机名:%s\nIP:%s\n告警规则:%s-%s%s%.2f\n恢复值:%.2f\n告警等级:%s\n%s",
+			timeStr, host.Name, host.HostServerUrl, rule.Name, rule.Type, rule.Operator, rule.Threshold,
+			value, rule.Priority, notify.Message)
 	default:
 		return fmt.Errorf("不支持的通知类型: %d", notifyType)
 	}
@@ -104,7 +96,7 @@ func WebhookNotification(alertId uint, hostId uint, value float64, notifyType No
 		return fmt.Errorf("marshal notify body failed: %w", err)
 	}
 
-	resp, err := http.Post(webhookConfig.FieldValue, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(notify.WebhookUrl, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return fmt.Errorf("send webhook notification failed: %w", err)
 	}

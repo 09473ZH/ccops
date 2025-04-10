@@ -4,7 +4,6 @@ import (
 	"ccops/global"
 	"ccops/models/alert"
 	"ccops/models/res"
-
 	"github.com/gin-gonic/gin"
 )
 

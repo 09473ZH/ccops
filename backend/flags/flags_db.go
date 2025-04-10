@@ -38,6 +38,7 @@ func DB() {
 			&alert.AlertRecord{},
 			&alert.AlertRule{},
 			&alert.AlertRuleTarget{},
+			&alert.Notification{},
 		)
 	if err != nil {
 		global.Log.Error("[ error ] 生成数据库表结构失败")

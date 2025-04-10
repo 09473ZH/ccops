@@ -53,19 +53,20 @@ type AlertRuleList struct {
 
 // AlertRecordInfo 告警记录信息
 type AlertRecordInfo struct {
-	ID          uint64     `json:"id"`          // 记录ID
-	RuleID      uint64     `json:"ruleId"`      // 规则ID
-	RuleName    string     `json:"ruleName"`    // 规则名称
-	Priority    string     `json:"priority"`    // 告警等级
-	HostID      uint64     `json:"hostId"`      // 主机ID
-	HostName    string     `json:"hostName"`    // 主机名称
-	Status      string     `json:"status"`      // 状态描述
-	StatusCode  int        `json:"statusCode"`  // 状态码
-	Value       float64    `json:"value"`       // 触发值
-	StartTime   time.Time  `json:"startTime"`   // 开始时间
-	EndTime     *time.Time `json:"endTime"`     // 结束时间
-	Description string     `json:"description"` // 描述
-	CreatedAt   time.Time  `json:"createdAt"`   // 创建时间
+	ID           uint64     `json:"id"`           // 记录ID
+	RuleID       uint64     `json:"ruleId"`       // 规则ID
+	RuleName     string     `json:"ruleName"`     // 规则名称
+	Priority     string     `json:"priority"`     // 告警等级
+	HostID       uint64     `json:"hostId"`       // 主机ID
+	HostName     string     `json:"hostName"`     // 主机名称
+	Status       string     `json:"status"`       // 状态描述
+	StatusCode   int        `json:"statusCode"`   // 状态码
+	Value        float64    `json:"value"`        // 触发值
+	RecoverValue float64    `json:"recoverValue"` // 恢复值
+	StartTime    time.Time  `json:"startTime"`    // 开始时间
+	EndTime      *time.Time `json:"endTime"`      // 结束时间
+	Description  string     `json:"description"`  // 描述
+	CreatedAt    time.Time  `json:"createdAt"`    // 创建时间
 }
 
 // AlertRecordList 告警记录列表响应
