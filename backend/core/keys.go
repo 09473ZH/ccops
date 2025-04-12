@@ -39,11 +39,11 @@ func InitKeysConfiguration() error {
 	// 检查数据库中是否已存在密钥对
 	var privateKeyConfig models.Configuration
 	var publicKeyConfig models.Configuration
-	
+
 	// 使用 Error 来检查记录是否存在
-	hasPrivateKey := global.DB.Where("type = ? AND field_name = ?", 
+	hasPrivateKey := global.DB.Where("type = ? AND field_name = ?",
 		models.ConfigurationTypeKey, "PrivateKey").First(&privateKeyConfig).Error == nil
-	hasPublicKey := global.DB.Where("type = ? AND field_name = ?", 
+	hasPublicKey := global.DB.Where("type = ? AND field_name = ?",
 		models.ConfigurationTypeKey, "PublicKey").First(&publicKeyConfig).Error == nil
 
 	// 如果数据库中已存在密钥对
@@ -55,8 +55,7 @@ func InitKeysConfiguration() error {
 		if err := ioutil.WriteFile(publicKeyPath, []byte(publicKeyConfig.FieldValue), 0644); err != nil {
 			return errors.New("写入公钥文件失败")
 		}
-		
-		fmt.Println("使用数据库中已存在的密钥对")
+
 		return nil
 	}
 
