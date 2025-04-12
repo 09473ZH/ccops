@@ -56,6 +56,66 @@ export interface HostInfo {
   disk: DiskInfo[];
   hostUser: any[];
   software: any[];
+  metrics?: MetricsInfo;
+}
+
+export interface CpuMetrics {
+  usagePercent: number;
+  load1m: number;
+  load5m: number;
+  load15m: number;
+}
+
+export interface MemoryMetrics {
+  totalBytes: number;
+  usedBytes: number;
+  freeBytes: number;
+  availableBytes: number;
+  usagePercent: number;
+}
+
+export interface DiskVolumeMetrics {
+  mountPoint: string;
+  deviceName: string;
+  totalBytes: number;
+  usedBytes: number;
+  freeBytes: number;
+  usagePercent: number;
+  fsType: string;
+}
+
+export interface DiskMetrics {
+  availableBytes: number;
+  totalBytes: number;
+  usagePercent: string;
+  readRate: number;
+  writeRate: number;
+  volumes: DiskVolumeMetrics[];
+}
+
+export interface NetworkInterfaceMetrics {
+  name: string;
+  macAddress: string;
+  ipv4Address: string;
+  totalRecvBytes: number;
+  totalSentBytes: number;
+  recvRate: number;
+  sendRate: number;
+}
+
+export interface NetworkMetrics {
+  recvRate: number;
+  sendRate: number;
+  interfaces: NetworkInterfaceMetrics[];
+}
+
+export interface MetricsInfo {
+  collectedAt: number;
+  hostId: number;
+  cpu: CpuMetrics;
+  memory: MemoryMetrics;
+  disk: DiskMetrics;
+  network: NetworkMetrics;
 }
 
 export interface HostListResponse {
@@ -75,6 +135,11 @@ const hostService = {
   /** 获取主机列表 */
   getHosts() {
     return get<HostListResponse>(HostApi.List);
+  },
+
+  /** 获取带监控主机列表 */
+  getHostsWithMetrics() {
+    return get<HostListResponse>(`${HostApi.List}?withMetrics=true`);
   },
 
   /** 获取我的主机列表 */

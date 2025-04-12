@@ -34,5 +34,11 @@ export const HOST_TABLE_CONFIG = {
     'fetchTime',
     'createdAt',
     'action',
+    'cpuUsage',
+    'memoryUsage',
+    'diskUsage',
+    'networkUsage',
+    'diskIO',
+    'network',
   ],
 };

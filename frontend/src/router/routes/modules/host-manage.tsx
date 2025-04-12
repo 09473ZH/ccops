@@ -22,7 +22,7 @@ function HostManageWrapper() {
 
 const hostManage: AppRouteObject[] = [
   {
-    order: 1,
+    order: 2,
     path: 'host_manage',
     element: <HostManageWrapper />,
     meta: {

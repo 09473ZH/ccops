@@ -1,8 +1,8 @@
-import { Space, Input, Popconfirm, Progress, Tooltip, Button } from 'antd';
+import { Space, Input, Popconfirm, Tooltip, Button } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import { useNavigate } from 'react-router-dom';
 
-import type { DiskInfo, HostInfo } from '@/api/services/host';
+import type { DiskMetrics, HostInfo, NetworkMetrics } from '@/api/services/host';
 import type { LabelInfo } from '@/api/services/label';
 import { ActionButton, CopyButton } from '@/components/Button';
 import { OsIcon } from '@/components/Icon';
@@ -12,6 +12,7 @@ import { formatBytes } from '@/utils/format-number';
 import { formatDateTime, formatTimeAgo } from '@/utils/format-time';
 
 import { type EditingState } from '../../hooks';
+import { MetricsProgress } from '../MetricsProgress';
 import { StatusBadge } from '../StatusBadge';
 
 export interface ColumnGroup {
@@ -41,6 +42,17 @@ export const getColumnGroups = (): ColumnGroup[] => [
     ],
   },
   {
+    title: '监控信息',
+    key: 'metrics',
+    children: [
+      { title: 'CPU 使用率', key: 'cpuUsage' },
+      { title: '内存使用率', key: 'memoryUsage' },
+      { title: '磁盘使用率', key: 'diskUsage' },
+      { title: '磁盘 I/O', key: 'diskIO' },
+      { title: '网络流量', key: 'network' },
+    ],
+  },
+  {
     title: '其他信息',
     key: 'other',
     children: [
@@ -55,9 +67,6 @@ const handleJumpServer = (record: HostInfo) => {
   const id = `${record.id}`;
   window.open(`/terminal/${id}`, '_blank');
 };
-
-const DISK_USAGE_WARNING_THRESHOLD = 80;
-const DISK_USAGE_DANGER_THRESHOLD = 90;
 
 function HostNameCell({ record }: { record: HostInfo }) {
   const navigate = useNavigate();
@@ -84,46 +93,6 @@ const renderHostName = (record: HostInfo, editing: EditingState, setEditingState
     );
   }
   return <HostNameCell record={record} />;
-};
-
-function renderDiskSpace(space: number, totalSpace: number, percent: number) {
-  if (totalSpace === 0) return <>--</>;
-
-  let strokeColor = '#87d068';
-  const usedPercent = 100 - percent;
-
-  if (usedPercent > DISK_USAGE_WARNING_THRESHOLD && usedPercent < DISK_USAGE_DANGER_THRESHOLD) {
-    strokeColor = '#FB9800';
-  } else if (usedPercent >= DISK_USAGE_DANGER_THRESHOLD) {
-    strokeColor = '#e55649';
-  }
-
-  return (
-    <Tooltip title={`可用：${space.toFixed(2)} GB 总量：${totalSpace.toFixed(2)} GB`}>
-      <Progress
-        strokeLinecap="butt"
-        percent={usedPercent}
-        size={[120, 10]}
-        strokeColor={strokeColor}
-        format={() => `${usedPercent.toFixed(2)}%`}
-      />
-    </Tooltip>
-  );
-}
-
-const getDiskInfo = (disk: DiskInfo[]) => {
-  if (!disk?.length) return null;
-
-  const { diskSpaceAvailable, totalDiskSpace } = disk[0];
-  if (typeof diskSpaceAvailable !== 'number' || typeof totalDiskSpace !== 'number') {
-    return null;
-  }
-
-  return {
-    space: diskSpaceAvailable,
-    totalSpace: totalDiskSpace,
-    percent: (diskSpaceAvailable / totalDiskSpace) * 100,
-  };
 };
 
 export const getColumns = (
@@ -195,15 +164,71 @@ export const getColumns = (
       },
     },
     {
-      title: '磁盘占用情况',
-      dataIndex: 'disk',
-      key: 'disk',
-      width: 130,
-      render: (disk: DiskInfo[]) => {
-        const diskInfo = getDiskInfo(disk);
-        if (!diskInfo) return <>--</>;
-        const { space, totalSpace, percent } = diskInfo;
-        return renderDiskSpace(space, totalSpace, percent);
+      title: 'CPU 使用率',
+      dataIndex: ['metrics', 'cpu', 'usagePercent'],
+      key: 'cpuUsage',
+      width: 120,
+      render: (usagePercent: number) => <MetricsProgress value={usagePercent} title="CPU使用率" />,
+    },
+    {
+      title: '内存使用率',
+      dataIndex: ['metrics', 'memory', 'usagePercent'],
+      key: 'memoryUsage',
+      width: 120,
+      render: (usagePercent: number) => <MetricsProgress value={usagePercent} title="内存使用率" />,
+    },
+    {
+      title: '磁盘使用率',
+      dataIndex: ['metrics', 'disk', 'usagePercent'],
+      key: 'diskUsage',
+      width: 120,
+      render: (usagePercent: string) => {
+        // TODO 后端数据有问题
+        if (!usagePercent) return <>--</>;
+        const percent = parseFloat(usagePercent);
+        return <MetricsProgress value={percent} title="磁盘使用率" />;
+      },
+    },
+    {
+      title: '磁盘 I/O',
+      dataIndex: ['metrics', 'disk'],
+      key: 'diskIO',
+      width: 150,
+      render: (disk: DiskMetrics) => {
+        if (!disk?.readRate && !disk?.writeRate) return <>--</>;
+        return (
+          <Space direction="vertical" size={0}>
+            <div>
+              read: <span>{formatBytes(disk.readRate)}</span>
+              /s
+            </div>
+            <div>
+              write: <span>{formatBytes(disk.writeRate)}</span>
+              /s
+            </div>
+          </Space>
+        );
+      },
+    },
+    {
+      title: '网络流量',
+      dataIndex: ['metrics', 'network'],
+      key: 'network',
+      width: 150,
+      render: (network: NetworkMetrics) => {
+        if (!network?.recvRate && !network?.sendRate) return <>--</>;
+        return (
+          <Space direction="vertical" size={0}>
+            <div>
+              ↑ <span>{formatBytes(network.recvRate)}</span>
+              /s
+            </div>
+            <div>
+              ↓ <span>{formatBytes(network.sendRate)}</span>
+              /s
+            </div>
+          </Space>
+        );
       },
     },
     {

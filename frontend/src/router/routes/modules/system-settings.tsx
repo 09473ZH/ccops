@@ -10,7 +10,7 @@ const CommonSettingPage = lazy(() => import('@/pages/admin-setting/common-settin
 const UserManagePage = lazy(() => import('@/pages/admin-setting/user-manage'));
 
 const adminSettings: AppRouteObject = {
-  order: 6,
+  order: 7,
   path: 'admin_settings',
   element: (
     <Suspense fallback={<CircleLoading />}>

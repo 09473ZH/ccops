@@ -30,4 +30,4 @@ export function useTerminalShortcuts({
       window.removeEventListener('keydown', handleReconnectShortcut);
     };
   }, [onClear, onReconnect]);
-} 
+}
