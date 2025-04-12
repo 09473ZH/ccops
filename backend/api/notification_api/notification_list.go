@@ -67,7 +67,7 @@ func (NotificationApi) GetNotificationList(c *gin.Context) {
 	}
 
 	res.OkWithData(alert.NotificationList{
-		Total: total,
+		Count: total,
 		List:  list,
 	}, c)
 }

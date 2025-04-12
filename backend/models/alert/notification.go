@@ -56,6 +56,6 @@ type NotificationInfo struct {
 
 // NotificationList 通知列表响应
 type NotificationList struct {
-	Total int64              `json:"total"` // 总数
+	Count int64              `json:"count"` // 总数
 	List  []NotificationInfo `json:"list"`  // 通知列表
 }

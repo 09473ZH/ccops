@@ -47,7 +47,7 @@ type AlertRuleTargetInfo struct {
 
 // AlertRuleList 告警规则列表响应
 type AlertRuleList struct {
-	Total int64           `json:"total"` // 总数
+	Count int64           `json:"count"` // 总数
 	List  []AlertRuleInfo `json:"list"`  // 规则列表
 }
 
@@ -71,7 +71,7 @@ type AlertRecordInfo struct {
 
 // AlertRecordList 告警记录列表响应
 type AlertRecordList struct {
-	Total         int64             `json:"total"`         // 总记录数
+	Count         int64             `json:"count"`         // 总记录数
 	AlertingTotal int64             `json:"alertingTotal"` // 告警中的记录数
 	HostTotal     int64             `json:"hostTotal"`     // 告警主机数
 	List          []AlertRecordInfo `json:"list"`          // 记录列表

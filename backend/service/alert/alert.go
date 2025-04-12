@@ -111,37 +111,26 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 					log.Printf("未达到持续时间要求，继续观察")
 					continue
 				}
-
 			}
 
 			// 创建或更新告警记录
 			if err := s.createOrUpdateAlert(global.DB, rule, metrics.HostID, value); err != nil {
-
+				log.Printf("创建或更新告警记录失败: %v", err)
 			}
 		} else {
-
-			// 重置持续时间检查状态
-			GetStateManager().ResetState(ruleKey)
-
-			// 只有在配置了恢复通知时才检查是否需要解除告警
-			if rule.RecoverNotify {
-				// 检查是否已经确认恢复
-				if !GetStateManager().ConfirmRecovery(ruleKey, true) {
-					log.Printf("恢复确认未完成，继续观察")
-					continue
+			// 检查是否存在告警记录
+			var record alert.AlertRecord
+			if err := global.DB.Where("rule_id = ? AND host_id = ? AND status = ?",
+				rule.ID, metrics.HostID, alert.AlertStatusAlerting).
+				First(&record).Error; err != nil {
+				if !errors.Is(err, gorm.ErrRecordNotFound) {
+					log.Printf("检查告警记录失败: %v", err)
 				}
+				continue
+			}
 
-				// 检查是否存在告警记录
-				var record alert.AlertRecord
-				if err := global.DB.Where("rule_id = ? AND host_id = ? AND status = ?",
-					rule.ID, metrics.HostID, alert.AlertStatusAlerting).
-					First(&record).Error; err != nil {
-					if !errors.Is(err, gorm.ErrRecordNotFound) {
-						log.Printf("检查告警记录失败: %v", err)
-					}
-					continue
-				}
-
+			// 检查是否已经确认恢复
+			if GetStateManager().ConfirmRecovery(ruleKey, true) {
 				// 发现告警记录，且当前值已恢复正常，则更新状态
 				log.Printf("检测到告警恢复，当前值: %.2f", value)
 				now := time.Now()
@@ -158,6 +147,9 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 				if err := WebhookNotification(uint(rule.ID), uint(metrics.HostID), value, NotificationTypeRecover, now); err != nil {
 					log.Printf("发送恢复通知失败: %v", err)
 				}
+
+				// 只有在确认恢复后才重置状态
+				GetStateManager().ResetState(ruleKey)
 			}
 		}
 	}

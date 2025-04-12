@@ -31,9 +31,9 @@ type MetricPoint struct {
 	Disk struct {
 		AvailableBytes float64     `json:"availableBytes"` // 可用空间(GB)
 		TotalBytes     float64     `json:"totalBytes"`     // 总空间(GB)
-		UsagePercent   string      `json:"usagePercent"`   // 使用率(百分比)
-		ReadRate       uint64      `json:"readRate"`       // 读取速率(B/s)
-		WriteRate      uint64      `json:"writeRate"`      // 写入速率(B/s)
+		UsagePercent   float64     `json:"usagePercent"`   // 使用率(百分比)
+		ReadRate       float64     `json:"readRate"`       // 读取速率(B/s)
+		WriteRate      float64     `json:"writeRate"`      // 写入速率(B/s)
 		Volumes        []DiskUsage `json:"volumes"`        // 磁盘详情列表
 	} `json:"disk"`
 

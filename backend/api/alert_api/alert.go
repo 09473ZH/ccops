@@ -49,17 +49,19 @@ func (AlertApi) CreateAlertRule(c *gin.Context) {
 		}
 	}()
 
-	// 验证通知配置是否存在
-	var notifyCount int64
-	if err := tx.Model(&alert.Notification{}).Where("id = ?", req.NotificationId).Count(&notifyCount).Error; err != nil {
-		tx.Rollback()
-		res.FailWithMessage("验证通知配置失败", c)
-		return
-	}
-	if notifyCount == 0 {
-		tx.Rollback()
-		res.FailWithMessage("指定的通知配置不存在", c)
-		return
+	if req.NotificationId > 0 {
+		// 验证通知配置是否存在
+		var notifyCount int64
+		if err := tx.Model(&alert.Notification{}).Where("id = ?", req.NotificationId).Count(&notifyCount).Error; err != nil {
+			tx.Rollback()
+			res.FailWithMessage("验证通知配置失败", c)
+			return
+		}
+		if notifyCount == 0 {
+			tx.Rollback()
+			res.FailWithMessage("指定的通知配置不存在", c)
+			return
+		}
 	}
 
 	// 创建告警规则
@@ -646,7 +648,7 @@ func (AlertApi) GetAlertRuleList(c *gin.Context) {
 	}
 
 	res.OkWithData(response.AlertRuleList{
-		Total: total,
+		Count: total,
 		List:  list,
 	}, c)
 }
@@ -816,7 +818,7 @@ func (AlertApi) GetAlertRecordList(c *gin.Context) {
 	}
 
 	res.OkWithData(response.AlertRecordList{
-		Total:         total,
+		Count:         total,
 		AlertingTotal: alertingTotal,
 		HostTotal:     hostTotal,
 		List:          list,
