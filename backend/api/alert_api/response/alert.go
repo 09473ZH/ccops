@@ -113,3 +113,15 @@ type AlertAggregationList struct {
 	Total int64              `json:"total"` // 总数
 	List  []AlertAggregation `json:"list"`  // 聚合列表
 }
+
+// MetricTypeInfo 指标类型信息
+type MetricTypeInfo struct {
+	Type string `json:"type"` // 指标类型代码
+	Name string `json:"name"` // 指标名称
+
+}
+
+// MetricTypeList 指标类型列表响应
+type MetricTypeList struct {
+	List []MetricTypeInfo `json:"list"` // 指标类型列表
+}

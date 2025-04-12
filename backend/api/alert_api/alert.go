@@ -1102,3 +1102,44 @@ func (AlertApi) GetAlertAggregation(c *gin.Context) {
 		List:  list,
 	}, c)
 }
+
+// GetMetricTypeList 获取可用的指标类型列表
+// @Summary 获取可用的指标类型列表
+// @Description 获取所有可用的监控指标类型
+// @Tags 告警规则
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.MetricTypeList
+// @Router /api/alert/metrics [get]
+func (AlertApi) GetMetricTypeList(c *gin.Context) {
+	metricTypes := []response.MetricTypeInfo{
+		{Type: "cpu", Name: "CPU使用率"},
+		{Type: "load1", Name: "1分钟负载"},
+		{Type: "load5", Name: "5分钟负载"},
+		{Type: "load15", Name: "15分钟负载"},
+
+		{Type: "memory", Name: "内存使用率"},
+		{Type: "memory_avail", Name: "可用内存"},
+		{Type: "memory_free", Name: "空闲内存"},
+
+		{Type: "disk_usage", Name: "磁盘使用率"},
+		{Type: "disk_free", Name: "磁盘剩余空间"},
+		{Type: "disk_read", Name: "磁盘读取速率"},
+		{Type: "disk_write", Name: "磁盘写入速率"},
+		{Type: "disk_volume", Name: "分区使用率"},
+
+		{Type: "network_in", Name: "总网络入站速度"},
+		{Type: "network_out", Name: "总网络出站速度"},
+		{Type: "netcard_in", Name: "单网卡入站速度"},
+		{Type: "netcard_out", Name: "单网卡出站速度"},
+		{Type: "netcard_status", Name: "网卡状态"},
+
+		{Type: "online", Name: "在线状态"},
+		{Type: "ssl", Name: "SSL证书过期"},
+		{Type: "process", Name: "进程状态"},
+	}
+
+	res.OkWithData(response.MetricTypeList{
+		List: metricTypes,
+	}, c)
+}

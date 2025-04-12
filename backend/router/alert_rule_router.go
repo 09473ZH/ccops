@@ -2,19 +2,21 @@ package router
 
 import (
 	"ccops/api"
+	"ccops/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (router RouterGroup) RulesRouter(rulesRouterGroup *gin.RouterGroup) {
 	app := api.ApiGroupApp.AlertApi
-
+	rulesRouterGroup.Use(middleware.JwtUser())
 	// 告警规则基础操作
-	rulesRouterGroup.POST("", app.CreateAlertRule)       // 创建告警规则
-	rulesRouterGroup.PUT("", app.UpdateAlertRule)        // 更新告警规则
-	rulesRouterGroup.GET("", app.GetAlertRuleList)       // 获取告警规则列表
-	rulesRouterGroup.GET("/:id", app.GetAlertRule)       // 获取告警规则
-	rulesRouterGroup.DELETE("/:id", app.DeleteAlertRule) // 删除告警规则
+	rulesRouterGroup.POST("", app.CreateAlertRule)          // 创建告警规则
+	rulesRouterGroup.PUT("", app.UpdateAlertRule)           // 更新告警规则
+	rulesRouterGroup.GET("", app.GetAlertRuleList)          // 获取告警规则列表
+	rulesRouterGroup.GET("/:id", app.GetAlertRule)          // 获取告警规则
+	rulesRouterGroup.DELETE("/:id", app.DeleteAlertRule)    // 删除告警规则
+	rulesRouterGroup.GET("/metrics", app.GetMetricTypeList) // 获取可用的指标类型列表
 
 	// 告警记录管理
 	recordGroup := rulesRouterGroup.Group("/records")

@@ -29,12 +29,13 @@ func (NotificationApi) GetNotification(c *gin.Context) {
 
 	// 转换为响应格式
 	info := alert.NotificationInfo{
-		ID:        notification.ID,
-		Name:      notification.Name,
-		Message:   notification.Message,
-		Enabled:   notification.Enabled,
-		CreatedAt: notification.CreatedAt,
-		UpdatedAt: notification.UpdatedAt,
+		ID:         notification.ID,
+		Name:       notification.Name,
+		Message:    notification.Message,
+		Enabled:    notification.Enabled,
+		CreatedAt:  notification.CreatedAt,
+		UpdatedAt:  notification.UpdatedAt,
+		WebhookUrl: notification.WebhookUrl,
 	}
 
 	res.OkWithData(info, c)

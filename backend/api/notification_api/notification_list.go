@@ -56,12 +56,13 @@ func (NotificationApi) GetNotificationList(c *gin.Context) {
 	list := make([]alert.NotificationInfo, len(notifications))
 	for i, notification := range notifications {
 		list[i] = alert.NotificationInfo{
-			ID:        notification.ID,
-			Name:      notification.Name,
-			Message:   notification.Message,
-			Enabled:   notification.Enabled,
-			CreatedAt: notification.CreatedAt,
-			UpdatedAt: notification.UpdatedAt,
+			ID:         notification.ID,
+			Name:       notification.Name,
+			Message:    notification.Message,
+			Enabled:    notification.Enabled,
+			CreatedAt:  notification.CreatedAt,
+			UpdatedAt:  notification.UpdatedAt,
+			WebhookUrl: notification.WebhookUrl,
 		}
 	}
 

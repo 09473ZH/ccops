@@ -25,9 +25,10 @@ func (NotificationApi) CreateNotification(c *gin.Context) {
 
 	// 创建通知配置
 	notification := &alert.Notification{
-		Name:    req.CreateNotification.Name,
-		Message: req.CreateNotification.Message,
-		Enabled: req.CreateNotification.Enabled,
+		Name:       req.CreateNotification.Name,
+		Message:    req.CreateNotification.Message,
+		Enabled:    req.CreateNotification.Enabled,
+		WebhookUrl: req.CreateNotification.WebhookUrl,
 	}
 
 	// 保存到数据库

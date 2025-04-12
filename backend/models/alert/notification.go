@@ -19,17 +19,19 @@ type Notification struct {
 type NotificationRequest struct {
 	// CreateNotification 创建通知请求
 	CreateNotification struct {
-		Name    string `json:"name" binding:"required"`    // 通知名称
-		Message string `json:"message" binding:"required"` // 通知消息模板
-		Enabled bool   `json:"enabled"`                    // 是否启用
+		Name       string `json:"name" binding:"required"`       // 通知名称
+		Message    string `json:"message" binding:"required"`    // 通知消息模板
+		Enabled    bool   `json:"enabled"`                       // 是否启用
+		WebhookUrl string `json:"webhookUrl" binding:"required"` // 通知Webhook地址
 	}
 
 	// UpdateNotification 更新通知请求
 	UpdateNotification struct {
-		ID      uint64 `json:"id" binding:"required"` // 通知ID
-		Name    string `json:"name"`                  // 通知名称
-		Message string `json:"message"`               // 通知消息模板
-		Enabled bool   `json:"enabled"`               // 是否启用
+		ID         uint64 `json:"id" binding:"required"` // 通知ID
+		Name       string `json:"name"`                  // 通知名称
+		Message    string `json:"message"`               // 通知消息模板
+		Enabled    bool   `json:"enabled"`               // 是否启用
+		WebhookUrl string `json:"webhookUrl" `
 	}
 
 	// NotificationListQuery 通知列表查询参数
@@ -43,12 +45,13 @@ type NotificationRequest struct {
 
 // NotificationInfo 通知信息
 type NotificationInfo struct {
-	ID        uint64    `json:"id"`        // 通知ID
-	Name      string    `json:"name"`      // 通知名称
-	Message   string    `json:"message"`   // 通知消息模板
-	Enabled   bool      `json:"enabled"`   // 是否启用
-	CreatedAt time.Time `json:"createdAt"` // 创建时间
-	UpdatedAt time.Time `json:"updatedAt"` // 更新时间
+	ID         uint64    `json:"id"`         // 通知ID
+	Name       string    `json:"name"`       // 通知名称
+	Message    string    `json:"message"`    // 通知消息模板
+	WebhookUrl string    `json:"webhookUrl"` // 通知Webhook地址
+	Enabled    bool      `json:"enabled"`    // 是否启用
+	CreatedAt  time.Time `json:"createdAt"`  // 创建时间
+	UpdatedAt  time.Time `json:"updatedAt"`  // 更新时间
 }
 
 // NotificationList 通知列表响应
