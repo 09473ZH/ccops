@@ -100,7 +100,6 @@ func WebhookNotification(alertId uint, hostId uint, value float64, notifyType No
 	// 基础信息模板
 	baseInfo := fmt.Sprintf("━━━━━━━━━━ CCOPS监控通知 ━━━━━━━━━━\n"+
 		"📅 触发时间：%s\n"+
-		"🏷️ 告警ID：#%d\n"+
 		"🔔 告警级别：%s %s\n"+
 		"\n📌 监控对象信息\n"+
 		"   主机名称：%s\n"+
@@ -110,7 +109,6 @@ func WebhookNotification(alertId uint, hostId uint, value float64, notifyType No
 		"   监控类型：%s\n"+
 		"   触发条件：%s %.2f\n",
 		timeStr,
-		alertId,
 		rule.Priority,
 		prioritySymbol,
 		host.Name,

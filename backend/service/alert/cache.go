@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 )
 
 // AlertRuleCache 告警规则缓存
@@ -21,8 +20,6 @@ type AlertRuleCache struct {
 	blacklist map[string]bool
 	// 缓存版本号，用于并发控制
 	version uint64
-	// 上次更新时间
-	lastUpdate time.Time
 	// 缓存更新锁
 	sync.RWMutex
 }
@@ -44,23 +41,8 @@ func GetRuleCache() *AlertRuleCache {
 		}
 		// 首次初始化
 		ruleCache.RefreshCache()
-
-		// 启动定时刷新任务
-		go ruleCache.startAutoRefresh()
 	})
 	return ruleCache
-}
-
-// startAutoRefresh 启动自动刷新任务
-func (c *AlertRuleCache) startAutoRefresh() {
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		if time.Since(c.lastUpdate) >= 30*time.Second {
-			c.RefreshCache()
-		}
-	}
 }
 
 // RefreshCache 刷新缓存
@@ -142,7 +124,6 @@ func (c *AlertRuleCache) RefreshCache() {
 	c.hostRules = newHostRules
 	c.labelRules = newLabelRules
 	c.blacklist = newBlacklist
-	c.lastUpdate = time.Now()
 
 	log.Printf("告警规则缓存已更新: %d个全局规则, %d个主机规则, %d个标签规则",
 		len(c.globalRules), len(c.hostRules), len(c.labelRules))
