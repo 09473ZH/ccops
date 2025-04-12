@@ -74,9 +74,6 @@ func (s *AlertService) getHostLabels(hostID uint64) ([]uint64, error) {
 
 // CheckMetrics 检查监控指标是否触发告警
 func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
-	log.Printf("开始检查告警，收到的指标数据：CPU使用率=%.2f%%, 内存使用率=%.2f%%, 网卡数量=%d, 主机ID=%d",
-		metrics.CPU.UsagePercent, metrics.Memory.UsagePercent,
-		len(metrics.Network.Interfaces), metrics.HostID)
 
 	// 获取主机所属的标签ID列表
 	hostLabels, err := s.getHostLabels(metrics.HostID)
@@ -84,19 +81,15 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 		log.Printf("获取主机标签失败: %v", err)
 		return err
 	}
-	log.Printf("获取到主机 %d 的标签: %v", metrics.HostID, hostLabels)
 
 	// 定期清理过期的状态
 	go GetStateManager().CleanupStates()
 
 	// 从缓存获取适用于该主机的所有规则
 	rules := GetRuleCache().GetRulesForHost(metrics.HostID, hostLabels)
-	log.Printf("找到%d条适用的告警规则", len(rules))
 
 	// 检查每个规则
 	for _, rule := range rules {
-		log.Printf("开始检查规则: ID=%d, Name=%s, Type=%s, Operator=%s, Threshold=%.2f",
-			rule.ID, rule.Name, rule.Type, rule.Operator, rule.Threshold)
 
 		// 获取指标值
 		value, err := s.getMetricValue(metrics, rule.Type)
@@ -104,11 +97,9 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 			log.Printf("获取指标值失败: %v", err)
 			continue
 		}
-		log.Printf("获取到指标值: %.2f", value)
 
 		// 检查是否触发告警
 		triggered := rule.CheckRule(value)
-		log.Printf("规则检查结果: triggered=%v", triggered)
 
 		ruleKey := fmt.Sprintf("%d_%d", rule.ID, metrics.HostID)
 
@@ -120,15 +111,15 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 					log.Printf("未达到持续时间要求，继续观察")
 					continue
 				}
-				log.Printf("达到持续时间要求，准备创建告警")
+
 			}
 
 			// 创建或更新告警记录
 			if err := s.createOrUpdateAlert(global.DB, rule, metrics.HostID, value); err != nil {
-				log.Printf("创建/更新告警记录失败: %v", err)
+
 			}
 		} else {
-			log.Printf("规则 %d 未触发", rule.ID)
+
 			// 重置持续时间检查状态
 			GetStateManager().ResetState(ruleKey)
 
@@ -139,7 +130,6 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 					log.Printf("恢复确认未完成，继续观察")
 					continue
 				}
-				log.Printf("恢复确认完成，准备发送恢复通知")
 
 				// 检查是否存在告警记录
 				var record alert.AlertRecord
