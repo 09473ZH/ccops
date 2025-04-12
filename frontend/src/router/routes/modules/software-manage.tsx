@@ -11,7 +11,7 @@ const PublishConfig = lazy(() => import('@/pages/software-manage/publish-config'
 
 const softwareManage: AppRouteObject[] = [
   {
-    order: 2,
+    order: 5,
     path: 'software_manage',
     element: (
       <Wrapper>

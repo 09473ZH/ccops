@@ -10,7 +10,7 @@ const TaskManagePage = lazy(() => import('@/pages/task-manage'));
 
 const taskManage: AppRouteObject[] = [
   {
-    order: 5,
+    order: 6,
     path: 'task_manage',
     element: (
       <Wrapper>

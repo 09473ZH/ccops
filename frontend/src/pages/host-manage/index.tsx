@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 
 import type { HostInfo } from '@/api/services/host';
 import { Iconify } from '@/components/Icon';
-import { useHostList } from '@/hooks/use-host-list';
+import { useHostListWithMetrics } from '@/hooks/use-host-list';
 import { useModalsControl } from '@/hooks/use-modals-control';
 import { useTable } from '@/hooks/use-table';
 
@@ -18,7 +18,7 @@ function HostManage() {
   const { open, isOpen, close } = useModalsControl({
     modals: [ModalName.Create, ModalName.AssignLabel, ModalName.LabelManage, ModalName.SshConfig],
   });
-  const { list: hostList, isLoading } = useHostList();
+  const { list: hostList, isLoading } = useHostListWithMetrics();
   const {
     table,
     filteredData,

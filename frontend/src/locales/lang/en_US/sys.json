@@ -113,6 +113,7 @@
       "functions": "Functions",
       "host_manage": "Host Manage",
       "host_detail": "Host Detail",
+      "host_dashboard": "Host Dashboard",
       "file_manage": "File Manage",
       "publish_config": "Publish Config",
       "quick_command": "Quick Command",

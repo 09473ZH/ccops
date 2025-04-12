@@ -10,7 +10,7 @@ const QuickCommandPage = lazy(() => import('@/pages/quick-command'));
 
 const quickCommand: AppRouteObject[] = [
   {
-    order: 3,
+    order: 4,
     path: 'quick_command',
     element: (
       <Wrapper>
