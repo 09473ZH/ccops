@@ -2,6 +2,7 @@ package alert
 
 import (
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -198,18 +199,25 @@ func ValidateRule(rule *AlertRule) error {
 
 // CheckRule 检查告警规则
 func (r *AlertRule) CheckRule(value float64) bool {
+	log.Printf("检查告警规则: 当前值=%.2f, 阈值=%.2f, 运算符=%s", value, r.Threshold, r.Operator)
+
+	var result bool
 	switch r.Operator {
 	case OperatorGt:
-		return value > r.Threshold
+		result = value > r.Threshold
 	case OperatorLt:
-		return value < r.Threshold
+		result = value < r.Threshold
 	case OperatorGte:
-		return value >= r.Threshold
+		result = value >= r.Threshold
 	case OperatorLte:
-		return value <= r.Threshold
+		result = value <= r.Threshold
 	case OperatorEq:
-		return value == r.Threshold
+		result = value == r.Threshold
 	default:
+		log.Printf("不支持的运算符: %s", r.Operator)
 		return false
 	}
+
+	log.Printf("规则检查结果: %v", result)
+	return result
 }

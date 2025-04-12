@@ -15,9 +15,6 @@ import (
 
 // AlertService 告警服务
 type AlertService struct {
-	// 用于记录每个规则的触发次数
-	triggerCount     map[string]int64
-	triggerStartTime map[string]time.Time
 	// 主机标签缓存，key是主机ID，value是标签ID列表
 	hostLabelCache     map[uint64][]uint64
 	hostLabelCacheTime map[uint64]time.Time
@@ -28,8 +25,6 @@ var defaultAlertService *AlertService
 
 func init() {
 	defaultAlertService = &AlertService{
-		triggerCount:       make(map[string]int64),
-		triggerStartTime:   make(map[string]time.Time),
 		hostLabelCache:     make(map[uint64][]uint64),
 		hostLabelCacheTime: make(map[uint64]time.Time),
 		mutex:              sync.RWMutex{},
@@ -77,21 +72,6 @@ func (s *AlertService) getHostLabels(hostID uint64) ([]uint64, error) {
 	return labels, nil
 }
 
-// cleanupOldTriggers 清理过期的触发记录
-func (s *AlertService) cleanupOldTriggers() {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	now := time.Now()
-	// 清理超过1小时的记录
-	for key, startTime := range s.triggerStartTime {
-		if now.Sub(startTime) > time.Hour {
-			delete(s.triggerCount, key)
-			delete(s.triggerStartTime, key)
-		}
-	}
-}
-
 // CheckMetrics 检查监控指标是否触发告警
 func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 	log.Printf("开始检查告警，收到的指标数据：CPU使用率=%.2f%%, 内存使用率=%.2f%%, 网卡数量=%d, 主机ID=%d",
@@ -104,9 +84,10 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 		log.Printf("获取主机标签失败: %v", err)
 		return err
 	}
+	log.Printf("获取到主机 %d 的标签: %v", metrics.HostID, hostLabels)
 
-	// 定期清理过期的触发记录
-	go s.cleanupOldTriggers()
+	// 定期清理过期的状态
+	go GetStateManager().CleanupStates()
 
 	// 从缓存获取适用于该主机的所有规则
 	rules := GetRuleCache().GetRulesForHost(metrics.HostID, hostLabels)
@@ -114,23 +95,32 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 
 	// 检查每个规则
 	for _, rule := range rules {
+		log.Printf("开始检查规则: ID=%d, Name=%s, Type=%s, Operator=%s, Threshold=%.2f",
+			rule.ID, rule.Name, rule.Type, rule.Operator, rule.Threshold)
+
 		// 获取指标值
 		value, err := s.getMetricValue(metrics, rule.Type)
 		if err != nil {
 			log.Printf("获取指标值失败: %v", err)
 			continue
 		}
+		log.Printf("获取到指标值: %.2f", value)
 
 		// 检查是否触发告警
 		triggered := rule.CheckRule(value)
+		log.Printf("规则检查结果: triggered=%v", triggered)
 
 		ruleKey := fmt.Sprintf("%d_%d", rule.ID, metrics.HostID)
+
 		if triggered {
+			log.Printf("规则 %d 被触发", rule.ID)
 			// 检查持续时间
 			if rule.Duration > 0 {
-				if !s.checkDuration(ruleKey, uint64(rule.Duration)) {
+				if !GetStateManager().CheckDuration(ruleKey, uint64(rule.Duration), value) {
+					log.Printf("未达到持续时间要求，继续观察")
 					continue
 				}
+				log.Printf("达到持续时间要求，准备创建告警")
 			}
 
 			// 创建或更新告警记录
@@ -138,11 +128,19 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 				log.Printf("创建/更新告警记录失败: %v", err)
 			}
 		} else {
-			// 如果未触发告警，重置计数器
-			s.resetTriggerCount(ruleKey)
+			log.Printf("规则 %d 未触发", rule.ID)
+			// 重置持续时间检查状态
+			GetStateManager().ResetState(ruleKey)
 
 			// 只有在配置了恢复通知时才检查是否需要解除告警
 			if rule.RecoverNotify {
+				// 检查是否已经确认恢复
+				if !GetStateManager().ConfirmRecovery(ruleKey, true) {
+					log.Printf("恢复确认未完成，继续观察")
+					continue
+				}
+				log.Printf("恢复确认完成，准备发送恢复通知")
+
 				// 检查是否存在告警记录
 				var record alert.AlertRecord
 				if err := global.DB.Where("rule_id = ? AND host_id = ? AND status = ?",
@@ -155,11 +153,11 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 				}
 
 				// 发现告警记录，且当前值已恢复正常，则更新状态
-				log.Printf("检查是否需要解除告警并发送恢复通知，当前值: %.2f", value)
+				log.Printf("检测到告警恢复，当前值: %.2f", value)
 				now := time.Now()
 				record.Status = alert.AlertStatusResolved
 				record.EndTime = &now
-				record.RecoverValue = value // 使用当前值作为恢复值
+				record.RecoverValue = value
 
 				if err := global.DB.Save(&record).Error; err != nil {
 					log.Printf("更新告警记录失败: %v", err)
@@ -299,46 +297,10 @@ func (s *AlertService) getMetricValue(metrics *monitor.MetricPoint, ruleType str
 	return value, nil
 }
 
-// checkDuration 检查告警持续时间
-func (s *AlertService) checkDuration(ruleKey string, duration uint64) bool {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	// 如果是首次触发，记录开始时间
-	if _, exists := s.triggerCount[ruleKey]; !exists {
-		s.triggerStartTime[ruleKey] = time.Now()
-		s.triggerCount[ruleKey] = 1
-		log.Printf("首次触发告警规则: %s, 开始计数", ruleKey)
-		return false
-	}
-
-	// 检查是否达到持续时间
-	elapsedDuration := time.Since(s.triggerStartTime[ruleKey])
-	isDurationMet := elapsedDuration.Seconds() >= float64(duration)
-
-	if !isDurationMet {
-		// 增加计数
-		s.triggerCount[ruleKey]++
-		log.Printf("告警持续时间检查: 规则=%s, 已持续=%.2f秒, 需要持续=%d秒",
-			ruleKey, elapsedDuration.Seconds(), duration)
-	}
-
-	return isDurationMet
-}
-
-// resetTriggerCount 重置触发计数器
-func (s *AlertService) resetTriggerCount(ruleKey string) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	delete(s.triggerCount, ruleKey)
-	delete(s.triggerStartTime, ruleKey)
-	log.Printf("重置告警计数器: %s", ruleKey)
-}
-
 // createOrUpdateAlert 创建或更新告警记录
 func (s *AlertService) createOrUpdateAlert(tx *gorm.DB, rule *alert.AlertRule, hostID uint64, value float64) error {
 	var record alert.AlertRecord
+	tx = tx.Debug()
 	err := tx.Where("rule_id = ? AND host_id = ? AND status = ?",
 		rule.ID, hostID, alert.AlertStatusAlerting).
 		First(&record).Error

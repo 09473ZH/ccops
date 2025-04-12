@@ -14,6 +14,9 @@ func NewCPUCollector() *CPUCollector {
 
 // Collect 收集CPU使用率
 func (cc *CPUCollector) Collect() (float64, error) {
+	// 使用瞬时值计算 CPU 使用率
+	// 由于 gopsutil 内部会维护上次的 CPU 时间数据
+	// 所以这里返回的是距离上次调用的平均使用率
 	cpuPercent, err := cpu.Percent(0, false)
 	if err != nil {
 		return 0, err

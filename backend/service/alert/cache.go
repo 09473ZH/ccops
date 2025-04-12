@@ -65,100 +65,105 @@ func (c *AlertRuleCache) startAutoRefresh() {
 
 // RefreshCache 刷新缓存
 func (c *AlertRuleCache) RefreshCache() {
-	// 创建新的缓存
+	c.Lock()
+	defer c.Unlock()
+
+	log.Printf("开始刷新告警规则缓存...")
+
+	// 查询所有启用的告警规则
+	var rules []alert.AlertRule
+	if err := global.DB.Where("enabled = ?", true).Find(&rules).Error; err != nil {
+		log.Printf("查询告警规则失败: %v", err)
+		return
+	}
+	log.Printf("从数据库获取到 %d 条启用的告警规则", len(rules))
+
+	// 查询所有规则目标
+	var targets []alert.AlertRuleTarget
+	if err := global.DB.Find(&targets).Error; err != nil {
+		log.Printf("查询规则目标失败: %v", err)
+		return
+	}
+	log.Printf("从数据库获取到 %d 条规则目标配置", len(targets))
+
+	// 创建新的缓存映射
 	newGlobalRules := make(map[uint64]*alert.AlertRule)
 	newHostRules := make(map[uint64]map[uint64]*alert.AlertRule)
 	newLabelRules := make(map[uint64]map[uint64]*alert.AlertRule)
 	newBlacklist := make(map[string]bool)
 
-	// 查询所有启用的告警规则
-	var rules []alert.AlertRule
-	if err := global.DB.Where("enabled = ?", true).Find(&rules).Error; err != nil {
-		log.Printf("刷新告警规则缓存失败: %v", err)
-		return
-	}
-
-	// 查询所有规则目标
-	var targets []alert.AlertRuleTarget
-	if err := global.DB.Find(&targets).Error; err != nil {
-		log.Printf("刷新告警规则目标缓存失败: %v", err)
-		return
-	}
-
 	// 处理规则和目标
 	for i := range rules {
 		rule := &rules[i]
-		if rule.Universal {
-			// 全局规则
-			newGlobalRules[rule.ID] = rule
-		}
-	}
+		log.Printf("处理规则: ID=%d, Name=%s, Universal=%v, Type=%s, Operator=%s, Threshold=%.2f",
+			rule.ID, rule.Name, rule.Universal, rule.Type, rule.Operator, rule.Threshold)
 
-	// 处理目标关联
-	for _, target := range targets {
-		rule, exists := newGlobalRules[target.AlertRuleID]
-		if !exists {
-			// 查找非全局规则
-			for i := range rules {
-				if rules[i].ID == target.AlertRuleID {
-					rule = &rules[i]
-					break
-				}
-			}
-			if rule == nil {
+		// 处理全局规则
+		if rule.Universal {
+			newGlobalRules[rule.ID] = rule
+			log.Printf("添加全局规则: ID=%d", rule.ID)
+		}
+
+		// 初始化主机和标签的规则映射
+		for _, target := range targets {
+			if target.AlertRuleID != rule.ID {
 				continue
 			}
-		}
 
-		if target.Excluded {
-			// 黑名单
-			if target.TargetType == alert.TargetTypeHost {
-				newBlacklist[formatBlacklistKey(target.AlertRuleID, target.TargetID)] = true
+			if target.Excluded {
+				// 处理黑名单
+				if target.TargetType == alert.TargetTypeHost {
+					blacklistKey := fmt.Sprintf("%d_%d", rule.ID, target.TargetID)
+					newBlacklist[blacklistKey] = true
+					log.Printf("添加黑名单: RuleID=%d, HostID=%d", rule.ID, target.TargetID)
+				}
+				continue
 			}
-		} else {
-			// 白名单
+
+			// 处理白名单
 			if target.TargetType == alert.TargetTypeHost {
-				// 主机特定规则
 				if _, exists := newHostRules[target.TargetID]; !exists {
 					newHostRules[target.TargetID] = make(map[uint64]*alert.AlertRule)
 				}
-				newHostRules[target.TargetID][target.AlertRuleID] = rule
-			} else if target.TargetType == alert.TargetTypeLabel {
-				// 标签规则
+				newHostRules[target.TargetID][rule.ID] = rule
+				log.Printf("添加主机规则: RuleID=%d, HostID=%d", rule.ID, target.TargetID)
+			} else {
 				if _, exists := newLabelRules[target.TargetID]; !exists {
 					newLabelRules[target.TargetID] = make(map[uint64]*alert.AlertRule)
 				}
-				newLabelRules[target.TargetID][target.AlertRuleID] = rule
+				newLabelRules[target.TargetID][rule.ID] = rule
+				log.Printf("添加标签规则: RuleID=%d, LabelID=%d", rule.ID, target.TargetID)
 			}
 		}
 	}
 
-	// 使用写锁更新缓存
-	c.Lock()
+	// 更新缓存
 	c.globalRules = newGlobalRules
 	c.hostRules = newHostRules
 	c.labelRules = newLabelRules
 	c.blacklist = newBlacklist
 	c.lastUpdate = time.Now()
-	c.version++
-	c.Unlock()
 
-	log.Printf("告警规则缓存刷新完成，全局规则：%d，主机规则：%d，标签规则：%d，版本号：%d",
-		len(c.globalRules), len(c.hostRules), len(c.labelRules), c.version)
+	log.Printf("告警规则缓存已更新: %d个全局规则, %d个主机规则, %d个标签规则",
+		len(c.globalRules), len(c.hostRules), len(c.labelRules))
 }
 
-// GetRulesForHost 获取适用于指定主机的所有规则
+// GetRulesForHost 获取适用于指定主机的规则
 func (c *AlertRuleCache) GetRulesForHost(hostID uint64, hostLabels []uint64) []*alert.AlertRule {
 	c.RLock()
-	currentVersion := c.version
+	defer c.RUnlock()
 
-	// 用map去重
+	log.Printf("开始获取主机 %d 的告警规则...", hostID)
+
+	// 用于去重的map
 	rulesMap := make(map[uint64]*alert.AlertRule)
 
-	// 添加全局规则（排除黑名单）
+	// 添加全局规则
 	for ruleID, rule := range c.globalRules {
-		if !c.blacklist[formatBlacklistKey(ruleID, hostID)] {
+		// 检查是否在黑名单中
+		if !c.blacklist[fmt.Sprintf("%d_%d", ruleID, hostID)] {
 			rulesMap[ruleID] = rule
+			log.Printf("添加全局规则: ID=%d, Name=%s", rule.ID, rule.Name)
 		}
 	}
 
@@ -166,6 +171,7 @@ func (c *AlertRuleCache) GetRulesForHost(hostID uint64, hostLabels []uint64) []*
 	if hostRules, exists := c.hostRules[hostID]; exists {
 		for ruleID, rule := range hostRules {
 			rulesMap[ruleID] = rule
+			log.Printf("添加主机特定规则: ID=%d, Name=%s", rule.ID, rule.Name)
 		}
 	}
 
@@ -174,18 +180,10 @@ func (c *AlertRuleCache) GetRulesForHost(hostID uint64, hostLabels []uint64) []*
 		if labelRules, exists := c.labelRules[labelID]; exists {
 			for ruleID, rule := range labelRules {
 				rulesMap[ruleID] = rule
+				log.Printf("添加标签规则: ID=%d, Name=%s", rule.ID, rule.Name)
 			}
 		}
 	}
-	c.RUnlock()
-
-	// 检查版本是否变化，如果变化则重新获取
-	c.RLock()
-	if currentVersion != c.version {
-		c.RUnlock()
-		return c.GetRulesForHost(hostID, hostLabels)
-	}
-	c.RUnlock()
 
 	// 转换为切片
 	rules := make([]*alert.AlertRule, 0, len(rulesMap))
@@ -193,6 +191,7 @@ func (c *AlertRuleCache) GetRulesForHost(hostID uint64, hostLabels []uint64) []*
 		rules = append(rules, rule)
 	}
 
+	log.Printf("主机 %d 共获取到 %d 条告警规则", hostID, len(rules))
 	return rules
 }
 
