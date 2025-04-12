@@ -152,7 +152,13 @@ func (HostsApi) HostListView(c *gin.Context) {
 	// 为每个主机赋值关联数据
 	for i := range hosts {
 		hosts[i].Disk = diskMap[hosts[i].ID]
-		hosts[i].Label = labelMap[hosts[i].ID]
+
+		// Initialize Label with an empty slice to ensure it returns an empty list instead of null
+		if labels, exists := labelMap[hosts[i].ID]; exists {
+			hosts[i].Label = labels
+		} else {
+			hosts[i].Label = []models.LabelModel{}
+		}
 
 		// 如果请求包含监控数据，则获取最新的监控数据
 		if cr.WithMetrics {

@@ -52,7 +52,7 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
         ws.onopen = () => {
           onConnectionChange?.(true);
           isManualReconnectRef.current = false;
-          
+
           if (isReconnect) {
             term.write('\x1b[2J\x1b[H');
           }
@@ -165,7 +165,7 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
         resizeObserver.disconnect();
         window.removeEventListener('resize', handleResize);
         cleanup();
-        
+
         // 一步完成终端实例销毁
         xtermRef.current?.dispose();
         xtermRef.current = undefined;
@@ -192,7 +192,7 @@ export const Terminal = forwardRef<TerminalRef, TerminalProps>(
 
         // 设置手动重连标志，防止关闭旧连接时显示"连接已关闭"的提示
         isManualReconnectRef.current = true;
-        
+
         // 关闭现有连接
         if (wsRef.current) {
           wsRef.current.close();
