@@ -136,7 +136,7 @@ func (db *TimeSeriesDB) Insert(point *MetricPoint) {
 			count:  0,
 		}
 		db.hostPoints[point.HostID] = hostData
-		fmt.Printf("[时序数据库] 创建新的主机时序数据: 主机ID=%d\n", point.HostID)
+
 	}
 
 	// 从对象池获取新对象并复制数据
@@ -155,8 +155,6 @@ func (db *TimeSeriesDB) Insert(point *MetricPoint) {
 		hostData.count++
 	}
 
-	fmt.Printf("[时序数据库] 插入数据点: 主机ID=%d, 时间戳=%d, 总数据点=%d\n",
-		point.HostID, point.CollectedAt, hostData.count)
 }
 
 // Query 查询指定主机在指定时间范围的数据
@@ -183,8 +181,6 @@ func (db *TimeSeriesDB) Query(hostID uint64, start, end int64) []*MetricPoint {
 		}
 	}
 
-	fmt.Printf("[时序数据库] 查询结果: 主机ID=%d, 时间范围=[%d, %d], 结果数量=%d\n",
-		hostID, start, end, len(result))
 	return result
 }
 
@@ -224,24 +220,6 @@ func (db *TimeSeriesDB) GetAllLatest() map[uint64]*MetricPoint {
 			}
 		}
 	}
-
-	fmt.Printf("[时序数据库] 获取所有主机最新数据: 主机数量=%d\n", len(result))
-	for hostID, point := range result {
-		fmt.Printf("  主机ID=%d: 时间戳=%d\n", hostID, point.CollectedAt)
-		fmt.Printf("    CPU使用率: %.2f%%\n", point.CPU.UsagePercent)
-		fmt.Printf("    内存使用率: %.2f%% (总共: %.2f GB, 已用: %.2f GB, 剩余: %.2f GB)\n",
-			point.Memory.UsagePercent,
-			float64(point.Memory.TotalBytes)/(1024*1024*1024),
-			float64(point.Memory.UsedBytes)/(1024*1024*1024),
-			float64(point.Memory.FreeBytes)/(1024*1024*1024))
-
-		for _, net := range point.Network.Interfaces {
-			fmt.Printf("    网卡 %s: MAC=%s, IPv4=%s\n", net.Name, net.MacAddress, net.IPv4Address)
-			fmt.Printf("      流量: 入站=%.2f MB/s, 出站=%.2f MB/s\n",
-				net.RecvRate/(1024*1024),
-				net.SendRate/(1024*1024))
-		}
-	}
 	return result
 }
 
@@ -263,15 +241,6 @@ func (db *TimeSeriesDB) GetAllData(hostID uint64) []*MetricPoint {
 		if point := hostData.points[idx]; point != nil {
 			result = append(result, point)
 		}
-	}
-
-	if len(result) > 0 {
-		firstPoint := result[0]
-		lastPoint := result[len(result)-1]
-		fmt.Printf("[时序数据库] 获取主机所有数据: 主机ID=%d, 数据点数量=%d\n", hostID, len(result))
-		fmt.Printf("  时间范围: %d -> %d\n", lastPoint.CollectedAt, firstPoint.CollectedAt)
-		fmt.Printf("  最新数据: CPU=%.2f%%, 内存=%.2f%%\n",
-			firstPoint.CPU.UsagePercent, firstPoint.Memory.UsagePercent)
 	}
 
 	return result

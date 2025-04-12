@@ -4,7 +4,6 @@ import (
 	"ccops/global"
 	"ccops/models"
 	"ccops/models/res"
-	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,7 +23,7 @@ func (TaskApi) TaskInfoView(c *gin.Context) {
 	var roleIds []uint
 	var revisionIds []uint
 	db.Model(&models.TaskAssociationModel{}).Where("task_id = ?", id).Select("role_id").Find(&roleIds)
-	fmt.Println("role:", roleIds)
+
 	db.Model(&models.TaskAssociationModel{}).Where("task_id = ?", id).Select("revision_id").Find(&revisionIds)
 	db.Model(&models.RoleModel{}).Where("id in (?)", roleIds).Select("name").Find(&taskInfoRep.RoleNames)
 	db.Model(&models.TargetAssociationModel{}).Where("task_id = ?", id).Select("host_ip").Find(&taskInfoRep.TargetIps)

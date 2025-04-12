@@ -8,6 +8,7 @@ import (
 	"ccops/api/file_api"
 	"ccops/api/hosts_api"
 	"ccops/api/labels_api"
+	"ccops/api/notification_api"
 	"ccops/api/role_api"
 	"ccops/api/role_revision_api"
 	"ccops/api/task_api"
@@ -26,6 +27,7 @@ type ApiGroup struct {
 	ConfigurationApi configuration_api.ConfigurationApi
 	LabelApi         labels_api.LabelApi
 	AlertApi         alert_api.AlertApi
+	NotificationApi  notification_api.NotificationApi
 }
 
 var ApiGroupApp = new(ApiGroup)

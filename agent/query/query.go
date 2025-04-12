@@ -3,6 +3,7 @@ package query
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"log"
 	"os/exec"
 	"runtime"
@@ -170,23 +171,48 @@ func QuerySoftwareList() (QueryResponse, error) {
 }
 
 func GetPublicIPInfo() (map[string]string, error) {
-	cmd := exec.Command("curl", "ipinfo.io")
+	cmd := exec.Command("curl", "-m", "5", "ipinfo.io")
 	var out bytes.Buffer
+	var stderr bytes.Buffer
 	cmd.Stdout = &out
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("获取公网IP信息失败: %v, stderr: %s", err, stderr.String())
+	}
+
+	if out.Len() == 0 {
+		return nil, fmt.Errorf("ipinfo.io 返回空数据")
 	}
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(out.Bytes(), &result); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("解析IP信息响应失败: %v", err)
 	}
 
-	publicIPInfo := map[string]string{
-		"ip":      result["ip"].(string),
-		"city":    result["city"].(string),
-		"country": result["country"].(string),
-		"org":     result["org"].(string),
+	publicIPInfo := make(map[string]string)
+
+	if ip, ok := result["ip"].(string); ok {
+		publicIPInfo["ip"] = ip
+	} else {
+		publicIPInfo["ip"] = "unknown"
+	}
+
+	if city, ok := result["city"].(string); ok {
+		publicIPInfo["city"] = city
+	} else {
+		publicIPInfo["city"] = "unknown"
+	}
+
+	if country, ok := result["country"].(string); ok {
+		publicIPInfo["country"] = country
+	} else {
+		publicIPInfo["country"] = "unknown"
+	}
+
+	if org, ok := result["org"].(string); ok {
+		publicIPInfo["org"] = org
+	} else {
+		publicIPInfo["org"] = "unknown"
 	}
 
 	return publicIPInfo, nil
@@ -254,6 +280,7 @@ func QueryHostDetailInfo() (HostDetailInfo, error) {
 		UserInfo:              make(QueryResponse, 0),
 		UserAuthorizeKeysInfo: make(QueryResponse, 0),
 		HostName:              hostname,
+		PublicIPInfo:          make(map[string]string),
 	}
 
 	systemInfo, err := QuerySystemInfo()
@@ -308,12 +335,19 @@ func QueryHostDetailInfo() (HostDetailInfo, error) {
 	}
 	info.UserAuthorizeKeysInfo = userAuthorizeKeysInfo
 
+	// 获取公网IP信息，如果失败则使用默认值
 	publicIPInfo, err := GetPublicIPInfo()
 	if err != nil {
 		log.Println("查询 public_ip_info 失败:", err)
-		return HostDetailInfo{}, err
+		info.PublicIPInfo = map[string]string{
+			"ip":      "unknown",
+			"city":    "unknown",
+			"country": "unknown",
+			"org":     "unknown",
+		}
+	} else {
+		info.PublicIPInfo = publicIPInfo
 	}
-	info.PublicIPInfo = publicIPInfo
 
 	return info, nil
 }

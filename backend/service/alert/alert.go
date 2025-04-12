@@ -13,20 +13,21 @@ import (
 	"gorm.io/gorm"
 )
 
+// AlertService 告警服务
 type AlertService struct {
-	// 用于记录每个规则的触发次数
-	triggerCount     map[string]int64
-	triggerStartTime map[string]time.Time
-	mutex            sync.RWMutex
+	// 主机标签缓存，key是主机ID，value是标签ID列表
+	hostLabelCache     map[uint64][]uint64
+	hostLabelCacheTime map[uint64]time.Time
+	mutex              sync.RWMutex
 }
 
 var defaultAlertService *AlertService
 
 func init() {
 	defaultAlertService = &AlertService{
-		triggerCount:     make(map[string]int64),
-		triggerStartTime: make(map[string]time.Time),
-		mutex:            sync.RWMutex{},
+		hostLabelCache:     make(map[uint64][]uint64),
+		hostLabelCacheTime: make(map[uint64]time.Time),
+		mutex:              sync.RWMutex{},
 	}
 }
 
@@ -35,301 +36,294 @@ func GetAlertService() *AlertService {
 	return defaultAlertService
 }
 
-// checkCycle 检查是否在循环周期内
-func (s *AlertService) checkCycle(r *alert.Rule) bool {
-	if r.CycleInterval == 0 {
-		return true
+// getHostLabels 获取主机标签（带缓存）
+func (s *AlertService) getHostLabels(hostID uint64) ([]uint64, error) {
+	s.mutex.RLock()
+	if labels, exists := s.hostLabelCache[hostID]; exists {
+		if time.Since(s.hostLabelCacheTime[hostID]) < 5*time.Minute {
+			s.mutex.RUnlock()
+			return labels, nil
+		}
+	}
+	s.mutex.RUnlock()
+
+	// 缓存不存在或已过期，重新查询
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	// 双重检查
+	if labels, exists := s.hostLabelCache[hostID]; exists {
+		if time.Since(s.hostLabelCacheTime[hostID]) < 5*time.Minute {
+			return labels, nil
+		}
 	}
 
-	if r.CycleStart == nil {
-		return true
+	var labels []uint64
+	if err := global.DB.Table("host_labels").
+		Where("host_model_id = ?", hostID).
+		Pluck("label_model_id", &labels).Error; err != nil {
+		return nil, err
 	}
 
-	// 计算距离循环开始时间的分钟数
-	minutes := time.Since(*r.CycleStart).Minutes()
+	// 更新缓存
+	s.hostLabelCache[hostID] = labels
+	s.hostLabelCacheTime[hostID] = time.Now()
 
-	// 检查是否在循环周期内
-	return int(minutes)%r.CycleInterval == 0
+	return labels, nil
 }
 
 // CheckMetrics 检查监控指标是否触发告警
 func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
-	log.Printf("开始检查告警，收到的指标数据：CPU使用率=%.2f%%, 内存使用率=%.2f%%, 网卡数量=%d, 主机ID=%d",
-		metrics.CPU.UsagePercent, metrics.Memory.UsagePercent,
-		len(metrics.Network.Interfaces), metrics.HostID)
-
-	// 开启GORM调试模式
-	tx := global.DB.Debug()
-
-	// 获取所有启用的告警规则
-	var rules []alert.AlertRule
-	if err := tx.Where("enable = ?", true).Find(&rules).Error; err != nil {
-		return fmt.Errorf("获取告警规则失败: %v", err)
-	}
-	log.Printf("找到%d条启用的告警规则", len(rules))
 
 	// 获取主机所属的标签ID列表
-	var hostLabels []uint64
-	if err := tx.Table("host_labels").
-		Where("host_model_id = ?", metrics.HostID).
-		Pluck("label_model_id", &hostLabels).Error; err != nil {
+	hostLabels, err := s.getHostLabels(metrics.HostID)
+	if err != nil {
 		log.Printf("获取主机标签失败: %v", err)
+		return err
 	}
+
+	// 定期清理过期的状态
+	go GetStateManager().CleanupStates()
+
+	// 从缓存获取适用于该主机的所有规则
+	rules := GetRuleCache().GetRulesForHost(metrics.HostID, hostLabels)
 
 	// 检查每个规则
 	for _, rule := range rules {
 
-		// 获取规则适用的所有主机ID
-		applicableHostIDs := make(map[uint64]struct{})
-
-		// 如果规则指定了主机ID，添加到适用列表
-		for _, id := range rule.HostIDs {
-			applicableHostIDs[id] = struct{}{}
+		// 获取指标值
+		value, err := s.getMetricValue(metrics, rule.Type)
+		if err != nil {
+			log.Printf("获取指标值失败: %v", err)
+			continue
 		}
 
-		// 如果规则指定了标签ID，获取相关的主机ID
-		if len(rule.LabelIDs) > 0 {
-			var labelHostIDs []uint64
-			if err := tx.Table("host_labels").
-				Where("label_model_id IN ?", rule.LabelIDs).
-				Pluck("host_model_id", &labelHostIDs).Error; err != nil {
-				log.Printf("获取标签关联的主机ID失败: %v", err)
-				continue
-			}
-			// 添加到适用列表
-			for _, id := range labelHostIDs {
-				applicableHostIDs[id] = struct{}{}
-			}
-		}
+		// 检查是否触发告警
+		triggered := rule.CheckRule(value)
 
-		// 判断规则是否适用于当前主机
-		isApplicable := false
+		ruleKey := fmt.Sprintf("%d_%d", rule.ID, metrics.HostID)
 
-		// 如果规则没有指定任何白名单限制，适用于所有主机
-		if len(rule.HostIDs) == 0 && len(rule.LabelIDs) == 0 {
-			isApplicable = true
-		} else {
-			// 否则检查当前主机是否在适用列表中
-			_, isApplicable = applicableHostIDs[metrics.HostID]
-		}
-
-		// 如果在黑名单中，则不适用
-		if contains(rule.IgnoreHostIDs, metrics.HostID) {
-			isApplicable = false
-			log.Printf("主机ID %d 在规则黑名单中，跳过检查", metrics.HostID)
-		}
-
-		if isApplicable {
-			log.Printf("检查告警规则: ID=%d, 名称=%s", rule.ID, rule.Name)
-
-			// 检查规则中的每个具体规则
-			for _, r := range rule.Rules {
-				log.Printf("检查具体规则: 类型=%s, 最小值=%.2f, 最大值=%.2f, 级别=%s",
-					r.Type, r.MinValue, r.MaxValue, r.Severity)
-
-				// 检查是否在循环周期内
-				if !s.checkCycle(&r) {
-					log.Printf("不在循环周期内，跳过检查")
+		if triggered {
+			log.Printf("规则 %d 被触发", rule.ID)
+			// 检查持续时间
+			if rule.Duration > 0 {
+				if !GetStateManager().CheckDuration(ruleKey, uint64(rule.Duration), value) {
+					log.Printf("未达到持续时间要求，继续观察")
 					continue
 				}
 
-				// 获取对应的指标值
-				value, err := s.getMetricValue(metrics, r.Type)
-				if err != nil {
-					log.Printf("获取指标值失败: %v", err)
-					continue
-				}
-				log.Printf("获取到的指标值: %.2f", value)
+			}
 
-				// 检查是否触发告警
-				isTriggered := r.CheckRule(value)
-				log.Printf("告警规则检查结果: 当前值=%.2f, 最小值=%.2f, 最大值=%.2f, 是否触发=%v",
-					value, r.MinValue, r.MaxValue, isTriggered)
+			// 创建或更新告警记录
+			if err := s.createOrUpdateAlert(global.DB, rule, metrics.HostID, value); err != nil {
 
-				// 生成规则键
-				ruleKey := fmt.Sprintf("%d_%d_%s", rule.ID, metrics.HostID, r.Type)
-
-				if isTriggered {
-					// 检查持续时间
-					isDurationMet := s.checkDuration(ruleKey, uint64(r.Duration))
-					log.Printf("持续时间检查结果: 是否满足=%v", isDurationMet)
-
-					if isDurationMet {
-						// 检查是否已存在告警中的记录
-						var existingRecord alert.AlertRecord
-						err := tx.Where("rule_id = ? AND host_id = ? AND type = ? AND status = ?",
-							rule.ID, metrics.HostID, r.Type, alert.AlertStatusAlerting).
-							First(&existingRecord).Error
-
-						if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-							log.Printf("查询现有告警记录失败: %v", err)
-							return fmt.Errorf("查询现有告警记录失败: %v", err)
-						}
-
-						if errors.Is(err, gorm.ErrRecordNotFound) {
-							// 不存在告警中的记录，创建新记录
-							record := &alert.AlertRecord{
-								RuleID: rule.ID,
-								HostID: metrics.HostID,
-
-								Status:      alert.AlertStatusAlerting,
-								Value:       value,
-								StartTime:   s.triggerStartTime[ruleKey],
-								Description: fmt.Sprintf("%s 触发告警规则 %s (级别: %s)", r.Type, rule.Name, r.Severity),
-							}
-							if err := tx.Create(record).Error; err != nil {
-								log.Printf("创建告警记录失败: %v", err)
-								return fmt.Errorf("创建告警记录失败: %v", err)
-							}
-							log.Printf("成功创建告警记录: ID=%d", record.ID)
-						} else {
-							// 已存在告警记录，只更新最新值
-							existingRecord.Value = value
-							if err := tx.Save(&existingRecord).Error; err != nil {
-								log.Printf("更新告警记录失败: %v", err)
-								return fmt.Errorf("更新告警记录失败: %v", err)
-							}
-							log.Printf("更新告警记录值: ID=%d, 新值=%.2f", existingRecord.ID, value)
-						}
-					}
-				} else {
-					// 如果未触发告警，重置计数器并检查是否需要解除告警
-					s.resetTriggerCount(ruleKey)
-					if r.RecoverNotify {
-						log.Printf("检查是否需要解除告警并发送恢复通知")
-						s.resolveAlert(rule.ID, metrics.HostID, r.Type)
-					}
-				}
 			}
 		} else {
-			log.Printf("规则 %s (ID=%d) 不适用于主机 %d，跳过检查", rule.Name, rule.ID, metrics.HostID)
 
+			// 重置持续时间检查状态
+			GetStateManager().ResetState(ruleKey)
+
+			// 只有在配置了恢复通知时才检查是否需要解除告警
+			if rule.RecoverNotify {
+				// 检查是否已经确认恢复
+				if !GetStateManager().ConfirmRecovery(ruleKey, true) {
+					log.Printf("恢复确认未完成，继续观察")
+					continue
+				}
+
+				// 检查是否存在告警记录
+				var record alert.AlertRecord
+				if err := global.DB.Where("rule_id = ? AND host_id = ? AND status = ?",
+					rule.ID, metrics.HostID, alert.AlertStatusAlerting).
+					First(&record).Error; err != nil {
+					if !errors.Is(err, gorm.ErrRecordNotFound) {
+						log.Printf("检查告警记录失败: %v", err)
+					}
+					continue
+				}
+
+				// 发现告警记录，且当前值已恢复正常，则更新状态
+				log.Printf("检测到告警恢复，当前值: %.2f", value)
+				now := time.Now()
+				record.Status = alert.AlertStatusResolved
+				record.EndTime = &now
+				record.RecoverValue = value
+
+				if err := global.DB.Save(&record).Error; err != nil {
+					log.Printf("更新告警记录失败: %v", err)
+					continue
+				}
+
+				// 发送恢复通知
+				if err := WebhookNotification(uint(rule.ID), uint(metrics.HostID), value, NotificationTypeRecover, now); err != nil {
+					log.Printf("发送恢复通知失败: %v", err)
+				}
+			}
 		}
 	}
 
 	return nil
 }
 
-// isHostApplicable 检查主机是否在适用列表中
-func (s *AlertService) isHostApplicable(hostID uint64, applicableHosts map[uint64]struct{}) bool {
-	_, exists := applicableHosts[hostID]
-	return exists
+// isHostApplicable 检查规则是否适用于主机
+func (s *AlertService) isHostApplicable(tx *gorm.DB, hostID uint64, hostLabels []uint64, rule *alert.AlertRule) (bool, error) {
+	// 如果规则是全局的
+	if rule.Universal {
+		// 检查是否在黑名单中
+		var count int64
+		err := tx.Model(&alert.AlertRuleTarget{}).
+			Where("alert_rule_id = ? AND target_id = ? AND target_type = ? AND excluded = ?",
+				rule.ID, hostID, alert.TargetTypeHost, true).
+			Count(&count).Error
+		if err != nil {
+			return false, err
+		}
+		// 不在黑名单中则适用
+		return count == 0, nil
+	}
 
+	// 非全局规则，检查白名单
+	var targets []alert.AlertRuleTarget
+	err := tx.Where("alert_rule_id = ?", rule.ID).Find(&targets).Error
+	if err != nil {
+		return false, err
+	}
+
+	// 检查主机是否直接在白名单中
+	for _, target := range targets {
+		if target.TargetType == alert.TargetTypeHost && target.TargetID == hostID {
+			return !target.Excluded, nil
+		}
+		// 检查主机的标签是否在白名单中
+		if target.TargetType == alert.TargetTypeLabel {
+			for _, labelID := range hostLabels {
+				if target.TargetID == labelID {
+					return !target.Excluded, nil
+				}
+			}
+		}
+	}
+
+	return false, nil
 }
 
 // getMetricValue 获取指定类型的指标值
 func (s *AlertService) getMetricValue(metrics *monitor.MetricPoint, ruleType string) (float64, error) {
 	var value float64
 	switch ruleType {
+	// CPU相关指标
 	case alert.RuleTypeCPUUsage:
 		value = metrics.CPU.UsagePercent
+	case alert.RuleTypeCPULoad1:
+		value = metrics.CPU.Load1m
+	case alert.RuleTypeCPULoad5:
+		value = metrics.CPU.Load5m
+	case alert.RuleTypeCPULoad15:
+		value = metrics.CPU.Load15m
+
+	// 内存相关指标
 	case alert.RuleTypeMemoryUsage:
 		value = metrics.Memory.UsagePercent
+	case alert.RuleTypeMemoryAvailable:
+		value = float64(metrics.Memory.AvailableBytes) / (1024 * 1024 * 1024) // 转换为GB
+	case alert.RuleTypeMemoryFree:
+		value = float64(metrics.Memory.FreeBytes) / (1024 * 1024 * 1024) // 转换为GB
+
+	// 磁盘相关指标
+	case alert.RuleTypeDiskUsage:
+		if len(metrics.Disk.Volumes) > 0 {
+			value = metrics.Disk.Volumes[0].UsagePercent
+		}
+	case alert.RuleTypeDiskFree:
+		value = metrics.Disk.AvailableBytes // 已经是GB单位
+	case alert.RuleTypeDiskReadIO:
+		value = float64(metrics.Disk.ReadRate) / (1024 * 1024) // 转换为MB/s
+	case alert.RuleTypeDiskWriteIO:
+		value = float64(metrics.Disk.WriteRate) / (1024 * 1024) // 转换为MB/s
+	case alert.RuleTypeDiskVolume:
+		// 遍历所有分区，找到使用率最高的
+		var maxUsage float64
+		for _, volume := range metrics.Disk.Volumes {
+			if volume.UsagePercent > maxUsage {
+				maxUsage = volume.UsagePercent
+			}
+		}
+		value = maxUsage
+
+	// 网络相关指标
 	case alert.RuleTypeNetInSpeed:
-		// 计算所有网卡的总入站速率
-		var totalSpeed float64
-		for _, net := range metrics.Network.Interfaces {
-			totalSpeed += net.RecvRate
-		}
-		value = totalSpeed
+		value = metrics.Network.RecvRate / (1024 * 1024) // 转换为MB/s
 	case alert.RuleTypeNetOutSpeed:
-		// 计算所有网卡的总出站速率
-		var totalSpeed float64
+		value = metrics.Network.SendRate / (1024 * 1024) // 转换为MB/s
+	case alert.RuleTypeNetCardInSpeed:
+		// 遍历所有网卡，找到入站速率最高的
+		var maxRecvRate float64
 		for _, net := range metrics.Network.Interfaces {
-			totalSpeed += net.SendRate
+			if net.RecvRate > maxRecvRate {
+				maxRecvRate = net.RecvRate
+			}
 		}
-		value = totalSpeed
+		value = maxRecvRate / (1024 * 1024) // 转换为MB/s
+	case alert.RuleTypeNetCardOutSpeed:
+		// 遍历所有网卡，找到出站速率最高的
+		var maxSendRate float64
+		for _, net := range metrics.Network.Interfaces {
+			if net.SendRate > maxSendRate {
+				maxSendRate = net.SendRate
+			}
+		}
+		value = maxSendRate / (1024 * 1024) // 转换为MB/s
+	case alert.RuleTypeNetCardStatus:
+		// 检查是否有活跃的网卡
+		if len(metrics.Network.Interfaces) > 0 {
+			value = 1 // 有网卡在线
+		} else {
+			value = 0 // 无网卡在线
+		}
+
 	default:
 		return 0, fmt.Errorf("不支持的规则类型: %s", ruleType)
 	}
 	return value, nil
 }
 
-// checkDuration 检查告警持续时间
-func (s *AlertService) checkDuration(ruleKey string, duration uint64) bool {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	// 如果是首次触发，记录开始时间
-	if _, exists := s.triggerCount[ruleKey]; !exists {
-		s.triggerStartTime[ruleKey] = time.Now()
-		s.triggerCount[ruleKey] = 1
-		log.Printf("首次触发告警规则: %s, 开始计数", ruleKey)
-		return false
-	}
-
-	// 检查是否达到持续时间
-	elapsedDuration := time.Since(s.triggerStartTime[ruleKey])
-	isDurationMet := elapsedDuration.Seconds() >= float64(duration)
-
-	if !isDurationMet {
-		// 增加计数
-		s.triggerCount[ruleKey]++
-		log.Printf("告警持续时间检查: 规则=%s, 已持续=%.2f秒, 需要持续=%d秒",
-			ruleKey, elapsedDuration.Seconds(), duration)
-	}
-
-	return isDurationMet
-
-}
-
-// resetTriggerCount 重置触发计数器
-func (s *AlertService) resetTriggerCount(ruleKey string) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	delete(s.triggerCount, ruleKey)
-	delete(s.triggerStartTime, ruleKey)
-	log.Printf("重置告警计数器: %s", ruleKey)
-}
-
-// resolveAlert 解除告警状态并发送恢复通知
-func (s *AlertService) resolveAlert(ruleID uint64, hostID uint64, ruleType string) error {
-	tx := global.DB.Debug()
-
-	// 查找处于告警状态的记录
+// createOrUpdateAlert 创建或更新告警记录
+func (s *AlertService) createOrUpdateAlert(tx *gorm.DB, rule *alert.AlertRule, hostID uint64, value float64) error {
 	var record alert.AlertRecord
+	tx = tx.Debug()
 	err := tx.Where("rule_id = ? AND host_id = ? AND status = ?",
-		ruleID, hostID, alert.AlertStatusAlerting).
+		rule.ID, hostID, alert.AlertStatusAlerting).
 		First(&record).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil // 没有需要解除的告警
+			// 创建新的告警记录
+			now := time.Now()
+			record = alert.AlertRecord{
+				RuleID:      rule.ID,
+				HostID:      hostID,
+				Status:      alert.AlertStatusAlerting,
+				Value:       value,
+				StartTime:   now,
+				Description: fmt.Sprintf("触发告警：%s，当前值：%.2f", rule.Name, value),
+			}
+			if err := tx.Create(&record).Error; err != nil {
+				return err
+			}
+
+			// 发送告警通知
+			if err := WebhookNotification(uint(rule.ID), uint(hostID), value, NotificationTypeAlert, now); err != nil {
+				log.Printf("发送告警通知失败: %v", err)
+			}
+			return nil
 		}
-		return fmt.Errorf("查询告警记录失败: %v", err)
+		return err
 	}
 
-	// 更新告警状态为已恢复
-	record.Status = alert.AlertStatusResolved
-	endTime := time.Now()
-	record.EndTime = &endTime
-	if err := tx.Save(&record).Error; err != nil {
-		return fmt.Errorf("更新告警记录失败: %v", err)
-	}
-
-	// 获取告警规则详情用于通知
-	var rule alert.AlertRule
-	if err := tx.First(&rule, ruleID).Error; err != nil {
-		return fmt.Errorf("获取告警规则失败: %v", err)
-	}
-
-	// 如果配置了通知组，发送恢复通知
-	if rule.NotificationGroupID > 0 {
-		// TODO: 调用通知服务发送恢复通知
-		log.Printf("发送告警恢复通知: 规则=%s, 主机ID=%d, 通知组ID=%d",
-			rule.Name, hostID, rule.NotificationGroupID)
-	}
-
-	return nil
-}
-
-// contains 检查切片中是否包含指定值
-func contains(slice []uint64, item uint64) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
+	// 更新现有记录
+	now := time.Now()
+	record.Value = value
+	record.UpdatedAt = now
+	record.Description = fmt.Sprintf("触发告警：%s，当前值：%.2f", rule.Name, value)
+	return tx.Save(&record).Error
 }
