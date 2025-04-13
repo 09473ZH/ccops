@@ -104,11 +104,11 @@ func (s *AlertService) CheckMetrics(metrics *monitor.MetricPoint) error {
 		ruleKey := fmt.Sprintf("%d_%d", rule.ID, metrics.HostID)
 
 		if triggered {
-			log.Printf("规则 %d 被触发", rule.ID)
+
 			// 检查持续时间
 			if rule.Duration > 0 {
 				if !GetStateManager().CheckDuration(ruleKey, uint64(rule.Duration), value) {
-					log.Printf("未达到持续时间要求，继续观察")
+
 					continue
 				}
 			}

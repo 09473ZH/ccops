@@ -12,7 +12,7 @@ func (router RouterGroup) RulesRouter(rulesRouterGroup *gin.RouterGroup) {
 	rulesRouterGroup.Use(middleware.JwtUser())
 	// 告警规则基础操作
 	rulesRouterGroup.POST("", app.CreateAlertRule)                  // 创建告警规则
-	rulesRouterGroup.PUT("", app.UpdateAlertRule)                   // 更新告警规则
+	rulesRouterGroup.PUT("/:id", app.UpdateAlertRule)               // 更新告警规则
 	rulesRouterGroup.GET("", app.GetAlertRuleList)                  // 获取告警规则列表
 	rulesRouterGroup.GET("/:id", app.GetAlertRule)                  // 获取告警规则
 	rulesRouterGroup.DELETE("/:id", app.DeleteAlertRule)            // 删除告警规则

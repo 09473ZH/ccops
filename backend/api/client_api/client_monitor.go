@@ -47,10 +47,7 @@ func (ClientApi) ClientMetricsReceive(c *gin.Context) {
 	}
 
 	// 获取该主机的最新数据
-	latestData := global.TimeSeriesDB.GetLatest(metrics.HostID)
-	if latestData != nil {
-		fmt.Printf("\n[时序数据库] 最新数据点时间戳: %d\n", latestData.CollectedAt)
-	}
+	global.TimeSeriesDB.GetLatest(metrics.HostID)
 
 	// 获取该主机的所有数据并打印统计信息
 	global.TimeSeriesDB.GetAllData(metrics.HostID)

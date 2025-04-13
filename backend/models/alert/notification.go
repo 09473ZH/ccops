@@ -27,11 +27,10 @@ type NotificationRequest struct {
 
 	// UpdateNotification 更新通知请求
 	UpdateNotification struct {
-		ID         uint64 `json:"id" binding:"required"` // 通知ID
-		Name       string `json:"name"`                  // 通知名称
-		Message    string `json:"message"`               // 通知消息模板
-		Enabled    bool   `json:"enabled"`               // 是否启用
-		WebhookUrl string `json:"webhookUrl" `
+		Name       string `json:"name"`       // 通知名称
+		Message    string `json:"message"`    // 通知消息模板
+		Enabled    bool   `json:"enabled"`    // 是否启用
+		WebhookUrl string `json:"webhookUrl"` // 通知Webhook地址
 	}
 
 	// NotificationListQuery 通知列表查询参数

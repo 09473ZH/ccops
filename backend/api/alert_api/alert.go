@@ -16,15 +16,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// CreateAlertRule 创建告警规则
-// @Summary 创建告警规则
-// @Description 创建新的告警规则
-// @Tags 告警规则
-// @Accept json
-// @Produce json
-// @Param data body request.CreateAlertRule true "告警规则信息"
-// @Success 200 {object} res.Response
-// @Router /api/alert/rules [post]
 func (AlertApi) CreateAlertRule(c *gin.Context) {
 	var req request.CreateAlertRule
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -200,10 +191,12 @@ func (AlertApi) CreateAlertRule(c *gin.Context) {
 // @Tags 告警规则
 // @Accept json
 // @Produce json
+// @Param id path int true "规则ID"
 // @Param data body request.UpdateAlertRule true "告警规则信息"
 // @Success 200 {object} res.Response
-// @Router /api/alert/rules [put]
+// @Router /api/alert/rules/{id} [put]
 func (AlertApi) UpdateAlertRule(c *gin.Context) {
+	id := c.Param("id")
 	var req request.UpdateAlertRule
 	if err := c.ShouldBindJSON(&req); err != nil {
 		res.FailWithMessage("参数错误", c)
@@ -229,7 +222,7 @@ func (AlertApi) UpdateAlertRule(c *gin.Context) {
 
 	// 查找现有规则
 	var rule alert.AlertRule
-	if err := tx.First(&rule, req.ID).Error; err != nil {
+	if err := tx.First(&rule, id).Error; err != nil {
 		tx.Rollback()
 		res.FailWithMessage("告警规则不存在", c)
 		return

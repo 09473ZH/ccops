@@ -199,7 +199,6 @@ func ValidateRule(rule *AlertRule) error {
 
 // CheckRule 检查告警规则
 func (r *AlertRule) CheckRule(value float64) bool {
-	log.Printf("检查告警规则: 当前值=%.2f, 阈值=%.2f, 运算符=%s", value, r.Threshold, r.Operator)
 
 	var result bool
 	switch r.Operator {
@@ -218,6 +217,5 @@ func (r *AlertRule) CheckRule(value float64) bool {
 		return false
 	}
 
-	log.Printf("规则检查结果: %v", result)
 	return result
 }

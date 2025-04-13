@@ -198,10 +198,7 @@ func (db *TimeSeriesDB) GetLatest(hostID uint64) *MetricPoint {
 
 	lastIdx := (hostData.head - 1 + 17280) % 17280
 	point := hostData.points[lastIdx]
-	if point != nil {
-		fmt.Printf("[时序数据库] 获取最新数据: 主机ID=%d, 时间戳=%d\n",
-			hostID, point.CollectedAt)
-	}
+
 	return point
 }
 

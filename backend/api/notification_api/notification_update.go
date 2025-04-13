@@ -4,6 +4,7 @@ import (
 	"ccops/global"
 	"ccops/models/alert"
 	"ccops/models/res"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,19 +15,22 @@ import (
 // @Tags 通知配置
 // @Accept json
 // @Produce json
+// @Param id path int true "通知ID"
 // @Param data body alert.NotificationRequest.UpdateNotification true "通知配置信息"
 // @Success 200 {object} res.Response
-// @Router /api/notifications [put]
+// @Router /api/notifications/{id} [put]
 func (NotificationApi) UpdateNotification(c *gin.Context) {
+	id := c.Param("id")
 	var req alert.NotificationRequest
 	if err := c.ShouldBindJSON(&req.UpdateNotification); err != nil {
+		fmt.Println(err)
 		res.FailWithMessage("参数错误", c)
 		return
 	}
 
 	// 查找现有通知配置
 	var notification alert.Notification
-	if err := global.DB.First(&notification, req.UpdateNotification.ID).Error; err != nil {
+	if err := global.DB.First(&notification, id).Error; err != nil {
 		res.FailWithMessage("通知配置不存在", c)
 		return
 	}
@@ -37,6 +41,9 @@ func (NotificationApi) UpdateNotification(c *gin.Context) {
 	}
 	if req.UpdateNotification.Message != "" {
 		notification.Message = req.UpdateNotification.Message
+	}
+	if req.UpdateNotification.WebhookUrl != "" {
+		notification.WebhookUrl = req.UpdateNotification.WebhookUrl
 	}
 	notification.Enabled = req.UpdateNotification.Enabled
 
