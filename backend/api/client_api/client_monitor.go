@@ -18,6 +18,7 @@ func (ClientApi) ClientMetricsReceive(c *gin.Context) {
 	// 读取并打印请求体
 	bodyBytes, err := c.GetRawData()
 	if err != nil {
+		fmt.Printf("!")
 		res.FailWithMessage("读取请求体失败", c)
 		return
 	}
@@ -28,6 +29,7 @@ func (ClientApi) ClientMetricsReceive(c *gin.Context) {
 
 	var metrics monitor.MetricPoint
 	if err := c.ShouldBindJSON(&metrics); err != nil {
+		fmt.Printf(err.Error())
 		res.FailWithMessage("参数错误", c)
 		return
 	}
