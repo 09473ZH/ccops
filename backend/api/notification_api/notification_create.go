@@ -7,15 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CreateNotification 创建通知配置
-// @Summary 创建通知配置
-// @Description 创建新的通知配置
-// @Tags 通知配置
-// @Accept json
-// @Produce json
-// @Param data body alert.NotificationRequest.CreateNotification true "通知配置信息"
-// @Success 200 {object} res.Response
-// @Router /api/notifications [post]
 func (NotificationApi) CreateNotification(c *gin.Context) {
 	var req alert.NotificationRequest
 	if err := c.ShouldBindJSON(&req.CreateNotification); err != nil {

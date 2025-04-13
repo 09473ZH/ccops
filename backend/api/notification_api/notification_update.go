@@ -9,16 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// UpdateNotification 更新通知配置
-// @Summary 更新通知配置
-// @Description 更新现有的通知配置
-// @Tags 通知配置
-// @Accept json
-// @Produce json
-// @Param id path int true "通知ID"
-// @Param data body alert.NotificationRequest.UpdateNotification true "通知配置信息"
-// @Success 200 {object} res.Response
-// @Router /api/notifications/{id} [put]
 func (NotificationApi) UpdateNotification(c *gin.Context) {
 	id := c.Param("id")
 	var req alert.NotificationRequest

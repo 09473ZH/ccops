@@ -8,18 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetNotificationList 获取通知配置列表
-// @Summary 获取通知配置列表
-// @Description 获取通知配置列表，支持分页和筛选
-// @Tags 通知配置
-// @Accept json
-// @Produce json
-// @Param page query int true "页码"
-// @Param limit query int true "每页数量"
-// @Param name query string false "通知名称"
-// @Param enabled query bool false "是否启用"
-// @Success 200 {object} alert.NotificationList
-// @Router /api/notifications [get]
 func (NotificationApi) GetNotificationList(c *gin.Context) {
 	var query alert.NotificationRequest
 	if err := c.ShouldBindQuery(&query.NotificationListQuery); err != nil {

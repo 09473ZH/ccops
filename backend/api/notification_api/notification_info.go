@@ -8,15 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetNotification 获取通知配置详情
-// @Summary 获取通知配置详情
-// @Description 获取指定通知配置的详细信息
-// @Tags 通知配置
-// @Accept json
-// @Produce json
-// @Param id path int true "通知ID"
-// @Success 200 {object} alert.NotificationInfo
-// @Router /api/notifications/{id} [get]
 func (NotificationApi) GetNotification(c *gin.Context) {
 	id := c.Param("id")
 

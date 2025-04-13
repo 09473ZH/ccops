@@ -8,15 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// DeleteNotification 删除通知配置
-// @Summary 删除通知配置
-// @Description 删除指定的通知配置
-// @Tags 通知配置
-// @Accept json
-// @Produce json
-// @Param id path int true "通知ID"
-// @Success 200 {object} res.Response
-// @Router /api/notifications/{id} [delete]
 func (NotificationApi) DeleteNotification(c *gin.Context) {
 	id := c.Param("id")
 

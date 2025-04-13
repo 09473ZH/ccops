@@ -185,16 +185,6 @@ func (AlertApi) CreateAlertRule(c *gin.Context) {
 	res.OkWithMessage("创建成功", c)
 }
 
-// UpdateAlertRule 更新告警规则
-// @Summary 更新告警规则
-// @Description 更新现有的告警规则
-// @Tags 告警规则
-// @Accept json
-// @Produce json
-// @Param id path int true "规则ID"
-// @Param data body request.UpdateAlertRule true "告警规则信息"
-// @Success 200 {object} res.Response
-// @Router /api/alert/rules/{id} [put]
 func (AlertApi) UpdateAlertRule(c *gin.Context) {
 	id := c.Param("id")
 	var req request.UpdateAlertRule
@@ -392,15 +382,6 @@ func (AlertApi) UpdateAlertRule(c *gin.Context) {
 	res.OkWithMessage("更新成功", c)
 }
 
-// DeleteAlertRule 删除告警规则
-// @Summary 删除告警规则
-// @Description 删除指定的告警规则
-// @Tags 告警规则
-// @Accept json
-// @Produce json
-// @Param id path int true "规则ID"
-// @Success 200 {object} res.Response
-// @Router /api/alert/rules/{id} [delete]
 func (AlertApi) DeleteAlertRule(c *gin.Context) {
 	id := c.Param("id")
 
@@ -437,15 +418,6 @@ func (AlertApi) DeleteAlertRule(c *gin.Context) {
 	res.OkWithMessage("删除成功", c)
 }
 
-// GetAlertRule 获取告警规则详情
-// @Summary 获取告警规则详情
-// @Description 获取指定告警规则的详细信息
-// @Tags 告警规则
-// @Accept json
-// @Produce json
-// @Param id path int true "规则ID"
-// @Success 200 {object} response.AlertRuleInfo
-// @Router /api/alert/rules/{id} [get]
 func (AlertApi) GetAlertRule(c *gin.Context) {
 	id := c.Param("id")
 
@@ -567,20 +539,6 @@ func (AlertApi) GetAlertRule(c *gin.Context) {
 	res.OkWithData(info, c)
 }
 
-// GetAlertRuleList 获取告警规则列表
-// @Summary 获取告警规则列表
-// @Description 获取告警规则列表，支持分页和筛选
-// @Tags 告警规则
-// @Accept json
-// @Produce json
-// @Param page query int true "页码"
-// @Param limit query int true "每页数量"
-// @Param name query string false "规则名称"
-// @Param enabled query bool false "是否启用"
-// @Param priority query string false "告警等级"
-// @Param type query string false "规则类型"
-// @Success 200 {object} response.AlertRuleList
-// @Router /api/alert/rules [get]
 func (AlertApi) GetAlertRuleList(c *gin.Context) {
 	var query request.AlertRuleListQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -736,21 +694,6 @@ func (AlertApi) GetAlertRuleList(c *gin.Context) {
 	}, c)
 }
 
-// GetAlertRecordList 获取告警记录列表
-// @Summary 获取告警记录列表
-// @Description 获取告警记录列表，支持分页和条件筛选
-// @Tags 告警记录
-// @Accept json
-// @Produce json
-// @Param page query int true "页码"
-// @Param limit query int true "每页数量"
-// @Param status query int false "状态: 1-告警中, 2-已恢复"
-// @Param ruleId query int false "规则ID"
-// @Param hostId query int false "主机ID"
-// @Param startTime query string false "开始时间"
-// @Param endTime query string false "结束时间"
-// @Success 200 {object} response.AlertRecordList
-// @Router /api/alert/records [get]
 func (AlertApi) GetAlertRecordList(c *gin.Context) {
 	var query request.AlertRecordListQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -908,19 +851,6 @@ func (AlertApi) GetAlertRecordList(c *gin.Context) {
 	}, c)
 }
 
-// GetAlertStatistics 获取告警统计信息
-// @Summary 获取告警统计信息
-// @Description 获取告警统计信息，包括各类告警数量、不同优先级告警数量等
-// @Tags 告警记录
-// @Accept json
-// @Produce json
-// @Param status query int false "状态: 1-告警中, 2-已恢复"
-// @Param ruleId query int false "规则ID"
-// @Param hostId query int false "主机ID"
-// @Param startTime query string false "开始时间"
-// @Param endTime query string false "结束时间"
-// @Success 200 {object} response.AlertStatistics
-// @Router /api/alert/statistics [get]
 func (AlertApi) GetAlertStatistics(c *gin.Context) {
 	var query request.AlertRecordListQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -1033,14 +963,6 @@ func (AlertApi) GetAlertStatistics(c *gin.Context) {
 	res.OkWithData(stats, c)
 }
 
-// GetActiveAlerts 获取当前活跃的告警
-// @Summary 获取当前活跃的告警
-// @Description 获取所有未解决的告警记录
-// @Tags 告警记录
-// @Accept json
-// @Produce json
-// @Success 200 {array} response.AlertRecordInfo
-// @Router /api/alert/records/active [get]
 func (AlertApi) GetActiveAlerts(c *gin.Context) {
 	var records []alert.AlertRecord
 	if err := global.DB.Where("status = ?", alert.AlertStatusAlerting).
@@ -1105,17 +1027,9 @@ func (AlertApi) GetActiveAlerts(c *gin.Context) {
 		}
 	}
 
-	res.OkWithData(list, c)
+	res.OkWithList(list, int64(len(list)), c)
 }
 
-// GetAlertAggregation 获取告警聚合信息
-// @Summary 获取告警聚合信息
-// @Description 获取按规则聚合的告警信息，包括每个规则当前触发的主机数等
-// @Tags 告警记录
-// @Accept json
-// @Produce json
-// @Success 200 {object} response.AlertAggregationList
-// @Router /api/alert/records/aggregation [get]
 func (AlertApi) GetAlertAggregation(c *gin.Context) {
 	// 1. 查询所有处于告警状态的记录，按规则分组
 	type Result struct {
@@ -1188,14 +1102,6 @@ func (AlertApi) GetAlertAggregation(c *gin.Context) {
 	}, c)
 }
 
-// GetMetricTypeList 获取可用的指标类型列表
-// @Summary 获取可用的指标类型列表
-// @Description 获取所有可用的监控指标类型
-// @Tags 告警规则
-// @Accept json
-// @Produce json
-// @Success 200 {object} response.MetricTypeList
-// @Router /api/alert/metrics [get]
 func (AlertApi) GetMetricTypeList(c *gin.Context) {
 	metricTypes := []response.MetricTypeInfo{
 		{Type: "cpu", Name: "CPU使用率"},
