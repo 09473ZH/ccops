@@ -645,6 +645,96 @@ func (AlertApi) GetAlertRuleList(c *gin.Context) {
 			CreatedAt:      rule.CreatedAt,
 			UpdatedAt:      rule.UpdatedAt,
 		}
+
+		// 查询规则目标
+		var targets []alert.AlertRuleTarget
+		if err := global.DB.Where("alert_rule_id = ?", rule.ID).Find(&targets).Error; err != nil {
+			res.FailWithMessage("获取规则目标失败", c)
+			return
+		}
+
+		// 收集所有主机和标签ID
+		hostIDs := make([]uint64, 0)
+		labelIDs := make([]uint64, 0)
+		for _, target := range targets {
+			if target.TargetType == alert.TargetTypeHost {
+				hostIDs = append(hostIDs, target.TargetID)
+			} else {
+				labelIDs = append(labelIDs, target.TargetID)
+			}
+		}
+
+		// 查询主机信息
+		if len(hostIDs) > 0 {
+			var hosts []struct {
+				ID   uint64 `gorm:"column:id"`
+				Name string `gorm:"column:name"`
+			}
+			if err := global.DB.Table("host_models").
+				Select("id, name").
+				Where("id IN ?", hostIDs).
+				Find(&hosts).Error; err != nil {
+				res.FailWithMessage("获取主机信息失败", c)
+				return
+			}
+
+			// 构建主机ID到名称的映射
+			hostMap := make(map[uint64]string)
+			for _, host := range hosts {
+				hostMap[host.ID] = host.Name
+			}
+
+			// 分类主机到黑白名单
+			for _, target := range targets {
+				if target.TargetType == alert.TargetTypeHost {
+					targetInfo := response.TargetInfo{
+						ID:   target.TargetID,
+						Name: hostMap[target.TargetID],
+					}
+					if target.Excluded {
+						list[i].BlacklistHosts = append(list[i].BlacklistHosts, targetInfo)
+					} else {
+						list[i].WhitelistHosts = append(list[i].WhitelistHosts, targetInfo)
+					}
+				}
+			}
+		}
+
+		// 查询标签信息
+		if len(labelIDs) > 0 {
+			var labels []struct {
+				ID   uint64 `gorm:"column:id"`
+				Name string `gorm:"column:name"`
+			}
+			if err := global.DB.Table("label_models").
+				Select("id, name").
+				Where("id IN ?", labelIDs).
+				Find(&labels).Error; err != nil {
+				res.FailWithMessage("获取标签信息失败", c)
+				return
+			}
+
+			// 构建标签ID到名称的映射
+			labelMap := make(map[uint64]string)
+			for _, label := range labels {
+				labelMap[label.ID] = label.Name
+			}
+
+			// 分类标签到黑白名单
+			for _, target := range targets {
+				if target.TargetType == alert.TargetTypeLabel {
+					targetInfo := response.TargetInfo{
+						ID:   target.TargetID,
+						Name: labelMap[target.TargetID],
+					}
+					if target.Excluded {
+						list[i].BlacklistLabels = append(list[i].BlacklistLabels, targetInfo)
+					} else {
+						list[i].WhitelistLabels = append(list[i].WhitelistLabels, targetInfo)
+					}
+				}
+			}
+		}
 	}
 
 	res.OkWithData(response.AlertRuleList{
