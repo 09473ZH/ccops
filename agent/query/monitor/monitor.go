@@ -4,7 +4,6 @@ import (
 	"agent/query/monitor/collectors"
 	"agent/query/monitor/config"
 	"agent/query/monitor/models"
-	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -19,31 +18,41 @@ import (
 
 // NetworkCalculator 网络速率计算器
 type NetworkCalculator struct {
-	prevStats map[string]*models.InterfaceStats
-	prevTime  time.Time
-	mutex     sync.Mutex
+	prevStats       map[string]*models.InterfaceStats
+	prevTime        time.Time
+	collectInterval time.Duration // 添加固定采集间隔
+	mutex           sync.Mutex
 }
 
 // DiskIOCalculator 磁盘IO速率计算器
 type DiskIOCalculator struct {
-	prevReadBytes  uint64
-	prevWriteBytes uint64
-	prevTime       time.Time
-	mutex          sync.Mutex
+	prevReadBytes   float64
+	prevWriteBytes  float64
+	prevTime        time.Time
+	prevReadRate    float64
+	prevWriteRate   float64
+	collectInterval time.Duration // 采集间隔
+	mutex           sync.Mutex
 }
+
+const (
+	maxDiskRateThreshold = 10 * 1024 * 1024 * 1024 // 10 GB/s，最大合理速率
+)
 
 // NewNetworkCalculator 创建新的网络速率计算器
 func NewNetworkCalculator() *NetworkCalculator {
 	return &NetworkCalculator{
-		prevStats: make(map[string]*models.InterfaceStats),
-		prevTime:  time.Now(),
+		prevStats:       make(map[string]*models.InterfaceStats),
+		prevTime:        time.Now(),
+		collectInterval: 5 * time.Second, // 设置固定采集间隔
 	}
 }
 
 // NewDiskIOCalculator 创建新的磁盘IO速率计算器
 func NewDiskIOCalculator() *DiskIOCalculator {
 	return &DiskIOCalculator{
-		prevTime: time.Now(),
+		prevTime:        time.Now(),
+		collectInterval: 5 * time.Second, // 设置固定采集间隔
 	}
 }
 
@@ -53,15 +62,34 @@ func (nc *NetworkCalculator) CalculateNetworkRates(current *models.InterfaceStat
 	defer nc.mutex.Unlock()
 
 	if prev, exists := nc.prevStats[current.Name]; exists {
-		duration := time.Since(nc.prevTime).Seconds()
-		if duration > 0 {
-			// 计算字节速率
-			if current.TotalRecvBytes >= prev.TotalRecvBytes {
-				current.RecvRate = float64(current.TotalRecvBytes-prev.TotalRecvBytes) / duration
-			}
-			if current.TotalSentBytes >= prev.TotalSentBytes {
-				current.SendRate = float64(current.TotalSentBytes-prev.TotalSentBytes) / duration
-			}
+		interval := nc.collectInterval.Seconds() // 使用固定间隔
+
+		// 首次采集，只记录基准值
+		if prev.TotalRecvBytes == 0 && prev.TotalSentBytes == 0 {
+			clone := *current
+			nc.prevStats[current.Name] = &clone
+			nc.prevTime = time.Now()
+			return
+		}
+
+		// 计算接收速率
+		if current.TotalRecvBytes >= prev.TotalRecvBytes {
+			current.RecvRate = float64(current.TotalRecvBytes-prev.TotalRecvBytes) / interval
+			// 保留两位小数
+			current.RecvRate = float64(int64(current.RecvRate*100)) / 100
+		} else {
+			// 计数器重置，保持上次速率
+			current.RecvRate = prev.RecvRate
+		}
+
+		// 计算发送速率
+		if current.TotalSentBytes >= prev.TotalSentBytes {
+			current.SendRate = float64(current.TotalSentBytes-prev.TotalSentBytes) / interval
+			// 保留两位小数
+			current.SendRate = float64(int64(current.SendRate*100)) / 100
+		} else {
+			// 计数器重置，保持上次速率
+			current.SendRate = prev.SendRate
 		}
 	}
 
@@ -72,25 +100,45 @@ func (nc *NetworkCalculator) CalculateNetworkRates(current *models.InterfaceStat
 }
 
 // CalculateDiskRates 计算磁盘IO速率
-func (dc *DiskIOCalculator) CalculateDiskRates(readBytes, writeBytes uint64) (float64, float64) {
+func (dc *DiskIOCalculator) CalculateDiskRates(readBytes float64, writeBytes float64) (float64, float64) {
 	dc.mutex.Lock()
 	defer dc.mutex.Unlock()
 
 	var readRate, writeRate float64
-	duration := time.Since(dc.prevTime).Seconds()
+	interval := dc.collectInterval.Seconds() // 使用固定的采集间隔
 
-	if duration > 0 {
-		if readBytes >= dc.prevReadBytes {
-			readRate = float64(readBytes-dc.prevReadBytes) / duration
-		}
-		if writeBytes >= dc.prevWriteBytes {
-			writeRate = float64(writeBytes-dc.prevWriteBytes) / duration
-		}
+	// 首次采集，记录基准值
+	if dc.prevReadBytes == 0 && dc.prevWriteBytes == 0 {
+		dc.prevReadBytes = readBytes
+		dc.prevWriteBytes = writeBytes
+		dc.prevTime = time.Now()
+		return 0, 0
+	}
+
+	// 计算速率
+	if readBytes >= dc.prevReadBytes {
+		readRate = (readBytes - dc.prevReadBytes) / interval
+	} else {
+		// 计数器重置，这次就不计算速率
+		readRate = dc.prevReadRate
+		log.Printf("检测到读取计数器重置: 当前值=%.2fGB, 前值=%.2fGB",
+			readBytes/(1024*1024*1024), dc.prevReadBytes/(1024*1024*1024))
+	}
+
+	if writeBytes >= dc.prevWriteBytes {
+		writeRate = (writeBytes - dc.prevWriteBytes) / interval
+	} else {
+		// 计数器重置，这次就不计算速率
+		writeRate = dc.prevWriteRate
+		log.Printf("检测到写入计数器重置: 当前值=%.2fGB, 前值=%.2fGB",
+			writeBytes/(1024*1024*1024), dc.prevWriteBytes/(1024*1024*1024))
 	}
 
 	// 保存当前状态
 	dc.prevReadBytes = readBytes
 	dc.prevWriteBytes = writeBytes
+	dc.prevReadRate = readRate
+	dc.prevWriteRate = writeRate
 	dc.prevTime = time.Now()
 
 	return readRate, writeRate
@@ -109,7 +157,7 @@ func CollectMetrics() (*models.SystemMetrics, error) {
 	}
 
 	// 采集 CPU 信息
-	if cpuPercent, err := cpu.Percent(0, false); err == nil && len(cpuPercent) > 0 {
+	if cpuPercent, err := cpu.Percent(time.Second, false); err == nil && len(cpuPercent) > 0 {
 		metrics.CPU.UsagePercent = cpuPercent[0]
 	}
 	if loadAvg, err := load.Avg(); err == nil {
@@ -143,15 +191,24 @@ func CollectMetrics() (*models.SystemMetrics, error) {
 		// 获取磁盘IO统计
 		if diskIO, err := disk.IOCounters(); err == nil {
 			for _, io := range diskIO {
-				metrics.Disk.ReadRate = io.ReadBytes
-				metrics.Disk.WriteRate = io.WriteBytes
+				// 计算IO速率
+				readRate, writeRate := diskIOCalculator.CalculateDiskRates(float64(io.ReadBytes), float64(io.WriteBytes))
+				metrics.Disk.ReadRate = readRate
+				metrics.Disk.WriteRate = writeRate
+
+				// 打印调试信息
+				log.Printf("磁盘IO统计 - 设备: %s", io.Name)
+				log.Printf("  总读取字节: %.2f GB", float64(io.ReadBytes)/(1024*1024*1024))
+				log.Printf("  总写入字节: %.2f GB", float64(io.WriteBytes)/(1024*1024*1024))
+				log.Printf("  读取速率: %.2f MB/s", readRate/(1024*1024))
+				log.Printf("  写入速率: %.2f MB/s", writeRate/(1024*1024))
 				break // 只取第一个磁盘的IO数据
 			}
 		}
 
 		metrics.Disk.AvailableBytes = float64(usage.Free)
 		metrics.Disk.TotalBytes = float64(usage.Total)
-		metrics.Disk.UsagePercent = fmt.Sprintf("%.0f", usage.UsedPercent)
+		metrics.Disk.UsagePercent = usage.UsedPercent
 		metrics.Disk.Volumes = []models.DiskUsage{diskUsage}
 	}
 
@@ -301,16 +358,23 @@ func (m *Monitor) CollectMetrics() (*models.SystemMetrics, error) {
 			if diskIO, err := disk.IOCounters(); err == nil {
 				for _, io := range diskIO {
 					// 计算IO速率
-					readRate, writeRate := diskIOCalculator.CalculateDiskRates(io.ReadBytes, io.WriteBytes)
-					metrics.Disk.ReadRate = uint64(readRate)
-					metrics.Disk.WriteRate = uint64(writeRate)
+					readRate, writeRate := diskIOCalculator.CalculateDiskRates(float64(io.ReadBytes), float64(io.WriteBytes))
+					metrics.Disk.ReadRate = readRate
+					metrics.Disk.WriteRate = writeRate
+
+					// 打印调试信息
+					log.Printf("磁盘IO统计 - 设备: %s", io.Name)
+					log.Printf("  总读取字节: %.2f GB", float64(io.ReadBytes)/(1024*1024*1024))
+					log.Printf("  总写入字节: %.2f GB", float64(io.WriteBytes)/(1024*1024*1024))
+					log.Printf("  读取速率: %.2f MB/s", readRate/(1024*1024))
+					log.Printf("  写入速率: %.2f MB/s", writeRate/(1024*1024))
 					break // 只取第一个磁盘的IO数据
 				}
 			}
 
-			metrics.Disk.AvailableBytes = float64(usage.Free) / (1024 * 1024 * 1024)
-			metrics.Disk.TotalBytes = float64(usage.Total) / (1024 * 1024 * 1024)
-			metrics.Disk.UsagePercent = fmt.Sprintf("%.0f", usage.UsedPercent)
+			metrics.Disk.AvailableBytes = float64(usage.Free)
+			metrics.Disk.TotalBytes = float64(usage.Total)
+			metrics.Disk.UsagePercent = usage.UsedPercent
 			metrics.Disk.Volumes = []models.DiskUsage{diskUsage}
 		}
 	}
