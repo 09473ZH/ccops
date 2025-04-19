@@ -6,7 +6,7 @@ import Wrapper from './wrapper';
 
 import { AppRouteObject } from '#/router';
 
-const DashboardPage = lazy(() => import('@/pages/dashboard'));
+const DashboardPage = lazy(() => import('@/pages/Dashboard'));
 
 const dashboard: AppRouteObject[] = [
   {
