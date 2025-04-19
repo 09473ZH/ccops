@@ -54,6 +54,7 @@ export default defineConfig(({ mode }) => {
           name: process.env.npm_package_version,
           setCommits: {
             auto: true,
+            ignoreMissing: true,
           },
         },
       }),
