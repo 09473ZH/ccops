@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	Version = "0.0.1-alpha3"
+	Version = "0.0.1-alpha4"
 )
 
 func GetAgentVersion() string {
