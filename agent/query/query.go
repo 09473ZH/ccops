@@ -170,6 +170,17 @@ func QuerySoftwareList() (QueryResponse, error) {
 	return info, nil
 }
 
+// getStringFromMap 是一个辅助函数，用于安全地从 map[string]interface{} 中获取字符串值
+// 如果键不存在、值为 nil 或类型不是 string，则返回 defaultValue
+func getStringFromMap(data map[string]interface{}, key string, defaultValue string) string {
+	if v, ok := data[key]; ok && v != nil {
+		if strVal, ok := v.(string); ok {
+			return strVal
+		}
+	}
+	return defaultValue
+}
+
 func GetPublicIPInfo() (map[string]string, error) {
 	cmd := exec.Command("curl", "-m", "5", "ipinfo.io")
 	var out bytes.Buffer
@@ -190,30 +201,13 @@ func GetPublicIPInfo() (map[string]string, error) {
 	}
 
 	publicIPInfo := make(map[string]string)
+	defaultValue := "unknown" // 定义默认值
 
-	if ip, ok := result["ip"].(string); ok {
-		publicIPInfo["ip"] = ip
-	} else {
-		publicIPInfo["ip"] = "unknown"
-	}
-
-	if city, ok := result["city"].(string); ok {
-		publicIPInfo["city"] = city
-	} else {
-		publicIPInfo["city"] = "unknown"
-	}
-
-	if country, ok := result["country"].(string); ok {
-		publicIPInfo["country"] = country
-	} else {
-		publicIPInfo["country"] = "unknown"
-	}
-
-	if org, ok := result["org"].(string); ok {
-		publicIPInfo["org"] = org
-	} else {
-		publicIPInfo["org"] = "unknown"
-	}
+	// 使用辅助函数获取各个字段的值
+	publicIPInfo["ip"] = getStringFromMap(result, "ip", defaultValue)
+	publicIPInfo["city"] = getStringFromMap(result, "city", defaultValue)
+	publicIPInfo["country"] = getStringFromMap(result, "country", defaultValue)
+	publicIPInfo["org"] = getStringFromMap(result, "org", defaultValue)
 
 	return publicIPInfo, nil
 }
