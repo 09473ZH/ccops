@@ -28,13 +28,13 @@ func (p *program) Start(s service.Service) error {
 }
 
 func (p *program) run() {
-	log.Println("服务运行，延时 1 秒运行，等待网络")
+	log.Println("Service running, delaying 1 second to wait for network")
 	time.Sleep(1 * time.Second)
 
 	clglobal.Address = server
 	err := request.SendHostInfoRequest()
 	if err != nil {
-		log.Panic("查询主机信息时出错: %v", err)
+		log.Panicf("Error querying host info: %v", err)
 	}
 	request.CheckAndUpdatePublicKey() // 检查并更新公钥
 
@@ -55,33 +55,33 @@ func runAction(s service.Service) {
 		// 检查服务是否存在
 		_, err := s.Status()
 		if err == nil {
-			log.Println("检测到现有服务，正在卸载...")
+			log.Println("Existing service detected, uninstalling...")
 			err = s.Stop()
 			if err != nil {
-				log.Println("停止服务时出错:", err)
+				log.Println("Error stopping service:", err)
 			}
 			err = s.Uninstall()
 			if err != nil {
-				log.Println("卸载服务时出错:", err)
+				log.Println("Error uninstalling service:", err)
 			} else {
-				log.Println("现有服务已成功卸载")
+				log.Println("Existing service uninstalled successfully.")
 			}
 		}
 
 		// 然后重新安装服务
 		err = s.Install()
 		if err != nil {
-			log.Println("安装服务时出错:", err)
+			log.Println("Error installing service:", err)
 			return
 		}
-		log.Println("服务安装成功。正在启动服务...")
+		log.Println("Service installed successfully. Starting service...")
 		err = s.Start()
 		if err != nil {
-			log.Println("启动服务时出错:", err)
+			log.Println("Error starting service:", err)
 			return
 		}
 
-		log.Println("服务启动成功。")
+		log.Println("Service started successfully.")
 	case "uninstall":
 		err := s.Stop()
 		if err != nil {
@@ -108,7 +108,7 @@ func runAction(s service.Service) {
 func main() {
 	flag.Parse()
 	if *version {
-		log.Println("ccagent version：", query.GetAgentVersion())
+		log.Println("ccagent version:", query.GetAgentVersion())
 		return
 	}
 	if *action != "uninstall" {
@@ -116,7 +116,7 @@ func main() {
 			log.Println("Server address is required. Use -server <address>, like -server http://ccops.corgi.plus")
 			return
 		} else {
-			log.Println("服务端地址是：", *server)
+			log.Println("Server address is:", *server)
 		}
 	}
 
