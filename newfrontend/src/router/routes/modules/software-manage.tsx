@@ -22,6 +22,7 @@ const softwareManage: AppRouteObject[] = [
       label: 'sys.menu.software_manage',
       icon: <Iconify icon="solar:card-bold-duotone" size={24} />,
       key: '/software_manage',
+      hideMenu: true, // 暂时隐藏
     },
   },
   {

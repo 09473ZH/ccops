@@ -27,6 +27,7 @@ const fileManage: AppRouteObject[] = [
         />
       ),
       key: '/file_manage',
+      hideMenu: true, // 暂时隐藏
     },
   },
 ];

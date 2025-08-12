@@ -21,6 +21,7 @@ const taskManage: AppRouteObject[] = [
       label: 'sys.menu.task_manage',
       icon: <Iconify icon="solar:checklist-minimalistic-bold-duotone" size={24} />,
       key: '/task_manage',
+      hideMenu: true, // 暂时隐藏
     },
   },
 ];

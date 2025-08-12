@@ -8,7 +8,7 @@ import { AppRouteObject, RouteMeta } from '#/router';
 export const menuFilter = (items: AppRouteObject[]) => {
   return items
     .filter((item) => {
-      const show = item.meta?.key;
+      const show = item.meta?.key && !item.meta?.hideMenu;
       if (show && item.children) {
         item.children = menuFilter(item.children);
       }

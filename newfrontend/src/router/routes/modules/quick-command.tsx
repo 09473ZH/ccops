@@ -23,6 +23,7 @@ const quickCommand: AppRouteObject[] = [
         <Iconify className="ant-menu-item-icon" icon="solar:bolt-circle-bold-duotone" size={24} />
       ),
       key: '/quick_command',
+      hideMenu: true, // 暂时隐藏
     },
   },
 ];
