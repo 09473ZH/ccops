@@ -1,0 +1,39 @@
+{
+  "quick-command": {
+    "auto-scroll": "自动滚动",
+    "clear": "清空",
+    "duration": {
+      "title": "执行时间",
+      "unit": "秒"
+    },
+    "execute": {
+      "error": "命令执行失败",
+      "title": "执行"
+    },
+    "manual-scroll": "手动滚动",
+    "output": {
+      "empty": "暂无输出",
+      "title": "执行输出"
+    },
+    "select-host": {
+      "host": "主机",
+      "host-placeholder": "请选择主机",
+      "enable-label-filter": "按标签筛选主机",
+      "host-tooltip": "可直接选择单个主机，已通过标签选中的主机将不会显示",
+      "label": "标签",
+      "label-placeholder": "请选择标签",
+      "label-tooltip": "选择标签后将自动选中该标签下的所有主机",
+      "no-available-hosts": "所选标签已包含所有主机",
+      "select-by-host": "按主机选择",
+      "select-by-label": "按标签选择",
+      "title": "选择主机"
+    },
+    "status": {
+      "ended": "已完成",
+      "pending": "等待执行",
+      "running": "执行中",
+      "title": "状态"
+    },
+    "title": "快捷命令"
+  }
+}

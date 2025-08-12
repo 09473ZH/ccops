@@ -1,0 +1,18 @@
+{
+  "python.defaultInterpreterPath": "./server/.venv/bin/python",
+  "python.formatting.provider": "black",
+  "python.sortImports.provider": "isort",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  },
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
+  },
+  "python.linting.enabled": true,
+  "python.linting.flake8Enabled": true,
+  "python.linting.mypyEnabled": true
+}

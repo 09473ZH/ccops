@@ -1,0 +1,42 @@
+{
+  "quick-command": {
+    "title": "Quick Command",
+    "select": {
+      "error": "Please select target hosts"
+    },
+    "status": {
+      "title": "Status",
+      "running": "Running",
+      "ended": "Completed",
+      "pending": "Pending"
+    },
+    "duration": {
+      "title": "Duration",
+      "unit": "s"
+    },
+    "select-host": {
+      "title": "Select Hosts",
+      "host": "Host",
+      "label": "Label",
+      "host-placeholder": "Select hosts",
+      "label-placeholder": "Select labels",
+      "select-by-label": "Select by label",
+      "enable-label-filter": "Filter hosts by label",
+      "select-by-host": "Select by host",
+      "label-tooltip": "Selecting a label will automatically select all hosts under it",
+      "host-tooltip": "Select individual hosts. Hosts already selected by labels will not be shown",
+      "no-available-hosts": "All hosts are included in selected labels"
+    },
+    "execute": {
+      "title": "Execute",
+      "error": "Command execution failed"
+    },
+    "output": {
+      "title": "Output",
+      "empty": "No output yet"
+    },
+    "auto-scroll": "Auto Scroll",
+    "manual-scroll": "Manual",
+    "clear": "Clear"
+  }
+}
