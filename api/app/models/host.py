@@ -38,14 +38,6 @@ class Software(Model):
         table = "software"
 
 
-class Label(Model):
-    id = fields.IntField(pk=True)
-    name = fields.CharField(max_length=255, unique=True)
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
-    
-    class Meta:
-        table = "labels"
 
 
 class Host(Model):
@@ -86,7 +78,7 @@ class Host(Model):
     city = fields.CharField(max_length=64, null=True)
     
     # 关联关系
-    labels: fields.ManyToManyRelation[Label] = fields.ManyToManyField(
+    labels: fields.ManyToManyRelation["Label"] = fields.ManyToManyField(
         "models.Label",
         related_name="hosts",
         through="host_labels"
