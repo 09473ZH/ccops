@@ -76,10 +76,8 @@ async def get_host_list(
         host_list = [HostSchema.model_validate(host) for host in hosts]
     
     result = HostListResponse(
-        data=host_list,
-        total=total,
-        page=page,
-        limit=limit
+        list=host_list,
+        count=total
     )
     return ApiResponse(data=result)
 

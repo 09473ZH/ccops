@@ -98,7 +98,5 @@ class HostListRequest(BaseModel):
 
 
 class HostListResponse(BaseModel):
-    data: list[HostSchema]
-    total: int
-    page: int
-    limit: int
+    list: list[HostSchema]
+    count: int

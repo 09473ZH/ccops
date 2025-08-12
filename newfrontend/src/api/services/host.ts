@@ -162,9 +162,9 @@ const hostService = {
     return del<void>(HostApi.Delete, { hostIds });
   },
 
-  /** 分配标签 */
-  assignLabels(params: { hostId: number; labelIds: number[] }) {
-    return post<HostInfo>(LabelApi.AssignToHost, params);
+  /** 分配注解 */
+  assignAnnotations(params: { hostId: number; annotationIds: number[] }) {
+    return post<HostInfo>(AnnotationApi.AssignToHost, params);
   },
 
   /** 获取新增主机命令 */
