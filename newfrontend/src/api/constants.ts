@@ -2,7 +2,7 @@
 export const ApiPath = {
   Auth: '/api/auth',
   Users: '/api/users',
-  Labels: '/api/labels',
+  Annotations: '/api/annotations',
   Files: '/api/files',
   Hosts: '/api/hosts',
   Clients: '/api/clients',
@@ -39,11 +39,12 @@ export const UserApi = {
   UpdatePermissions: `${ApiPath.Users}/:id/permissions`, // 分配权限
 } as const;
 
-/** 标签相关接口 */
-export const LabelApi = {
-  ...createCrudApi(ApiPath.Labels),
-  AssignToHost: `${ApiPath.Hosts}/assign_labels`, // 分配标签到主机
-  UnlabelFromHost: `${ApiPath.Labels}/:id/unbind_all_hosts `, // 解除所有主机标签关联
+/** 注解相关接口 */
+export const AnnotationApi = {
+  ...createCrudApi(ApiPath.Annotations),
+  AssignToHost: `${ApiPath.Annotations}/assign_to_host`, // 分配注解到主机
+  UnbindFromHost: `${ApiPath.Annotations}/:id/unbind_all_hosts`, // 解除所有主机注解关联
+  Search: `${ApiPath.Annotations}/search`, // 搜索注解
 } as const;
 
 /** 文件相关接口 */

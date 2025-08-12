@@ -35,9 +35,11 @@ init_db(app)
 from app.routers import hosts_router
 from app.routers.auth import router as auth_router
 from app.routers.users import router as users_router
+from app.routers.annotations import router as annotations_router
 
 app.include_router(auth_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
+app.include_router(annotations_router, prefix="/api")
 app.include_router(hosts_router, prefix="/api")
 
 

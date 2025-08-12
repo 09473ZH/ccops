@@ -1,7 +1,7 @@
 import { get, post, del } from '../client';
-import { HostApi, LabelApi } from '../constants';
+import { HostApi, AnnotationApi } from '../constants';
 
-import type { LabelInfo } from './label';
+import type { AnnotationInfo } from './annotation';
 
 export interface DiskInfo {
   id: number;
@@ -13,8 +13,8 @@ export interface DiskInfo {
 }
 
 export interface MyHostInfo {
-  labelName: string;
-  labelId: number;
+  annotationName: string;
+  annotationId: number;
   hosts: {
     hostId: number;
     hostName: string;
@@ -28,7 +28,7 @@ export interface HostInfo {
   hostServerUrl: string;
   uuid: string;
   primaryMac: string;
-  label: LabelInfo[];
+  annotations: AnnotationInfo[];
   operatingSystem: string;
   version: string;
   arch: string;

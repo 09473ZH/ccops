@@ -16,7 +16,7 @@ import { useHostStore } from './hooks/state/use-host-store';
 
 function HostManage() {
   const { open, isOpen, close } = useModalsControl({
-    modals: [ModalName.Create, ModalName.AssignLabel, ModalName.LabelManage, ModalName.SshConfig],
+    modals: [ModalName.Create, ModalName.AssignAnnotation, ModalName.AnnotationManage, ModalName.SshConfig],
   });
   const { list: hostList, isLoading } = useHostListWithMetrics();
   const {
@@ -34,7 +34,7 @@ function HostManage() {
   });
 
   const actions = useHostActions();
-  const { editing, setEditing, resetEditing, setLabelAssign, resetLabelAssign } = useHostStore();
+  const { editing, setEditing, resetEditing, annotationAssign, setAnnotationAssign, resetAnnotationAssign } = useHostStore();
 
   const columnGroups = getColumnGroups();
 
@@ -56,12 +56,12 @@ function HostManage() {
     resetEditing();
   };
 
-  const handleAssignLabels = (record: HostInfo) => {
-    setLabelAssign({
+  const handleAssignAnnotations = (record: HostInfo) => {
+    setAnnotationAssign({
       hostId: record.id,
-      selectedLabels: record.label?.map((l) => l.id) || [],
+      selectedAnnotations: record.annotations?.map((a) => a.id) || [],
     });
-    open(ModalName.AssignLabel);
+    open(ModalName.AssignAnnotation);
   };
 
   const batchActions = [
@@ -102,7 +102,7 @@ function HostManage() {
     table.visibleColumns,
     handleEditName,
     handleSaveName,
-    handleAssignLabels,
+    handleAssignAnnotations,
     actions.deleteHosts.mutate,
     setEditing,
     hostList,
@@ -135,9 +135,9 @@ function HostManage() {
           <Button
             className="transition-all"
             icon={<Iconify icon="flowbite:tag-outline" />}
-            onClick={() => open(ModalName.LabelManage)}
+            onClick={() => open(ModalName.AnnotationManage)}
           >
-            标签管理
+            注解管理
           </Button>
           <Button
             type="primary"
@@ -173,16 +173,16 @@ function HostManage() {
       {/* 模态框组件 */}
       <Suspense fallback={null}>
         <Modals.Create open={isOpen(ModalName.Create)} onClose={() => close(ModalName.Create)} />
-        <Modals.AssignLabel
-          open={isOpen(ModalName.AssignLabel)}
+        <Modals.AssignAnnotation
+          open={isOpen(ModalName.AssignAnnotation)}
           onClose={() => {
-            close(ModalName.AssignLabel);
-            resetLabelAssign();
+            close(ModalName.AssignAnnotation);
+            resetAnnotationAssign();
           }}
         />
-        <Modals.LabelManage
-          open={isOpen(ModalName.LabelManage)}
-          onClose={() => close(ModalName.LabelManage)}
+        <Modals.AnnotationManage
+          open={isOpen(ModalName.AnnotationManage)}
+          onClose={() => close(ModalName.AnnotationManage)}
         />
         <Modals.SshConfig
           open={isOpen(ModalName.SshConfig)}

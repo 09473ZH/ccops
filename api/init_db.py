@@ -9,7 +9,7 @@ from tortoise import Tortoise
 from app.core.config import settings
 from app.models.user import User
 from app.models.host import Host, HostUser, Disk, Software
-from app.models.label import Label
+from app.models.annotation import Annotation
 from app.utils.auth import AuthUtils
 
 
@@ -18,7 +18,7 @@ async def init_database():
     print("🔄 连接数据库...")
     await Tortoise.init(
         db_url=settings.database_url,
-        modules={"models": ["app.models.host", "app.models.user", "app.models.label"]}
+        modules={"models": ["app.models.host", "app.models.user", "app.models.annotation"]}
     )
     
     print("🗑️  手动删除所有表...")
@@ -27,9 +27,9 @@ async def init_database():
     
     # 删除表的顺序很重要（先删除有外键的表）
     tables_to_drop = [
-        "host_labels",  # 多对多关系表
+        "host_annotations",  # 多对多关系表
         "host_users", "disks", "software",  # 主机相关表
-        "labels", "users", "hosts"  # 主表
+        "annotations", "users", "hosts"  # 主表
     ]
     
     for table in tables_to_drop:
@@ -54,17 +54,17 @@ async def init_database():
     )
     print(f"✅ 创建管理员用户成功: {admin_user.username}")
     
-    print("🏷️  创建测试标签...")
-    # 创建一些测试标签
-    labels = [
-        await Label.create(name="server/env", value="production"),
-        await Label.create(name="server/env", value="staging"),
-        await Label.create(name="server/os", value="ubuntu"),
-        await Label.create(name="server/type", value="web"),
-        await Label.create(name="app/version", value="v1.2.3"),
-        await Label.create(name="team/owner", value="backend"),
+    print("🏷️  创建测试注解...")
+    # 创建一些测试注解
+    annotations = [
+        await Annotation.create(name="server/env", value="production"),
+        await Annotation.create(name="server/env", value="staging"),
+        await Annotation.create(name="server/os", value="ubuntu"),
+        await Annotation.create(name="server/type", value="web"),
+        await Annotation.create(name="app/version", value="v1.2.3"),
+        await Annotation.create(name="team/owner", value="backend"),
     ]
-    print(f"✅ 创建 {len(labels)} 个测试标签")
+    print(f"✅ 创建 {len(annotations)} 个测试注解")
     
     print("🖥️  创建测试主机...")
     # 创建测试主机
@@ -87,12 +87,12 @@ async def init_database():
         city="Shanghai"
     )
     
-    # 关联标签
-    await host.labels.add(labels[0])  # server/env=production
-    await host.labels.add(labels[2])  # server/os=ubuntu
-    await host.labels.add(labels[3])  # server/type=web
-    await host.labels.add(labels[4])  # app/version=v1.2.3
-    await host.labels.add(labels[5])  # team/owner=backend
+    # 关联注解
+    await host.annotations.add(annotations[0])  # server/env=production
+    await host.annotations.add(annotations[2])  # server/os=ubuntu
+    await host.annotations.add(annotations[3])  # server/type=web
+    await host.annotations.add(annotations[4])  # app/version=v1.2.3
+    await host.annotations.add(annotations[5])  # team/owner=backend
     
     print(f"✅ 创建测试主机成功: {host.name}")
     
@@ -159,7 +159,7 @@ async def init_database():
     print("\n📊 初始化数据统计:")
     print(f"   👤 用户: {await User.all().count()} 个")
     print(f"   🖥️  主机: {await Host.all().count()} 台")
-    print(f"   🏷️  标签: {await Label.all().count()} 个")
+    print(f"   🏷️  注解: {await Annotation.all().count()} 个")
     print(f"   👥 主机用户: {await HostUser.all().count()} 个")
     print(f"   💾 磁盘: {await Disk.all().count()} 个")
     print(f"   📦 软件: {await Software.all().count()} 个")

@@ -15,10 +15,13 @@ class BaseSchema(BaseModel):
         alias_generator = to_camel
         populate_by_name = True
 
-# 手动定义 Pydantic 模型以保持类型提示
-class LabelSchema(BaseSchema):
+# 注解模型（层级格式）
+class AnnotationSchemaForHost(BaseSchema):
     id: int
-    name: str
+    name: str  # 如 "server/env"
+    value: str  # 如 "prod"
+    namespace: str | None = None  # 如 "server"
+    key: str  # 如 "env"
     created_at: datetime
     updated_at: datetime
 
@@ -82,14 +85,14 @@ class HostSchema(BaseSchema):
     city: str | None = None
 
 class HostSchemaWithRelations(HostSchema):
-    labels: list[LabelSchema] = []
+    annotations: list[AnnotationSchemaForHost] = []
 
 # 请求和响应模型
 class HostListRequest(BaseModel):
     page: int = 1
     limit: int = 20
     key: str | None = None
-    label_ids: list[int] | None = None
+    annotation_ids: list[int] | None = None
     logic: str = "and"  # "and" or "or"
     with_metrics: bool = False
 

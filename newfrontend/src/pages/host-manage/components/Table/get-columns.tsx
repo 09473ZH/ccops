@@ -3,7 +3,7 @@ import { ColumnType } from 'antd/es/table';
 import { useNavigate } from 'react-router-dom';
 
 import type { DiskMetrics, HostInfo, NetworkMetrics } from '@/api/services/host';
-import type { LabelInfo } from '@/api/services/label';
+import type { AnnotationInfo } from '@/api/services/annotation';
 import { ActionButton, CopyButton } from '@/components/Button';
 import { OsIcon } from '@/components/Icon';
 import ShowMoreTags from '@/components/ShowMoreTags';
@@ -100,7 +100,7 @@ export const getColumns = (
   visibleColumns: string[],
   handleEditName: (record: HostInfo) => void,
   handleSaveName: () => void,
-  handleAssignLabels: (record: HostInfo) => void,
+  handleAssignAnnotations: (record: HostInfo) => void,
   handleDeleteHost: (ids: number[]) => void,
   setEditingState: (state: Partial<EditingState>) => void,
   hostList: HostInfo[],
@@ -138,17 +138,17 @@ export const getColumns = (
       filters: Array.from(
         new Map(
           hostList
-            .flatMap((host) => host.label || [])
-            .map((label) => [label.id, { text: label.name, value: label.id }]),
+            .flatMap((host) => host.annotations || [])
+            .map((annotation) => [annotation.id, { text: `${annotation.name}=${annotation.value}`, value: annotation.id }]),
         ).values(),
       ).sort((a, b) => a.text.localeCompare(b.text)),
       onFilter: (value: boolean | React.Key, record: HostInfo) => {
-        return record.label?.some((label) => label.id === value) || false;
+        return record.annotations?.some((annotation) => annotation.id === value) || false;
       },
       filterMultiple: true,
-      render: (label: LabelInfo[]) => (
+      render: (annotations: AnnotationInfo[]) => (
         <ShowMoreTags
-          dataSource={(label || []).map((label) => ({ id: label.id, name: label.name }))}
+          dataSource={(annotations || []).map((annotation) => ({ id: annotation.id, name: `${annotation.name}=${annotation.value}` }))}
           labelField="name"
           color="blue"
         />
@@ -360,7 +360,7 @@ export const getColumns = (
               icon="edit"
               onClick={() => handleEditName(record)}
             />
-            <ActionButton icon="tag" onClick={() => handleAssignLabels(record)} />
+            <ActionButton icon="tag" onClick={() => handleAssignAnnotations(record)} />
             <Popconfirm
               title="确定要删除这个主机吗？"
               onConfirm={() => handleDeleteHost([record.id])}

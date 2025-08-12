@@ -11,21 +11,21 @@ export interface EditingState {
   action: 'edit' | null;
 }
 
-interface LabelAssignState {
+interface AnnotationAssignState {
   hostId: number | null;
-  selectedLabels: number[];
+  selectedAnnotations: number[];
 }
 
 interface HostState {
   editing: EditingState;
-  labelAssign: LabelAssignState;
+  annotationAssign: AnnotationAssignState;
 }
 
 interface HostStore extends HostState {
   setEditing: (editing: Partial<EditingState>) => void;
   resetEditing: () => void;
-  setLabelAssign: (labelAssign: Partial<LabelAssignState>) => void;
-  resetLabelAssign: () => void;
+  setAnnotationAssign: (annotationAssign: Partial<AnnotationAssignState>) => void;
+  resetAnnotationAssign: () => void;
 }
 
 const initialState: HostState = {
@@ -35,15 +35,15 @@ const initialState: HostState = {
     hostServerUrl: '',
     action: null,
   },
-  labelAssign: {
+  annotationAssign: {
     hostId: null,
-    selectedLabels: [],
+    selectedAnnotations: [],
   },
 };
 
 export const useHostStore = create<HostStore>((set) => ({
   editing: initialState.editing,
-  labelAssign: initialState.labelAssign,
+  annotationAssign: initialState.annotationAssign,
 
   setEditing: (editing) =>
     set((state) => ({
@@ -52,10 +52,10 @@ export const useHostStore = create<HostStore>((set) => ({
 
   resetEditing: () => set({ editing: initialState.editing }),
 
-  setLabelAssign: (labelAssign) =>
+  setAnnotationAssign: (annotationAssign) =>
     set((state) => ({
-      labelAssign: { ...state.labelAssign, ...labelAssign },
+      annotationAssign: { ...state.annotationAssign, ...annotationAssign },
     })),
 
-  resetLabelAssign: () => set({ labelAssign: initialState.labelAssign }),
+  resetAnnotationAssign: () => set({ annotationAssign: initialState.annotationAssign }),
 }));

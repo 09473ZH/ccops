@@ -7,7 +7,7 @@ from app.schemas.host import (
     HostSchemaWithRelations, 
     HostListRequest, 
     HostListResponse,
-    LabelSchema,
+    AnnotationSchemaForHost,
     HostUserSchema,
     DiskSchema,
     SoftwareSchema
@@ -24,7 +24,7 @@ class TestHostSchemas:
         assert request.page == 1
         assert request.limit == 20
         assert request.key is None
-        assert request.label_ids is None
+        assert request.annotation_ids is None
         assert request.logic == "and"
         assert request.with_metrics is False
     
@@ -34,7 +34,7 @@ class TestHostSchemas:
             page=2,
             limit=50,
             key="test",
-            label_ids=[1, 2, 3],
+            annotation_ids=[1, 2, 3],
             logic="or",
             with_metrics=True
         )
@@ -42,7 +42,7 @@ class TestHostSchemas:
         assert request.page == 2
         assert request.limit == 50
         assert request.key == "test"
-        assert request.label_ids == [1, 2, 3]
+        assert request.annotation_ids == [1, 2, 3]
         assert request.logic == "or"
         assert request.with_metrics is True
     
@@ -108,19 +108,19 @@ class TestSchemaValidation:
         request = HostListRequest(logic="or")
         assert request.logic == "or"
     
-    def test_host_list_request_label_ids_type(self):
+    def test_host_list_request_annotation_ids_type(self):
         """测试标签ID列表类型"""
         # 空列表
-        request = HostListRequest(label_ids=[])
-        assert request.label_ids == []
+        request = HostListRequest(annotation_ids=[])
+        assert request.annotation_ids == []
         
         # 整数列表
-        request = HostListRequest(label_ids=[1, 2, 3])
-        assert request.label_ids == [1, 2, 3]
+        request = HostListRequest(annotation_ids=[1, 2, 3])
+        assert request.annotation_ids == [1, 2, 3]
         
         # None值
-        request = HostListRequest(label_ids=None)
-        assert request.label_ids is None
+        request = HostListRequest(annotation_ids=None)
+        assert request.annotation_ids is None
 
 
 class TestSchemaImports:
@@ -133,7 +133,7 @@ class TestSchemaImports:
         assert HostSchemaWithRelations is not None
         assert HostListRequest is not None
         assert HostListResponse is not None
-        assert LabelSchema is not None
+        assert AnnotationSchemaForHost is not None
         assert HostUserSchema is not None
         assert DiskSchema is not None
         assert SoftwareSchema is not None

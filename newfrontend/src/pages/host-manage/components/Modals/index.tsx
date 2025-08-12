@@ -6,14 +6,14 @@ export const Modals = {
       default: module.CreateHostModal,
     })),
   ),
-  AssignLabel: lazy(() =>
-    import('./AssignLabelModal').then((module) => ({
-      default: module.AssignLabelModal,
+  AssignAnnotation: lazy(() =>
+    import('./AssignAnnotationModal').then((module) => ({
+      default: module.AssignAnnotationModal,
     })),
   ),
-  LabelManage: lazy(() =>
-    import('./LabelManageModal').then((module) => ({
-      default: module.LabelManageModal,
+  AnnotationManage: lazy(() =>
+    import('./AnnotationManageModal').then((module) => ({
+      default: module.AnnotationManageModal,
     })),
   ),
   SshConfig: lazy(() =>
@@ -25,7 +25,7 @@ export const Modals = {
 
 export enum ModalName {
   Create = 'Create',
-  AssignLabel = 'AssignLabel',
-  LabelManage = 'LabelManage',
+  AssignAnnotation = 'AssignAnnotation',
+  AnnotationManage = 'AnnotationManage',
   SshConfig = 'SshConfig',
 }

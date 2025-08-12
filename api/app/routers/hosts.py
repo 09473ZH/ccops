@@ -18,8 +18,8 @@ async def get_host_list(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     key: Optional[str] = Query(None, description="搜索关键词"),
-    label_ids: Optional[str] = Query(None, description="标签ID列表，逗号分隔"),
-    logic: str = Query("and", description="标签逻辑，and 或 or"),
+    annotation_ids: Optional[str] = Query(None, description="注解ID列表，逗号分隔"),
+    logic: str = Query("and", description="注解逻辑，and 或 or"),
     with_metrics: bool = Query(False, description="是否包含监控数据")
 ):
     """获取主机列表"""
@@ -32,18 +32,18 @@ async def get_host_list(
         search_condition = Q(name__icontains=key) | Q(primary_ip__icontains=key) | Q(public_ip__icontains=key)
         query = query.filter(search_condition)
     
-    # 标签筛选
-    if label_ids:
+    # 注解筛选
+    if annotation_ids:
         try:
-            label_id_list = [int(x.strip()) for x in label_ids.split(",") if x.strip()]
-            if label_id_list:
+            annotation_id_list = [int(x.strip()) for x in annotation_ids.split(",") if x.strip()]
+            if annotation_id_list:
                 if logic == "and":
-                    for label_id in label_id_list:
-                        query = query.filter(labels__id=label_id)
+                    for annotation_id in annotation_id_list:
+                        query = query.filter(annotations__id=annotation_id)
                 else:
-                    query = query.filter(labels__id__in=label_id_list).distinct()
+                    query = query.filter(annotations__id__in=annotation_id_list).distinct()
         except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid label_ids format")
+            raise HTTPException(status_code=400, detail="Invalid annotation_ids format")
     
     # 计算总数
     total = await query.count()
@@ -51,9 +51,25 @@ async def get_host_list(
     # 分页查询
     offset = (page - 1) * limit
     if with_metrics:
-        hosts = await query.offset(offset).limit(limit).prefetch_related("labels")
-        # 转换为带关联数据的 Schema
-        host_list = [HostSchemaWithRelations.model_validate(host) for host in hosts]
+        hosts = await query.offset(offset).limit(limit).prefetch_related("annotations")
+        # 转换为带关联数据的 Schema，并格式化标签
+        host_list = []
+        for host in hosts:
+            host_data = HostSchemaWithRelations.model_validate(host)
+            # 格式化注解数据
+            formatted_annotations = []
+            for annotation in host.annotations:
+                formatted_annotations.append({
+                    "id": annotation.id,
+                    "name": annotation.name,
+                    "value": annotation.value,
+                    "namespace": annotation.namespace,
+                    "key": annotation.key,
+                    "createdAt": annotation.created_at.isoformat(),
+                    "updatedAt": annotation.updated_at.isoformat(),
+                })
+            host_data.annotations = formatted_annotations
+            host_list.append(host_data)
     else:
         hosts = await query.offset(offset).limit(limit)
         # 转换为基础 Schema

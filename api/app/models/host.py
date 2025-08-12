@@ -78,10 +78,10 @@ class Host(Model):
     city = fields.CharField(max_length=64, null=True)
     
     # 关联关系
-    labels: fields.ManyToManyRelation["Label"] = fields.ManyToManyField(
-        "models.Label",
+    annotations: fields.ManyToManyRelation["Annotation"] = fields.ManyToManyField(
+        "models.Annotation",
         related_name="hosts",
-        through="host_labels"
+        through="host_annotations"
     )
     
     class Meta:
