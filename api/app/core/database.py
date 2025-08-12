@@ -10,7 +10,7 @@ def init_db(app: FastAPI) -> None:
     register_tortoise(
         app,
         db_url=settings.database_url,
-        modules={"models": ["app.models.host", "app.models.user", "app.models.annotation"]},
+        modules={"models": ["app.models.host", "app.models.user", "app.models.annotation", "app.models.configuration"]},
         generate_schemas=True,
         add_exception_handlers=True,
     )

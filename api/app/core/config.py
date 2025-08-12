@@ -15,6 +15,10 @@ class Settings(BaseSettings):
         "DATABASE_URL", 
         "postgres://root:password@localhost:5432/ccops"
     )
+    old_database_url: str = os.getenv(
+        "OLD_DATABASE_URL", 
+        ""
+    )
     
     # JWT 配置 - 从环境变量读取
     SECRET_KEY: str = os.getenv(

@@ -10,6 +10,7 @@ from app.core.config import settings
 from app.models.user import User
 from app.models.host import Host, HostUser, Disk, Software
 from app.models.annotation import Annotation
+from app.models.configuration import Configuration
 from app.utils.auth import AuthUtils
 
 
@@ -18,7 +19,7 @@ async def init_database():
     print("🔄 连接数据库...")
     await Tortoise.init(
         db_url=settings.database_url,
-        modules={"models": ["app.models.host", "app.models.user", "app.models.annotation"]}
+        modules={"models": ["app.models.host", "app.models.user", "app.models.annotation", "app.models.configuration"]}
     )
     
     print("🗑️  手动删除所有表...")
@@ -29,7 +30,7 @@ async def init_database():
     tables_to_drop = [
         "host_annotations",  # 多对多关系表
         "host_users", "disks", "software",  # 主机相关表
-        "annotations", "users", "hosts"  # 主表
+        "annotations", "configurations", "users", "hosts"  # 主表
     ]
     
     for table in tables_to_drop:
@@ -155,11 +156,60 @@ async def init_database():
     ]
     print(f"✅ 创建 {len(software_list)} 个软件记录")
     
+    print("⚙️  创建系统配置...")
+    # 创建系统配置
+    system_configs = [
+        await Configuration.create(
+            type="system",
+            field_name="ServerUrl",
+            field_value="http://127.0.0.1:8003",
+            field_description="用于连接ccops服务端",
+            is_changed=False
+        ),
+        await Configuration.create(
+            type="llm",
+            field_name="BaseUrl",
+            field_value="",
+            field_description="大模型接口地址",
+            is_changed=False
+        ),
+        await Configuration.create(
+            type="llm",
+            field_name="ApiKey",
+            field_value="",
+            field_description="大模型密钥",
+            is_changed=False
+        ),
+        await Configuration.create(
+            type="llm",
+            field_name="ModelName",
+            field_value="gpt-4o-mini",
+            field_description="大模型名称",
+            is_changed=False
+        ),
+        await Configuration.create(
+            type="key",
+            field_name="PublicKey",
+            field_value="",
+            field_description="公钥内容",
+            is_changed=False
+        ),
+        await Configuration.create(
+            type="key",
+            field_name="PrivateKey",
+            field_value="",
+            field_description="私钥内容",
+            is_changed=False
+        )
+    ]
+    print(f"✅ 创建 {len(system_configs)} 个系统配置")
+    
     print("🎉 数据库初始化完成！")
     print("\n📊 初始化数据统计:")
     print(f"   👤 用户: {await User.all().count()} 个")
     print(f"   🖥️  主机: {await Host.all().count()} 台")
     print(f"   🏷️  注解: {await Annotation.all().count()} 个")
+    print(f"   ⚙️  配置: {await Configuration.all().count()} 个")
     print(f"   👥 主机用户: {await HostUser.all().count()} 个")
     print(f"   💾 磁盘: {await Disk.all().count()} 个")
     print(f"   📦 软件: {await Software.all().count()} 个")

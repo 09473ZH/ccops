@@ -15,6 +15,7 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
     "python-dotenv>=1.0.0",
     "bcrypt==4.2.0",
+    "aiomysql>=0.2.0",
 ]
 
 [project.optional-dependencies]
