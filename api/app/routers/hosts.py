@@ -16,64 +16,95 @@ router = APIRouter(prefix="/hosts", tags=["hosts"])
 @router.get("", response_model=ApiResponse[HostListResponse])
 async def get_host_list(
     page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(0, ge=0),  # 0表示不限制，与Go版本对应
     key: Optional[str] = Query(None, description="搜索关键词"),
-    annotation_ids: Optional[str] = Query(None, description="注解ID列表，逗号分隔"),
-    logic: str = Query("and", description="注解逻辑，and 或 or"),
-    with_metrics: bool = Query(False, description="是否包含监控数据")
+    labelIds: Optional[str] = Query(None, description="标签ID列表，逗号分隔，与Go版本对应"),
+    logic: str = Query("and", description="标签逻辑，and 或 or"),
+    withMetrics: bool = Query(False, description="是否包含监控数据")
 ):
     """获取主机列表"""
+    from app.models.host import Disk
     
-    # 构建查询条件
-    query = Host.all()
+    # 构建基础查询 - 仅选择Go版本返回的字段
+    query = Host.all().order_by("-created_at")  # 默认按创建时间降序
     
-    # 关键词搜索
+    # 关键词搜索 - 仅搜索name字段，与Go版本对应
     if key:
-        search_condition = Q(name__icontains=key) | Q(primary_ip__icontains=key) | Q(public_ip__icontains=key)
-        query = query.filter(search_condition)
+        query = query.filter(name__icontains=key)
     
-    # 注解筛选
-    if annotation_ids:
+    # 标签筛选 - 使用labelIds参数名，与Go版本对应
+    if labelIds:
         try:
-            annotation_id_list = [int(x.strip()) for x in annotation_ids.split(",") if x.strip()]
-            if annotation_id_list:
+            label_id_list = [int(x.strip()) for x in labelIds.split(",") if x.strip()]
+            if label_id_list:
                 if logic == "and":
-                    for annotation_id in annotation_id_list:
-                        query = query.filter(annotations__id=annotation_id)
+                    # 交集筛选
+                    for label_id in label_id_list:
+                        query = query.filter(annotations__id=label_id)
                 else:
-                    query = query.filter(annotations__id__in=annotation_id_list).distinct()
+                    # 并集筛选
+                    query = query.filter(annotations__id__in=label_id_list).distinct()
         except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid annotation_ids format")
+            raise HTTPException(status_code=400, detail="Invalid labelIds format")
     
     # 计算总数
     total = await query.count()
     
     # 分页查询
-    offset = (page - 1) * limit
-    if with_metrics:
+    offset = (page - 1) * limit if limit > 0 else 0
+    if limit > 0:
         hosts = await query.offset(offset).limit(limit).prefetch_related("annotations")
-        # 转换为带关联数据的 Schema，并格式化标签
-        host_list = []
-        for host in hosts:
-            host_data = HostSchemaWithRelations.model_validate(host)
-            # 格式化注解数据
-            formatted_annotations = []
-            for annotation in host.annotations:
-                formatted_annotations.append({
-                    "id": annotation.id,
-                    "name": annotation.name,
-                    "value": annotation.value,
-                    "namespace": annotation.namespace,
-                    "key": annotation.key,
-                    "createdAt": annotation.created_at.isoformat(),
-                    "updatedAt": annotation.updated_at.isoformat(),
-                })
-            host_data.annotations = formatted_annotations
-            host_list.append(host_data)
     else:
-        hosts = await query.offset(offset).limit(limit)
-        # 转换为基础 Schema
-        host_list = [HostSchema.model_validate(host) for host in hosts]
+        hosts = await query.prefetch_related("annotations")
+    
+    # 批量获取磁盘信息
+    host_ids = [host.id for host in hosts]
+    disks = []
+    if host_ids:
+        disks = await Disk.filter(host_id__in=host_ids)
+    
+    # 构建磁盘映射
+    disk_map = {}
+    for disk in disks:
+        if disk.host_id not in disk_map:
+            disk_map[disk.host_id] = []
+        disk_map[disk.host_id].append({
+            "id": disk.id,
+            "hostId": disk.host_id,
+            "diskSpaceAvailable": disk.disk_space_available,
+            "totalDiskSpace": disk.total_disk_space,
+            "percentDiskSpaceAvailable": disk.percent_disk_space_available,
+            "encrypted": disk.encrypted
+        })
+    
+    # 转换为带关联数据的Schema
+    host_list = []
+    for host in hosts:
+        host_data = HostSchemaWithRelations.model_validate(host)
+        
+        # 添加磁盘数据
+        host_data.disk = disk_map.get(host.id, [])
+        
+        # 格式化标签数据 - 使用label字段名与Go版本对应
+        formatted_labels = []
+        for annotation in host.annotations:
+            formatted_labels.append({
+                "id": annotation.id,
+                "name": annotation.name,
+                "value": annotation.value,
+                "namespace": annotation.namespace,
+                "key": annotation.key,
+                "createdAt": annotation.created_at.isoformat(),
+                "updatedAt": annotation.updated_at.isoformat(),
+            })
+        host_data.label = formatted_labels
+        
+        # 监控数据（如果需要）
+        if withMetrics:
+            # TODO: 实现监控数据获取逻辑
+            host_data.metrics = None
+        
+        host_list.append(host_data)
     
     result = HostListResponse(
         list=host_list,

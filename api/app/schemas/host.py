@@ -52,32 +52,52 @@ class HostSchema(BaseSchema):
     created_at: datetime
     updated_at: datetime
     
-    # 基本信息
+    # 基本信息 - 与Go版本对应
     name: str
     operating_system: str | None = None
-    status: int = 0
+    host_server_url: str | None = None
     
-    # 时间信息
+    # 硬件信息 - 与Go版本对应  
+    cpu_brand: str | None = None
+    physical_memory: str | None = None
+    kernel_version: str | None = None
+    
+    # 时间信息 - 与Go版本对应
     fetch_time: datetime | None = None
     start_time: datetime | None = None
     
-    # 连接信息
+    # 其他字段保持兼容
+    status: int = 0
     agent: str | None = None
-    host_server_url: str | None = None
-    
-    # 系统信息
     osquery_host_id: str | None = None
     osquery_version: str | None = None
     platform_like: str | None = None
-    
-    # 硬件信息
+    platform: str | None = None
+    arch: str | None = None
+    instance_id: str | None = None
     cpu_type: str | None = None
-    cpu_brand: str | None = None
     cpu_logical_cores: str | None = None
     cpu_physical_cores: str | None = None
-    physical_memory: str | None = None
-    
-    # 网络信息
+    cpu_sockets: str | None = None
+    cpu_subtype: str | None = None
+    cpu_microcode: str | None = None
+    board_model: str | None = None
+    board_serial: str | None = None
+    board_vendor: str | None = None
+    board_version: str | None = None
+    hardware_model: str | None = None
+    hardware_serial: str | None = None
+    hardware_vendor: str | None = None
+    hardware_version: str | None = None
+    computer_name: str | None = None
+    uuid: str | None = None
+    total_uptime_seconds: str | None = None
+    build: str | None = None
+    major: str | None = None
+    minor: str | None = None
+    patch: str | None = None
+    version: str | None = None
+    org: str | None = None
     primary_ip: str | None = None
     primary_mac: str | None = None
     public_ip: str | None = None
@@ -86,6 +106,9 @@ class HostSchema(BaseSchema):
 
 class HostSchemaWithRelations(HostSchema):
     annotations: list[AnnotationSchemaForHost] = []
+    disk: list[DiskSchema] = []
+    label: list[AnnotationSchemaForHost] = []  # 兼容Go版本的label字段名
+    metrics: dict | None = None  # 监控指标数据，可选
 
 # 请求和响应模型
 class HostListRequest(BaseModel):
@@ -98,5 +121,5 @@ class HostListRequest(BaseModel):
 
 
 class HostListResponse(BaseModel):
-    list: list[HostSchema]
+    list: list[HostSchemaWithRelations]  # 使用带关联数据的Schema
     count: int

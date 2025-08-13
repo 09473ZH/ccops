@@ -67,26 +67,68 @@ async def init_database():
     ]
     print(f"✅ 创建 {len(annotations)} 个测试注解")
     
-    print("🖥️  创建测试主机...")
-    # 创建测试主机
-    host = await Host.create(
-        name="web-server-01",
-        operating_system="Ubuntu 22.04.3 LTS",
-        status=0,  # 在线
-        agent="osquery-5.10.2",
-        osquery_version="5.10.2",
-        platform_like="debian",
-        cpu_type="x86_64",
-        cpu_brand="Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz",
-        cpu_logical_cores="4",
-        cpu_physical_cores="2",
-        physical_memory="8589934592",  # 8GB
-        primary_ip="192.168.1.100",
-        primary_mac="02:42:ac:11:00:02",
-        public_ip="203.0.113.100",
-        country="China",
-        city="Shanghai"
-    )
+    print("🖥️  创建真实主机数据...")
+    # 根据SQL数据创建主机
+    hosts_data = [
+        {
+            "name": "alitest1",
+            "operating_system": "Ubuntu",
+            "status": 0,
+            "fetch_time": "2025-08-13 07:32:10",
+            "start_time": "2024-11-07 04:53:14",
+            "agent": "",
+            "host_server_url": "10.144.225.133",
+            "osquery_host_id": "",
+            "osquery_version": "",
+            "platform_like": "",
+            "cpu_type": "x86_64",
+            "cpu_microcode": "0x1",
+            "cpu_logical_cores": "2",
+            "cpu_physical_cores": "1",
+            "cpu_sockets": "1",
+            "cpu_subtype": "85",
+            "cpu_brand": "Intel(R) Xeon(R) Platinum",
+            "board_model": "",
+            "board_serial": "",
+            "board_vendor": "",
+            "board_version": "",
+            "hardware_model": "Alibaba Cloud ECS",
+            "hardware_serial": "59999ae8-23ad-47d1-be6d-d2c2d12019ad",
+            "hardware_vendor": "Alibaba Cloud",
+            "hardware_version": "pc-i440fx-2.1",
+            "physical_memory": "1981919232",
+            "uuid": "59999ae8-23ad-47d1-be6d-d2c2d12019ad",
+            "total_uptime_seconds": "1268315",
+            "arch": "x86_64",
+            "build": "",
+            "kernel_version": "5.4.0-171-generic",
+            "major": "20",
+            "minor": "4",
+            "patch": "0",
+            "platform": "ubuntu",
+            "version": "20.04.6 LTS (Focal Fossa)",
+            "public_ip": "8.141.5.30",
+            "country": "CN",
+            "city": "Beijing",
+            "org": "AS37963 Hangzhou Alibaba Advertising Co.,Ltd."
+        }
+    ]
+    
+    created_hosts = []
+    for host_data in hosts_data:
+        # 转换时间字符串为datetime对象
+        if host_data["fetch_time"]:
+            from datetime import datetime
+            host_data["fetch_time"] = datetime.strptime(host_data["fetch_time"], "%Y-%m-%d %H:%M:%S")
+        if host_data["start_time"]:
+            host_data["start_time"] = datetime.strptime(host_data["start_time"], "%Y-%m-%d %H:%M:%S")
+        
+        host = await Host.create(**host_data)
+        created_hosts.append(host)
+        print(f"✅ 创建主机成功: {host.name}")
+    
+    # 使用第一个主机进行关联操作
+    host = created_hosts[0]
     
     # 关联注解
     await host.annotations.add(annotations[0])  # server/env=production
