@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     app_name: str = "CCOPS API"
     debug: bool = False
     
-    # 数据库配置 - 从环境变量读取
+    # 数据库配置 - 从环境变量读取 
     database_url: str = os.getenv(
         "DATABASE_URL", 
         "postgres://root:password@localhost:5432/ccops"

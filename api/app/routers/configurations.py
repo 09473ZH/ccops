@@ -6,12 +6,12 @@ from app.schemas.configuration import (
     ConfigurationCreate,
     ConfigurationUpdate, 
     ConfigurationSchema,
-    ConfigurationListResponse,
-    ConfigurationBatchUpdate
+    ConfigurationListResponse
 )
 from app.services.configuration import ConfigurationService
 from app.routers.auth import get_current_user
 from app.models.user import User
+from app.models.configuration import Configuration
 
 router = APIRouter(prefix="/configurations", tags=["configurations"])
 
@@ -89,9 +89,31 @@ async def delete_configuration(
 
 @router.post("/batch_update", response_model=ApiResponse[dict], summary="批量更新配置")
 async def batch_update_configurations(
-    request: ConfigurationBatchUpdate,
+    request: dict,
     current_user: User = Depends(get_current_user)
 ):
-    """批量更新配置"""
-    updated_count = await ConfigurationService.batch_update_configurations(request)
-    return ApiResponse(data={"updated_count": updated_count})
+    """
+    批量更新配置 - 兼容旧Go后端格式
+    接收格式: {"publicKeyValue": "123", "privateKeyValue": "456"}
+    """
+    
+    # 字段映射：前端字段名 -> 数据库field_name
+    field_mapping = {
+        "baseUrlValue": "BaseUrl",
+        "apiKeyValue": "ApiKey", 
+        "modelNameValue": "ModelName",
+        "serverUrlValue": "ServerUrl",
+        "publicKeyValue": "PublicKey",
+        "privateKeyValue": "PrivateKey"
+    }
+    
+    for frontend_field, value in request.items():
+        if frontend_field in field_mapping:
+            field_name = field_mapping[frontend_field]
+            config = await Configuration.filter(field_name=field_name).first()
+            if config:
+                config.field_value = str(value)
+                config.is_changed = True
+                await config.save()
+    
+    return ApiResponse(code=0, data={}, msg="更新成功")

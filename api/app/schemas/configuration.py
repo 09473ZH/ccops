@@ -48,3 +48,5 @@ class ConfigurationBatchUpdate(BaseModel):
 class PublicConfigurationResponse(BaseModel):
     """公开配置响应Schema"""
     configurations: Dict[str, Any] = Field(..., description="公开配置键值对")
+
+
