@@ -16,6 +16,9 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "bcrypt==4.2.0",
     "aiomysql>=0.2.0",
+    "paramiko>=4.0.0",
+    "asyncssh>=2.21.0",
+    "websockets>=15.0.1",
 ]
 
 [project.optional-dependencies]
