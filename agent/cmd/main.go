@@ -2,9 +2,6 @@ package main
 
 import (
 	"agent/query"
-	"agent/web/clglobal"
-	"agent/web/request"
-	"agent/web/router"
 	"agent/websocket"
 	"flag"
 	"log"
@@ -31,27 +28,20 @@ func (p *program) Start(s service.Service) error {
 }
 
 func (p *program) run() {
-	log.Println("Service running, delaying 1 second to wait for network")
+	log.Println("Agent starting...")
 	time.Sleep(1 * time.Second)
 
-	clglobal.Address = server
-	err := request.SendHostInfoRequest()
-	if err != nil {
-		log.Panicf("Error querying host info: %v", err)
-	}
-	request.CheckAndUpdatePublicKey() // 检查并更新公钥
-
-	// 启动 WebSocket 客户端
+	// 只启动 WebSocket 客户端
 	p.wsClient = websocket.NewAgentClient(*server)
-	go func() {
-		if err := p.wsClient.Start(); err != nil {
-			log.Printf("Failed to start WebSocket client: %v", err)
-		}
-	}()
+	if err := p.wsClient.Start(); err != nil {
+		log.Printf("Failed to start WebSocket client: %v", err)
+		return
+	}
 
-	// 启动 Gin 路由
-	router.StartGin() // 调用 web/router 包中的函数
-
+	log.Println("Agent running successfully")
+	
+	// 保持主程序运行
+	select {}
 }
 
 func (p *program) Stop(s service.Service) error {

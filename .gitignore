@@ -132,3 +132,4 @@ agent/build.sh
 backend/config/conf_yaml/settings-local.yaml
 
 .history
+tmp
