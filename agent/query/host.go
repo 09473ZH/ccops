@@ -6,17 +6,8 @@ import (
 	"runtime"
 )
 
-var (
-	Version = "0.0.1-alpha4"
-)
-
-func GetAgentVersion() string {
-	return Version
-}
-
-// 获取主机名
+// GetHostName 获取主机名
 func GetHostName() (string, error) {
-	// 获取主机名
 	hostname, err := os.Hostname()
 	if err != nil {
 		return "", err
@@ -24,8 +15,8 @@ func GetHostName() (string, error) {
 	return hostname, nil
 }
 
+// GetOsType 获取操作系统类型
 func GetOsType() (string, error) {
-	// 获取操作系统
 	osType := runtime.GOOS
 	switch osType {
 	case "linux":

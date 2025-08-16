@@ -5,28 +5,26 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"runtime"
 
 	"github.com/goccy/go-json"
 )
 
-type QueryResponse []map[string]string
-type HostDetailInfo struct {
-	AgentVersion          string            `json:"agent_version"`
-	SystemInfo            map[string]string `json:"system_info"`
-	Uptime                map[string]string `json:"uptime"`
-	DiskInfo              map[string]string `json:"disk_info"`
-	OsInfo                map[string]string `json:"os_info"`
-	SoftwareInfo          QueryResponse     `json:"software_info"`
-	UserInfo              QueryResponse     `json:"user_info"`
-	UserAuthorizeKeysInfo QueryResponse     `json:"user_authorize_keys_info"`
-	HostName              string            `json:"hostname"`
-	IP                    string            `json:"ip"`
-	PublicIPInfo          map[string]string `json:"public_ip_info"`
+
+// isOsqueryAvailable 检查 osquery 是否可用
+func isOsqueryAvailable() bool {
+	_, err := exec.LookPath("osqueryi")
+	return err == nil
 }
 
 func RunQuery(sql string) (QueryResponse, error) {
+	// 检查 osquery 是否可用
+	if !isOsqueryAvailable() {
+		return nil, errors.New("osqueryi command not found")
+	}
+	
 	args := []string{
 		"--json", sql,
 	}
@@ -76,7 +74,23 @@ func RunQuery(sql string) (QueryResponse, error) {
 func QuerySystemInfo() (map[string]string, error) {
 	info, err := RunQuery("select * from system_info limit 1;")
 	if err != nil {
-		return nil, err
+		// osquery 不可用，使用原生实现
+		log.Println("osquery 不可用，使用原生系统信息")
+		nativeInfo := make(map[string]string)
+		
+		// 主机名
+		if hostname, err := os.Hostname(); err == nil {
+			nativeInfo["hostname"] = hostname
+			nativeInfo["computer_name"] = hostname
+		}
+		
+		// UUID
+		nativeInfo["uuid"] = getMachineUUID()
+		
+		// 架构
+		nativeInfo["cpu_type"] = runtime.GOARCH
+		
+		return nativeInfo, nil
 	}
 	if len(info) == 0 {
 		return nil, errors.New("没有查询到系统信息")
@@ -266,6 +280,7 @@ func QueryHostDetailInfo() (HostDetailInfo, error) {
 	hostname, _ := GetHostName()
 	info := HostDetailInfo{
 		AgentVersion:          GetAgentVersion(),
+		UUID:                  getMachineUUID(),
 		SystemInfo:            make(map[string]string),
 		Uptime:                make(map[string]string),
 		DiskInfo:              make(map[string]string),
@@ -277,57 +292,46 @@ func QueryHostDetailInfo() (HostDetailInfo, error) {
 		PublicIPInfo:          make(map[string]string),
 	}
 
+	// 检查 osquery 是否可用
+	if !isOsqueryAvailable() {
+		log.Println("osqueryi 命令不存在，只返回基本信息")
+		return info, nil
+	}
+
 	systemInfo, err := QuerySystemInfo()
 	if err != nil {
 		log.Println("查询系统信息失败:", err)
-		return HostDetailInfo{}, err
+		// osquery 不可用时，只返回基本信息
+		return info, nil
 	}
 	info.SystemInfo = systemInfo
 
-	uptime, err := QueryUptime()
-	if err != nil {
-		log.Println("查询 uptime 失败:", err)
-		return HostDetailInfo{}, err
+	if uptime, err := QueryUptime(); err == nil {
+		info.Uptime = uptime
 	}
-	info.Uptime = uptime
 
-	diskInfo, err := QueryDiskSpaceUnix()
-	if err != nil {
-		log.Println("查询 disk_info 失败:", err)
-		return HostDetailInfo{}, err
+	if diskInfo, err := QueryDiskSpaceUnix(); err == nil {
+		info.DiskInfo = diskInfo
 	}
-	info.DiskInfo = diskInfo
 
-	osInfo, err := QueryOsUnix()
-	if err != nil {
-		log.Println("查询 os_info 失败:", err)
-		return HostDetailInfo{}, err
+	if osInfo, err := QueryOsUnix(); err == nil {
+		info.OsInfo = osInfo
 	}
-	info.OsInfo = osInfo
 
 	// 判断是否为Linux系统
 	if runtime.GOOS == "linux" {
-		softwareInfo, err := QuerySoftwareList()
-		if err != nil {
-			log.Println("查询 software_info 失败:", err)
-			return HostDetailInfo{}, err
+		if softwareInfo, err := QuerySoftwareList(); err == nil {
+			info.SoftwareInfo = softwareInfo
 		}
-		info.SoftwareInfo = softwareInfo
 	}
 
-	userInfo, err := QueryUserInfo()
-	if err != nil {
-		log.Println("查询 user_info 失败:", err)
-		return HostDetailInfo{}, err
+	if userInfo, err := QueryUserInfo(); err == nil {
+		info.UserInfo = userInfo
 	}
-	info.UserInfo = userInfo
 
-	userAuthorizeKeysInfo, err := QueryUserAuthorizeKeys()
-	if err != nil {
-		log.Println("查询 user_authorize_keys_info 失败:", err)
-		return HostDetailInfo{}, err
+	if userAuthorizeKeysInfo, err := QueryUserAuthorizeKeys(); err == nil {
+		info.UserAuthorizeKeysInfo = userAuthorizeKeysInfo
 	}
-	info.UserAuthorizeKeysInfo = userAuthorizeKeysInfo
 
 	// 获取公网IP信息，如果失败则使用默认值
 	publicIPInfo, err := GetPublicIPInfo()
@@ -345,3 +349,4 @@ func QueryHostDetailInfo() (HostDetailInfo, error) {
 
 	return info, nil
 }
+

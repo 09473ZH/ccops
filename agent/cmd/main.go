@@ -56,87 +56,77 @@ func (p *program) Stop(s service.Service) error {
 func runAction(s service.Service) {
 	switch *action {
 	case "install":
-		// 先尝试卸载现有服务
-		// 检查服务是否存在
-		_, err := s.Status()
-		if err == nil {
-			log.Println("Existing service detected, uninstalling...")
-			err = s.Stop()
-			if err != nil {
-				log.Println("Error stopping service:", err)
-			}
-			err = s.Uninstall()
-			if err != nil {
-				log.Println("Error uninstalling service:", err)
-			} else {
-				log.Println("Existing service uninstalled successfully.")
-			}
-		}
-
-		// 然后重新安装服务
-		err = s.Install()
-		if err != nil {
-			log.Println("Error installing service:", err)
-			return
-		}
-		log.Println("Service installed successfully. Starting service...")
-		err = s.Start()
-		if err != nil {
-			log.Println("Error starting service:", err)
-			return
-		}
-
-		log.Println("Service started successfully.")
+		installService(s)
 	case "uninstall":
-		err := s.Stop()
-		if err != nil {
-			log.Println("Error stopping service:", err)
-			return
-		}
-		log.Println("Service stopped successfully.")
-		err = s.Uninstall()
-		if err != nil {
-			log.Println("Error uninstalling service:", err)
-			return
-		}
-		log.Println("Service uninstalled successfully.")
+		uninstallService(s)
 	case "run":
-		err := s.Run()
-		if err != nil {
-			log.Println("Error running service:", err)
+		if err := s.Run(); err != nil {
+			log.Printf("Error running service: %v", err)
 		}
 	default:
 		log.Println("Invalid action. Use 'install', 'uninstall', or 'run'.")
 	}
 }
 
+func installService(s service.Service) {
+	// 强制重新安装：先停止并卸载（忽略错误）
+	s.Stop()
+	s.Uninstall()
+	
+	if err := s.Install(); err != nil {
+		log.Printf("Error installing service: %v", err)
+		return
+	}
+	log.Println("Service installed successfully")
+	
+	if err := s.Start(); err != nil {
+		log.Printf("Error starting service: %v", err)
+		return
+	}
+	log.Println("Service started successfully")
+}
+
+func uninstallService(s service.Service) {
+	if err := s.Stop(); err != nil {
+		log.Printf("Error stopping service: %v", err)
+	}
+	
+	if err := s.Uninstall(); err != nil {
+		log.Printf("Error uninstalling service: %v", err)
+		return
+	}
+	log.Println("Service uninstalled successfully")
+}
+
 func main() {
 	flag.Parse()
+	
 	if *version {
 		log.Println("ccagent version:", query.GetAgentVersion())
 		return
 	}
-	if *action != "uninstall" {
-		if *server == "" {
-			log.Println("Server address is required. Use -server <address>, like -server http://ccops.corgi.plus")
-			return
-		} else {
-			log.Println("Server address is:", *server)
-		}
+	
+	// 验证参数
+	if *action != "uninstall" && *server == "" {
+		log.Println("Server address is required. Use -server <address>, like -server http://ccops.corgi.plus")
+		return
+	}
+	
+	if *server != "" {
+		log.Println("Server address:", *server)
 	}
 
 	svcConfig := &service.Config{
 		Name:        "ccagent",
-		DisplayName: "CC Agent Service",
+		DisplayName: "CC Agent Service", 
 		Description: "Agent service of ccagent",
 		Arguments:   []string{"-action", "run", "-server", *server},
-		// 在系统层面设置自动启动
 		Dependencies: []string{"Requires=network.target", "After=network-online.target"},
 	}
 
 	s, err := service.New(&program{}, svcConfig)
 	if err != nil {
-		log.Println("Error creating service:", err)
+		log.Printf("Error creating service: %v", err)
 		return
 	}
 
