@@ -73,6 +73,13 @@ class AgentConnection:
             
         try:
             await self.user_sessions[session_id].send_text(text_data)
+            
+            # 检测会话结束消息，主动关闭WebSocket连接
+            if "[Session ended]" in text_data:
+                logger.info(f"Session {session_id} ended normally, closing WebSocket")
+                await self.user_sessions[session_id].close()
+                self.remove_user_session(session_id)
+                
         except Exception as e:
             logger.warning(f"Failed to send to user session {session_id}: {e}")
             self.remove_user_session(session_id)

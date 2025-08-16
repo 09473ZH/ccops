@@ -104,15 +104,19 @@ func (t *SSHTunnel) Connect() error {
 	go func() {
 		if err := t.cmd.Wait(); err != nil {
 			log.Printf("Shell process exited with error: %v", err)
+			if t.onError != nil {
+				t.onError(fmt.Errorf("shell process exited with error: %v", err))
+			}
 		} else {
 			log.Println("Shell process exited normally")
+			// 正常退出（如Ctrl+D），发送友好的关闭消息
+			if t.onData != nil {
+				t.onData([]byte("\r\n[Session ended]\r\n"))
+			}
 		}
 		t.mu.Lock()
 		t.connected = false
 		t.mu.Unlock()
-		if t.onError != nil {
-			t.onError(fmt.Errorf("shell process exited"))
-		}
 	}()
 
 	log.Println("Shell started successfully with PTY")
@@ -209,15 +213,19 @@ func (t *SSHTunnel) connectWithoutPTY(shell string, args []string) error {
 	go func() {
 		if err := t.cmd.Wait(); err != nil {
 			log.Printf("Shell process exited with error: %v", err)
+			if t.onError != nil {
+				t.onError(fmt.Errorf("shell process exited with error: %v", err))
+			}
 		} else {
 			log.Println("Shell process exited normally")
+			// 正常退出（如Ctrl+D），发送友好的关闭消息
+			if t.onData != nil {
+				t.onData([]byte("\r\n[Session ended]\r\n"))
+			}
 		}
 		t.mu.Lock()
 		t.connected = false
 		t.mu.Unlock()
-		if t.onError != nil {
-			t.onError(fmt.Errorf("shell process exited"))
-		}
 	}()
 
 	log.Println("Shell started successfully without PTY")
