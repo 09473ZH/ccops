@@ -6,6 +6,7 @@ from typing import Dict
 
 from app.models.host import Host
 from app.models.configuration import Configuration
+from app.services.agent_manager import agent_manager
 
 router = APIRouter(prefix="/hosts", tags=["terminal"])
 
@@ -32,6 +33,99 @@ class ConnectionManager:
     async def send_message(self, session_id: str, message: str):
         if session_id in self.active_connections:
             await self.active_connections[session_id].send_text(message)
+
+manager = ConnectionManager()
+
+
+class AgentTerminal:
+    """通过Agent连接的SSH终端"""
+    def __init__(self, host: Host, websocket: WebSocket, session_id: str):
+        self.host = host
+        self.websocket = websocket
+        self.session_id = session_id
+        self.connected = False
+
+    async def connect_agent_ssh(self):
+        """通过Agent建立SSH连接"""
+        try:
+            # 检查Agent是否在线
+            if not agent_manager.is_host_online(str(self.host.id)):
+                await self.websocket.send_text("错误: Agent未连接或主机离线")
+                return False
+
+            # 启动SSH会话
+            success = await agent_manager.start_ssh_session(
+                str(self.host.id), 
+                self.session_id, 
+                self.websocket
+            )
+            
+            if success:
+                self.connected = True
+                logger.info(f"Agent SSH连接建立成功: host={self.host.id}, session={self.session_id}")
+                return True
+            else:
+                await self.websocket.send_text("错误: 无法启动Agent SSH会话")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Agent SSH连接失败: {str(e)}")
+            await self.websocket.send_text(f"Agent SSH连接失败: {str(e)}")
+            return False
+
+    async def send_input(self, data: bytes):
+        """发送输入到Agent SSH"""
+        try:
+            if not self.connected:
+                logger.warning("Agent SSH未连接，忽略输入")
+                return
+
+            success = await agent_manager.send_ssh_data(
+                str(self.host.id), 
+                self.session_id, 
+                data
+            )
+            
+            if not success:
+                logger.error("发送数据到Agent失败")
+                
+        except Exception as e:
+            logger.error(f"发送输入到Agent失败: {e}")
+            await self.websocket.send_text(f"输入发送错误: {str(e)}")
+
+    async def resize_terminal(self, rows: int, cols: int):
+        """调整Agent终端大小"""
+        try:
+            if not self.connected:
+                return
+
+            success = await agent_manager.resize_ssh_terminal(
+                str(self.host.id), 
+                self.session_id, 
+                cols, 
+                rows
+            )
+            
+            if not success:
+                logger.warning("调整Agent终端大小失败")
+                
+        except Exception as e:
+            logger.warning(f"调整Agent终端大小失败: {e}")
+
+    def close(self):
+        """关闭Agent SSH连接"""
+        try:
+            if self.connected:
+                # 异步停止SSH会话（不等待结果）
+                asyncio.create_task(agent_manager.stop_ssh_session(
+                    str(self.host.id), 
+                    self.session_id
+                ))
+                self.connected = False
+                logger.info(f"Agent SSH连接关闭: host={self.host.id}, session={self.session_id}")
+        except Exception as e:
+            logger.error(f"关闭Agent SSH连接失败: {e}")
+
 
 manager = ConnectionManager()
 
@@ -141,8 +235,11 @@ class SSHTerminal:
 
 @router.websocket("/{host_id}/terminal")
 async def terminal_websocket(websocket: WebSocket, host_id: int):
-    """WebShell终端WebSocket接口"""
+    """WebShell终端WebSocket接口 - 支持直连SSH和Agent连接"""
     session_id = f"{host_id}_{id(websocket)}"
+    terminal = None
+    output_task = None
+    stderr_task = None
     
     try:
         # 连接WebSocket
@@ -158,22 +255,57 @@ async def terminal_websocket(websocket: WebSocket, host_id: int):
             await websocket.close()
             return
         
-        # 创建SSH终端
-        terminal = SSHTerminal(host, websocket, session_id)
+        # 检查连接类型：优先使用Agent连接，如果Agent不在线则尝试直连
+        use_agent = agent_manager.is_host_online(str(host_id))
+        logger.info(f"Host {host_id} agent online status: {use_agent}")
+        logger.info(f"Available agents: {agent_manager.get_online_hosts()}")
         
-        # 建立SSH连接
-        if not await terminal.connect_ssh():
-            await websocket.close()
-            return
-        
-        # 启动SSH输出处理任务
-        output_task = asyncio.create_task(terminal.handle_ssh_output())
-        stderr_task = asyncio.create_task(terminal.handle_ssh_stderr())
+        if use_agent:
+            # 使用Agent连接
+            logger.info(f"使用Agent连接主机 {host_id}")
+            terminal = AgentTerminal(host, websocket, session_id)
+            
+            # 建立Agent SSH连接
+            logger.info(f"Attempting to connect via Agent for host {host_id}")
+            if not await terminal.connect_agent_ssh():
+                logger.error(f"Failed to connect via Agent for host {host_id}")
+                await websocket.close()
+                return
+                
+            logger.info(f"Successfully connected via Agent for host {host_id}")
+            await websocket.send_text(f"已通过Agent连接到主机 {host.name or host_id}\r\n")
+            
+        else:
+            # 使用直连SSH
+            logger.info(f"使用直连SSH连接主机 {host_id}")
+            terminal = SSHTerminal(host, websocket, session_id)
+            
+            # 建立SSH连接
+            if not await terminal.connect_ssh():
+                await websocket.close()
+                return
+            
+            # 启动SSH输出处理任务（仅直连SSH需要）
+            output_task = asyncio.create_task(terminal.handle_ssh_output())
+            stderr_task = asyncio.create_task(terminal.handle_ssh_stderr())
         
         try:
             while True:
-                # 接收WebSocket消息
-                data = await websocket.receive_bytes()
+                # 接收WebSocket消息，支持文本和二进制数据
+                try:
+                    message = await websocket.receive()
+                    if message['type'] == 'websocket.receive':
+                        if 'bytes' in message:
+                            data = message['bytes']
+                        elif 'text' in message:
+                            data = message['text'].encode('utf-8')
+                        else:
+                            continue
+                    else:
+                        continue
+                except Exception as e:
+                    logger.error(f"Failed to receive WebSocket message: {e}")
+                    break
                 
                 # 处理心跳包
                 if len(data) == 1 and data[0] == 0:
@@ -199,12 +331,20 @@ async def terminal_websocket(websocket: WebSocket, host_id: int):
             logger.info(f"WebSocket连接断开: {session_id}")
         except Exception as e:
             logger.error(f"WebSocket处理错误: {e}")
-            await websocket.send_text(f"会话错误: {str(e)}")
+            try:
+                await websocket.send_text(f"会话错误: {str(e)}")
+            except:
+                pass
         finally:
-            # 清理任务
-            output_task.cancel()
-            stderr_task.cancel()
-            terminal.close()
+            # 清理任务（仅直连SSH需要）
+            if output_task:
+                output_task.cancel()
+            if stderr_task:
+                stderr_task.cancel()
+            
+            # 关闭终端连接
+            if terminal:
+                terminal.close()
             
     except Exception as e:
         logger.error(f"WebSocket连接失败: {e}")

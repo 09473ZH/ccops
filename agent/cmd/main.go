@@ -5,6 +5,7 @@ import (
 	"agent/web/clglobal"
 	"agent/web/request"
 	"agent/web/router"
+	"agent/websocket"
 	"flag"
 	"log"
 	"time"
@@ -12,7 +13,9 @@ import (
 	"github.com/kardianos/service"
 )
 
-type program struct{}
+type program struct{
+	wsClient *websocket.AgentClient
+}
 
 // 提取 flag 定义到外面
 var (
@@ -38,6 +41,14 @@ func (p *program) run() {
 	}
 	request.CheckAndUpdatePublicKey() // 检查并更新公钥
 
+	// 启动 WebSocket 客户端
+	p.wsClient = websocket.NewAgentClient(*server)
+	go func() {
+		if err := p.wsClient.Start(); err != nil {
+			log.Printf("Failed to start WebSocket client: %v", err)
+		}
+	}()
+
 	// 启动 Gin 路由
 	router.StartGin() // 调用 web/router 包中的函数
 
@@ -45,6 +56,10 @@ func (p *program) run() {
 
 func (p *program) Stop(s service.Service) error {
 	// 停止服务时的逻辑
+	if p.wsClient != nil {
+		log.Println("Stopping WebSocket client...")
+		p.wsClient.Stop()
+	}
 	return nil
 }
 

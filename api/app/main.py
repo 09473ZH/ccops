@@ -38,6 +38,8 @@ from app.routers.users import router as users_router
 from app.routers.annotations import router as annotations_router
 from app.routers.configurations import router as configurations_router
 from app.routers.terminal import router as terminal_router
+from app.routers.agent import router as agent_router
+from app.routers.client import router as client_router
 
 app.include_router(auth_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
@@ -45,6 +47,8 @@ app.include_router(annotations_router, prefix="/api")
 app.include_router(configurations_router, prefix="/api")
 app.include_router(hosts_router, prefix="/api")
 app.include_router(terminal_router, prefix="/api")
+app.include_router(agent_router, prefix="/api")
+app.include_router(client_router, prefix="/api")
 
 
 @app.get("/")
