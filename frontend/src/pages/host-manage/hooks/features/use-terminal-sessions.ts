@@ -1,106 +1,177 @@
-import { createRef, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 import type { HostInfo } from '@/api/services/host';
 
-import type { TerminalRef } from '../../components/Terminal';
+import type { TerminalTab, TreeNode, SplitDirection } from '../../components/Terminal/types';
 
-export interface TerminalSession {
-  id: string;
-  hostId: string;
-  title: string;
-  ref: React.RefObject<HTMLDivElement>;
-  terminalRef: React.RefObject<TerminalRef>;
-}
+import {
+  createPane,
+  splitPane,
+  closePane,
+  getAllPaneIds,
+  findAdjacentPane,
+  updateSizes,
+} from './use-split-layout';
+
+// Re-export for backwards compatibility
+export type TerminalSession = TerminalTab;
 
 export function useTerminalSessions(initialId: string | undefined, hosts: HostInfo[] | undefined) {
-  const [sessions, setSessions] = useState<TerminalSession[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string>('');
+  const [tabs, setTabs] = useState<TerminalTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string>('');
 
-  const getActiveSession = useCallback(() => {
-    return sessions.find((s) => s.id === activeSessionId);
-  }, [sessions, activeSessionId]);
-
-  const handleActiveSession = useCallback(
-    (action: (terminal: TerminalRef) => void) => {
-      const activeSession = getActiveSession();
-      if (activeSession?.terminalRef.current) {
-        action(activeSession.terminalRef.current);
-      }
+  const getHostTitle = useCallback(
+    (hostId: string) => {
+      const host = hosts?.find((h: HostInfo) => h.id.toString() === hostId);
+      return host ? `${host.name}@${host.hostServerUrl}` : `终端${hostId}`;
     },
-    [getActiveSession],
+    [hosts],
   );
 
-  const createSession = (hostId: string) => {
-    const host = hosts?.find((h: HostInfo) => h.id.toString() === hostId);
-    const sameHostSessions = sessions.filter((s) => s.hostId === hostId);
-    const sessionId = `${hostId}-${Date.now()}`;
+  const getActiveTab = useCallback(() => {
+    return tabs.find((t) => t.id === activeTabId);
+  }, [tabs, activeTabId]);
 
-    const newSession: TerminalSession = {
-      id: sessionId,
-      hostId,
-      title: host
-        ? `${host.name}@${host.hostServerUrl}${
-            sameHostSessions.length ? ` (${sameHostSessions.length})` : ''
-          }`
-        : `终端${hostId}`,
-      ref: createRef<HTMLDivElement>(),
-      terminalRef: createRef<TerminalRef>(),
-    };
+  // ── Tab Operations ──
 
-    setSessions((prev) => [...prev, newSession]);
-    setActiveSessionId(sessionId);
-    return newSession;
-  };
+  const createSession = useCallback(
+    (hostId: string) => {
+      const pane = createPane(hostId);
+      const tabId = `tab-${Date.now()}`;
+      const newTab: TerminalTab = {
+        id: tabId,
+        hostId,
+        title: getHostTitle(hostId),
+        layoutTree: pane,
+        activePaneId: pane.id,
+      };
+      setTabs((prev) => [...prev, newTab]);
+      setActiveTabId(tabId);
+      return newTab;
+    },
+    [getHostTitle],
+  );
 
-  const closeSession = (sessionId: string) => {
-    if (sessionId === initialId) return;
-
-    setSessions((prev) => {
-      const newSessions = prev.filter((s) => s.id !== sessionId);
-      if (activeSessionId === sessionId) {
-        const closedIndex = prev.findIndex((s) => s.id === sessionId);
-        if (newSessions.length > 0) {
-          const nextSession = newSessions[closedIndex] || newSessions[closedIndex - 1];
-          setActiveSessionId(nextSession.id);
-        } else {
-          setActiveSessionId('');
+  const closeSession = useCallback(
+    (tabId: string) => {
+      setTabs((prev) => {
+        const newTabs = prev.filter((t) => t.id !== tabId);
+        if (activeTabId === tabId && newTabs.length > 0) {
+          const closedIndex = prev.findIndex((t) => t.id === tabId);
+          const nextTab = newTabs[closedIndex] || newTabs[closedIndex - 1];
+          setActiveTabId(nextTab.id);
         }
+        return newTabs;
+      });
+    },
+    [activeTabId],
+  );
+
+  // ── Split Operations ──
+
+  const splitActivePane = useCallback(
+    (direction: SplitDirection, hostId?: string) => {
+      setTabs((prev) =>
+        prev.map((tab) => {
+          if (tab.id !== activeTabId) return tab;
+          const targetHostId = hostId || tab.hostId;
+          const newTree = splitPane(tab.layoutTree, tab.activePaneId, direction, targetHostId);
+          // Find the newly created pane (last pane in the new tree)
+          const allPanes = getAllPaneIds(newTree);
+          const newPaneId = allPanes[allPanes.length - 1];
+          return { ...tab, layoutTree: newTree, activePaneId: newPaneId };
+        }),
+      );
+    },
+    [activeTabId],
+  );
+
+  const closePaneInActiveTab = useCallback(() => {
+    setTabs((prev) => {
+      const tab = prev.find((t) => t.id === activeTabId);
+      if (!tab) return prev;
+
+      const newTree = closePane(tab.layoutTree, tab.activePaneId);
+      if (newTree === null) {
+        // Last pane closed — close the tab
+        const newTabs = prev.filter((t) => t.id !== activeTabId);
+        if (newTabs.length > 0) {
+          const closedIndex = prev.findIndex((t) => t.id === activeTabId);
+          const nextTab = newTabs[closedIndex] || newTabs[closedIndex - 1];
+          setActiveTabId(nextTab.id);
+        }
+        return newTabs;
       }
-      return newSessions;
+
+      // Set focus to first remaining pane
+      const remainingPanes = getAllPaneIds(newTree);
+      return prev.map((t) =>
+        t.id === activeTabId
+          ? { ...t, layoutTree: newTree, activePaneId: remainingPanes[0] }
+          : t,
+      );
     });
-  };
+  }, [activeTabId]);
+
+  const setActivePaneId = useCallback(
+    (paneId: string) => {
+      setTabs((prev) =>
+        prev.map((tab) => (tab.id === activeTabId ? { ...tab, activePaneId: paneId } : tab)),
+      );
+    },
+    [activeTabId],
+  );
+
+  const navigatePane = useCallback(
+    (direction: 'up' | 'down' | 'left' | 'right') => {
+      const tab = tabs.find((t) => t.id === activeTabId);
+      if (!tab) return;
+      const nextPaneId = findAdjacentPane(tab.layoutTree, tab.activePaneId, direction);
+      if (nextPaneId) setActivePaneId(nextPaneId);
+    },
+    [tabs, activeTabId, setActivePaneId],
+  );
+
+  const updateLayoutSizes = useCallback(
+    (splitId: string, sizes: [number, number]) => {
+      setTabs((prev) =>
+        prev.map((tab) =>
+          tab.id === activeTabId
+            ? { ...tab, layoutTree: updateSizes(tab.layoutTree, splitId, sizes) }
+            : tab,
+        ),
+      );
+    },
+    [activeTabId],
+  );
+
+  // ── Title Updates ──
 
   const updateSessionTitles = useCallback(() => {
-    if (hosts) {
-      setSessions((prev) => {
-        const updatedSessions = prev.map((session) => {
-          const host = hosts.find((h) => h.id.toString() === session.hostId);
-          if (!host) return session;
-
-          const newTitle = `${host.name}@${host.hostServerUrl}`;
-          return session.title !== newTitle
-            ? {
-                ...session,
-                title: newTitle,
-              }
-            : session;
-        });
-
-        return prev.every((session, i) => session.title === updatedSessions[i].title)
-          ? prev
-          : updatedSessions;
+    if (!hosts) return;
+    setTabs((prev) => {
+      const updated = prev.map((tab) => {
+        const newTitle = getHostTitle(tab.hostId);
+        return tab.title !== newTitle ? { ...tab, title: newTitle } : tab;
       });
-    }
-  }, [hosts]);
+      return prev.every((t, i) => t.title === updated[i].title) ? prev : updated;
+    });
+  }, [hosts, getHostTitle]);
 
   return {
-    sessions,
-    activeSessionId,
-    setActiveSessionId,
+    // Tab-level (backwards compatible names)
+    sessions: tabs,
+    activeSessionId: activeTabId,
+    setActiveSessionId: setActiveTabId,
     createSession,
     closeSession,
     updateSessionTitles,
-    getActiveSession,
-    handleActiveSession,
+    // Split operations
+    splitActivePane,
+    closePaneInActiveTab,
+    setActivePaneId,
+    navigatePane,
+    updateLayoutSizes,
+    getActiveTab,
   };
 }

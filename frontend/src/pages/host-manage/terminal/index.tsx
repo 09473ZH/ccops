@@ -1,35 +1,42 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import 'xterm/css/xterm.css';
 
-import type { HostInfo } from '@/api/services/host';
 import { useHostList } from '@/hooks/use-host-list';
 import { cn } from '@/utils';
 
-import { Terminal as TerminalComponent } from '../components/Terminal';
 import { FontSelector } from '../components/Terminal/FontSelector';
+import { HostSelectorModal } from '../components/Terminal/HostSelectorModal';
+import { SplitPaneRenderer } from '../components/Terminal/SplitPaneRenderer';
+import { getPaneHandle } from '../components/Terminal/TerminalPane';
+import type { TerminalTab } from '../components/Terminal/types';
 import { terminalThemes, type ThemeNames } from '../constants/themes';
-import { useHostSearch, useTerminalSessions, type TerminalSession } from '../hooks';
+import { useHostSearch, useTerminalSessions } from '../hooks';
+import { useSplitPaneShortcuts } from '../hooks/use-split-pane-shortcuts';
 
-import { getCurrentTheme, setTheme, getStyles } from './theme';
+import { getCurrentTheme, setTheme, getStyles, getShortcutKeys } from './theme';
 
 export default function Terminal() {
   const { id } = useParams<{ id: string }>();
   const { list: hosts } = useHostList();
-  const [isConnected, setIsConnected] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
   const [currentTheme, setCurrentTheme] = useState<ThemeNames>(getCurrentTheme());
   const [fontSize, setFontSize] = useState<number>(14);
   const [fontFamily, setFontFamily] = useState('Consolas');
 
   const {
-    sessions,
-    activeSessionId,
-    setActiveSessionId,
+    sessions: tabs,
+    activeSessionId: activeTabId,
+    setActiveSessionId: setActiveTabId,
     createSession,
     closeSession,
     updateSessionTitles,
-    handleActiveSession,
+    splitActivePane,
+    closePaneInActiveTab,
+    setActivePaneId,
+    navigatePane,
+    updateLayoutSizes,
+    getActiveTab,
   } = useTerminalSessions(id, hosts);
 
   const {
@@ -44,146 +51,144 @@ export default function Terminal() {
     handleKeyDown,
   } = useHostSearch(hosts);
 
-  const styles = getStyles(currentTheme);
-  const { shortcuts } = styles;
+  // ── Derived state ──
 
-  // 更新时间
+  const styles = useMemo(() => getStyles(currentTheme), [currentTheme]);
+  const shortcutKeys = getShortcutKeys();
+  const modKey = shortcutKeys.clear.startsWith('⌘') ? '⌘' : 'Ctrl';
+  const activeTab = tabs.find((t) => t.id === activeTabId);
+  const isActiveTabSplit = activeTab?.layoutTree.type === 'split';
+  const xtermTheme = useMemo(() => terminalThemes[currentTheme], [currentTheme]);
+
+  // ── Pane actions ──
+
+  const getActivePaneHandle = useCallback(() => {
+    const tab = getActiveTab();
+    return tab ? getPaneHandle(tab.activePaneId) : undefined;
+  }, [getActiveTab]);
+
+  // ── Shortcuts ──
+
+  const shortcutActions = useMemo(
+    () => ({
+      onSplitVertical: () => splitActivePane('vertical'),
+      onSplitHorizontal: () => splitActivePane('horizontal'),
+      onClosePane: () => {
+        if (isActiveTabSplit) closePaneInActiveTab();
+      },
+      onNavigateUp: () => navigatePane('up'),
+      onNavigateDown: () => navigatePane('down'),
+      onNavigateLeft: () => navigatePane('left'),
+      onNavigateRight: () => navigatePane('right'),
+      onClear: () => getActivePaneHandle()?.clear(),
+      onReconnect: () => getActivePaneHandle()?.reconnect(),
+    }),
+    [splitActivePane, closePaneInActiveTab, navigatePane, getActivePaneHandle, isActiveTabSplit],
+  );
+  useSplitPaneShortcuts(shortcutActions);
+
+  // ── Effects ──
+
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date().toLocaleTimeString());
-    }, 1000);
+    const timer = setInterval(() => setCurrentTime(new Date().toLocaleTimeString()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // 初始化第一个终端会话
   useEffect(() => {
-    if (id && sessions.length === 0 && hosts) {
-      createSession(id);
-    }
-  }, [id, sessions.length, hosts, createSession]);
+    if (id && tabs.length === 0) createSession(id);
+  }, [id, tabs.length, createSession]);
 
-  // 当hosts加载完成后，更新已有会话的标题
   useEffect(() => {
     updateSessionTitles();
   }, [hosts, updateSessionTitles]);
 
-  const handleThemeChange = (theme: ThemeNames) => {
+  // ── Handlers ──
+
+  const handleThemeChange = useCallback((theme: ThemeNames) => {
     setCurrentTheme(theme);
     setTheme(theme);
-  };
+  }, []);
 
-  const handleFontSizeChange = (newSize: number) => {
-    const size = Math.min(Math.max(newSize, 12), 20);
-    setFontSize(size);
-  };
+  const handleFontSizeChange = useCallback((newSize: number) => {
+    setFontSize(Math.min(Math.max(newSize, 12), 20));
+  }, []);
 
-  const handleClear = useCallback(
-    () => handleActiveSession((terminal) => terminal.clear()),
-    [handleActiveSession],
-  );
-
-  const handleReconnect = useCallback(
-    () => handleActiveSession((terminal) => terminal.reconnect()),
-    [handleActiveSession],
-  );
-
-  useEffect(() => {
-    // 清屏
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'l') {
-        e.preventDefault();
-        handleClear();
-      }
-    };
-    // 重新连接
-    const handleReconnectKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'r') {
-        e.preventDefault();
-        handleReconnect();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keydown', handleReconnectKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keydown', handleReconnectKeyDown);
-    };
-  }, [handleClear, handleReconnect]);
-
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      setIsSearchFocused(false);
+  const handleHostSelect = useCallback(
+    (hostId: string) => {
+      createSession(hostId);
       setSearchQuery('');
-    }
-  };
+      setIsSearchFocused(false);
+    },
+    [createSession, setSearchQuery, setIsSearchFocused],
+  );
+
+  const handleCloseSearch = useCallback(() => {
+    setIsSearchFocused(false);
+    setSearchQuery('');
+  }, [setIsSearchFocused, setSearchQuery]);
 
   if (!id) return null;
 
   return (
     <div className={styles.container}>
-      {/* 主机选择器弹窗 */}
+      {/* Host selector modal */}
       {isSearchFocused && (
-        <div className={styles.hostSelector.overlay} onClick={handleOverlayClick}>
-          <div className={styles.hostSelector.container}>
-            <input
-              ref={searchInputRef}
-              type="text"
-              className={styles.hostSelector.input}
-              placeholder="输入主机名称或地址搜索..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setActiveIndex(0);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  e.preventDefault();
-                  setIsSearchFocused(false);
-                  setSearchQuery('');
-                } else {
-                  handleKeyDown(e, createSession);
-                }
-              }}
-            />
-            <div className={styles.hostSelector.list}>
-              {filteredHosts?.map((host: HostInfo, index: number) => (
-                <div
-                  key={host.id}
-                  className={styles.hostSelector.item(activeIndex === index)}
-                  onClick={() => {
-                    createSession(host.id.toString());
-                    setSearchQuery('');
-                    setIsSearchFocused(false);
-                  }}
-                  onMouseEnter={() => setActiveIndex(index)}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className={styles.hostSelector.itemTitle}>{host.name}</div>
-                    <div style={styles.hostSelector.itemSubtitle(activeIndex === index)}>
-                      {host.hostServerUrl}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <HostSelectorModal
+          filteredHosts={filteredHosts}
+          activeIndex={activeIndex}
+          searchQuery={searchQuery}
+          searchInputRef={searchInputRef}
+          styles={styles.hostSelector}
+          onSearchChange={setSearchQuery}
+          onActiveIndexChange={setActiveIndex}
+          onSelect={handleHostSelect}
+          onClose={handleCloseSearch}
+          onKeyDown={handleKeyDown}
+          createSession={createSession}
+        />
       )}
 
-      {/* 标题栏 */}
+      {/* Header */}
       <div className={styles.header.container}>
         <div className={styles.header.left.container}>
           <span className={styles.header.left.time}>{currentTime}</span>
           <span className={styles.header.left.text}>SSH</span>
-          <div className={styles.header.left.sshStatus}>
-            <div className={styles.header.left.dot(isConnected)} />
-            <span>{isConnected ? '已连接' : '未连接'}</span>
-          </div>
-          <button className={cn(styles.header.left.button)} onClick={handleReconnect}>
+          <button
+            className={cn(styles.header.left.button)}
+            onClick={() => getActivePaneHandle()?.reconnect()}
+          >
             <span>重新连接</span>
-            <span className={styles.header.left.shortcut}>({shortcuts.reconnect})</span>
+            <span className={styles.header.left.shortcut}>({shortcutKeys.reconnect})</span>
           </button>
-          <button onClick={handleClear}>清屏</button>
+          <button
+            className={styles.header.left.button}
+            onClick={() => getActivePaneHandle()?.clear()}
+          >
+            清屏
+          </button>
+          <button
+            className={styles.header.left.button}
+            onClick={() => splitActivePane('vertical')}
+            title={`${modKey}+D`}
+          >
+            垂直分屏
+          </button>
+          <button
+            className={styles.header.left.button}
+            onClick={() => splitActivePane('horizontal')}
+            title={`${modKey}+Shift+D`}
+          >
+            水平分屏
+          </button>
+          {isActiveTabSplit && (
+            <button
+              className={styles.header.left.button}
+              onClick={closePaneInActiveTab}
+              title={`${modKey}+Shift+X`}
+            >
+              关闭面板
+            </button>
+          )}
         </div>
 
         <div className={styles.header.right.container}>
@@ -201,8 +206,6 @@ export default function Terminal() {
               ))}
             </select>
           </div>
-
-          {/* 字体大小控制 */}
           <div className={styles.header.right.fontSizeButton.container}>
             <button
               className={styles.header.right.fontSizeButton.button}
@@ -221,22 +224,21 @@ export default function Terminal() {
         </div>
       </div>
 
-      {/* 标签栏 */}
+      {/* Tab bar */}
       <div className={styles.tabBar.container}>
-        {sessions.map((session: TerminalSession) => (
+        {tabs.map((tab: TerminalTab) => (
           <div
-            key={session.id}
-            className={styles.tabBar.tab(activeSessionId === session.id)}
-            onClick={() => setActiveSessionId(session.id)}
+            key={tab.id}
+            className={styles.tabBar.tab(activeTabId === tab.id)}
+            onClick={() => setActiveTabId(tab.id)}
           >
-            <span className={styles.tabBar.title}>{session.title}</span>
-            {sessions.length > 1 && (
+            <span className={styles.tabBar.title}>{tab.title}</span>
+            {tabs.length > 1 && (
               <button
-                disabled={sessions.length === 1}
                 className={styles.tabBar.closeButton}
                 onClick={(e) => {
                   e.stopPropagation();
-                  closeSession(session.id);
+                  closeSession(tab.id);
                 }}
               >
                 ×
@@ -249,22 +251,19 @@ export default function Terminal() {
         </button>
       </div>
 
-      {/* 终端区域 */}
+      {/* Terminal area */}
       <div className={styles.terminal.container}>
         <div className={styles.terminal.wrapper}>
-          {sessions.map((session: TerminalSession) => (
-            <div
-              key={session.id}
-              className={styles.terminal.session(activeSessionId === session.id)}
-            >
-              <TerminalComponent
-                ref={session.terminalRef}
-                className={styles.terminal.xterm(activeSessionId === session.id)}
-                hostId={session.hostId}
+          {tabs.map((tab: TerminalTab) => (
+            <div key={tab.id} className={styles.terminal.session(activeTabId === tab.id)}>
+              <SplitPaneRenderer
+                node={tab.layoutTree}
+                activePaneId={tab.activePaneId}
+                onPaneFocus={setActivePaneId}
+                onSizesChange={updateLayoutSizes}
                 fontSize={fontSize}
                 fontFamily={fontFamily}
-                theme={terminalThemes[currentTheme]}
-                onConnectionChange={setIsConnected}
+                theme={xtermTheme}
               />
             </div>
           ))}
