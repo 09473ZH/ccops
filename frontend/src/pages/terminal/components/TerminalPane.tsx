@@ -59,7 +59,11 @@ export const TerminalPane = memo(function TerminalPane({
   return (
     <TerminalErrorBoundary paneId={paneId} onReconnect={reconnect}>
       <div
-        className={cn('relative h-full w-full', isSplit && isActive && 'ring-1 ring-blue-500/30')}
+        className={cn(
+          'relative h-full w-full',
+          isSplit && 'p-1',
+          isSplit && isActive && 'ring-1 ring-blue-500/30',
+        )}
         onClick={() => onFocus(paneId)}
       >
         <Terminal
