@@ -5,7 +5,7 @@ import TerminalLayout from '@/layouts/TerminalLayout';
 
 import type { AppRouteObject } from '#/router';
 
-const Terminal = lazy(() => import('@/pages/host-manage/terminal'));
+const Terminal = lazy(() => import('@/pages/terminal'));
 
 const terminalRoutes: AppRouteObject[] = [
   {

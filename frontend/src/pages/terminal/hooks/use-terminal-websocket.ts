@@ -5,7 +5,7 @@ import type { FitAddon } from 'xterm-addon-fit';
 import { HostApi } from '@/api/constants';
 import { useUserToken } from '@/store/user';
 
-import type { ConnectionStatus } from '../../components/Terminal/types';
+import type { ConnectionStatus } from '../components/types';
 
 const HEARTBEAT_INTERVAL = 30_000;
 const HEARTBEAT_TIMEOUT = 10_000;

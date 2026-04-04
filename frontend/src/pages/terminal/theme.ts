@@ -1,6 +1,6 @@
 import { cn } from '@/utils';
 
-import type { ThemeNames } from '../constants/themes';
+import type { ThemeNames } from './constants/themes';
 
 // 主题管理基础函数
 export const getCurrentTheme = (): ThemeNames => {
@@ -123,11 +123,11 @@ export const getStyles = (theme: ThemeNames) => {
         container: 'flex items-center space-x-4',
         fontSelector: {
           container: 'flex items-center space-x-2',
-          select: getSelectStyle(), // 使用新的选择器样式
+          select: getSelectStyle(),
         },
         themeSelector: {
           container: 'relative inline-block',
-          select: getSelectStyle(), // 使用新的选择器样式
+          select: getSelectStyle(),
         },
         fontSizeButton: {
           container: 'flex items-center space-x-2',
@@ -153,17 +153,13 @@ export const getStyles = (theme: ThemeNames) => {
           'group relative flex h-9 min-w-[140px] max-w-[240px] items-center rounded-t-lg px-3',
           'transition-all duration-200',
           {
-            // 活动标签 - 增加对比度
             'bg-terminal-dark-button text-terminal-dark-text': isActive && theme === 'Dark',
             'bg-terminal-light-button text-terminal-light-text ': isActive && theme === 'Light',
             'bg-terminal-retro-button text-terminal-retro-text': isActive && theme === 'Retro',
-
-            // 非活动标签
             'hover:bg-gray-700/50 text-gray-600': !isActive && theme === 'Dark',
             'hover:bg-gray-200/50 text-gray-600': !isActive && theme === 'Light',
             'hover:bg-[#d5ccbf]/50 text-terminal-retro-text/60': !isActive && theme === 'Retro',
           },
-          // 添加边框效果
           {
             'border-t border-l border-r border-gray-700/50': isActive && theme === 'Dark',
             'border-t border-l border-r border-gray-300/50': isActive && theme === 'Light',

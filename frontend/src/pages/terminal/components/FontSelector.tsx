@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { cn } from '@/utils';
 import { preloadFonts } from '@/utils/fonts';
 
-import { getStyles, getCurrentTheme } from '../../terminal/theme';
+import { getStyles, getCurrentTheme } from '../theme';
 
 interface Props {
   value: string;
@@ -29,7 +29,6 @@ const isFontAvailable = (font: string) => {
   const context = canvas.getContext('2d');
   if (!context) return false;
 
-  // 使用 monospace 作为基准字体
   context.font = '16px monospace';
   const baseWidth = context.measureText(testString).width;
   context.font = `16px "${font}", monospace`;
@@ -43,7 +42,6 @@ const getDefaultFont = () => {
   const isMac = /mac/i.test(navigator.userAgent);
   const isWindows = /win/i.test(navigator.userAgent);
 
-  // 先尝试系统常见字体
   if (isMac) {
     if (isFontAvailable('Menlo')) return 'Menlo';
     if (isFontAvailable('Monaco')) return 'Monaco';
@@ -62,14 +60,12 @@ export function FontSelector({ value, onChange, className }: Props) {
 
   const styles = getStyles(getCurrentTheme());
 
-  // 组件挂载时加载 Web Fonts
   useEffect(() => {
     preloadFonts().then(() => {
       setFontsLoaded(true);
     });
   }, []);
 
-  // 组件挂载时自动选择系统默认字体
   useEffect(() => {
     const defaultFont = getDefaultFont();
     onChange(defaultFont);

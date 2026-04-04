@@ -1,9 +1,7 @@
-import type { TreeNode, PaneNode, SplitNode, SplitDirection } from '../../components/Terminal/types';
-
-let idCounter = 0;
+import type { TreeNode, PaneNode, SplitDirection } from '../components/types';
 
 function nextId(prefix: string): string {
-  return `${prefix}-${Date.now()}-${++idCounter}`;
+  return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
 export function createPane(hostId: string): PaneNode {
@@ -30,7 +28,6 @@ export function splitPane(
     return tree;
   }
 
-  // SplitNode — recurse into children
   const [left, right] = tree.children;
   const newLeft = splitPane(left, targetPaneId, direction, newHostId);
   const newRight = splitPane(right, targetPaneId, direction, newHostId);
@@ -49,7 +46,6 @@ export function closePane(tree: TreeNode, targetPaneId: string): TreeNode | null
   const newLeft = closePane(left, targetPaneId);
   const newRight = closePane(right, targetPaneId);
 
-  // If one child was removed, collapse to the other
   if (newLeft === null) return newRight;
   if (newRight === null) return newLeft;
 
@@ -87,7 +83,6 @@ export function updateSizes(
 
 /**
  * Find adjacent pane for arrow-key navigation.
- * Builds a 2D grid of panes and finds the nearest in the given direction.
  */
 export function findAdjacentPane(
   tree: TreeNode,
@@ -100,7 +95,6 @@ export function findAdjacentPane(
   const currentIndex = paneIds.indexOf(currentPaneId);
   if (currentIndex === -1) return null;
 
-  // Simple linear navigation: left/up = previous, right/down = next
   if (direction === 'left' || direction === 'up') {
     return currentIndex > 0 ? paneIds[currentIndex - 1] : paneIds[paneIds.length - 1];
   }
