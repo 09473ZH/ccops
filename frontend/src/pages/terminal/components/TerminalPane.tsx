@@ -4,23 +4,12 @@ import type { FitAddon } from 'xterm-addon-fit';
 
 import { cn } from '@/utils';
 
-import { useTerminalWebSocket } from '../../hooks/features/use-terminal-websocket';
+import { useTerminalWebSocket } from '../hooks/use-terminal-websocket';
+import { registerPane, unregisterPane } from '../lib/pane-registry';
 
-import { Terminal, type TerminalRef } from './index';
+import { Terminal, type TerminalRef } from './Terminal';
+import { TerminalErrorBoundary } from './TerminalErrorBoundary';
 import type { TerminalPaneProps } from './types';
-
-export interface TerminalPaneHandle {
-  clear: () => void;
-  reconnect: () => void;
-  fit: () => void;
-}
-
-// Global registry so parent can call methods on any pane by ID
-const paneRegistry = new Map<string, TerminalPaneHandle>();
-
-export function getPaneHandle(paneId: string): TerminalPaneHandle | undefined {
-  return paneRegistry.get(paneId);
-}
 
 export const TerminalPane = memo(function TerminalPane({
   paneId,
@@ -57,31 +46,36 @@ export const TerminalPane = memo(function TerminalPane({
 
   // Register pane handle for external access
   useEffect(() => {
-    const handle: TerminalPaneHandle = {
+    registerPane(paneId, {
       clear: () => terminalRef.current?.clear(),
       reconnect,
       fit: () => terminalRef.current?.fit(),
-    };
-    paneRegistry.set(paneId, handle);
+    });
     return () => {
-      paneRegistry.delete(paneId);
+      unregisterPane(paneId);
     };
   }, [paneId, reconnect]);
 
   return (
-    <div
-      className={cn('relative h-full w-full', isSplit && isActive && 'ring-1 ring-blue-500/30')}
-      onClick={() => onFocus(paneId)}
-    >
-      <Terminal
-        ref={terminalRef}
-        className="h-full"
-        fontSize={fontSize}
-        fontFamily={fontFamily}
-        theme={theme}
-        onTermReady={handleTermReady}
-        onResize={handleResize}
-      />
-    </div>
+    <TerminalErrorBoundary paneId={paneId} onReconnect={reconnect}>
+      <div
+        className={cn(
+          'relative h-full w-full',
+          isSplit && 'p-1',
+          isSplit && isActive && 'ring-1 ring-blue-500/30',
+        )}
+        onClick={() => onFocus(paneId)}
+      >
+        <Terminal
+          ref={terminalRef}
+          className="h-full"
+          fontSize={fontSize}
+          fontFamily={fontFamily}
+          theme={theme}
+          onTermReady={handleTermReady}
+          onResize={handleResize}
+        />
+      </div>
+    </TerminalErrorBoundary>
   );
 });

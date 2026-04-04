@@ -2,12 +2,14 @@ import { memo } from 'react';
 
 import type { HostInfo } from '@/api/services/host';
 
+import type { getStyles } from '../theme';
+
 interface HostSelectorModalProps {
   filteredHosts: HostInfo[] | undefined;
   activeIndex: number;
   searchQuery: string;
   searchInputRef: React.RefObject<HTMLInputElement>;
-  styles: ReturnType<typeof import('../../terminal/theme').getStyles>['hostSelector'];
+  styles: ReturnType<typeof getStyles>['hostSelector'];
   onSearchChange: (query: string) => void;
   onActiveIndexChange: (index: number) => void;
   onSelect: (hostId: string) => void;

@@ -1,10 +1,11 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Allotment } from 'allotment';
 import 'allotment/dist/style.css';
 import type { ITheme } from 'xterm';
 
-import { getAllPaneIds, findPane } from '../../hooks/features/use-split-layout';
+import { getAllPaneIds, findPane } from '../hooks/use-split-layout';
+import { getPaneHandle } from '../lib/pane-registry';
 
 import { TerminalPane } from './TerminalPane';
 import type { TreeNode, PaneNode } from './types';
@@ -32,7 +33,7 @@ function PaneSlot({
 }) {
   const slotRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const slot = slotRef.current;
     if (!slot) return;
 
@@ -122,18 +123,26 @@ export function SplitPaneRenderer({
   );
 
   // After skeleton mounts or tree changes, bump revision so portals find containers
-  useEffect(() => {
+  useLayoutEffect(() => {
     setRevision((r) => r + 1);
   }, [node]);
 
   // Clean up containers for removed panes
-  useEffect(() => {
+  useLayoutEffect(() => {
     const currentIds = new Set(paneIds);
     for (const id of containers.current.keys()) {
       if (!currentIds.has(id)) {
         containers.current.delete(id);
       }
     }
+  }, [paneIds]);
+
+  // Refit all panes after tree structure changes (split/close)
+  useEffect(() => {
+    const frameId = requestAnimationFrame(() => {
+      paneIds.forEach((id) => getPaneHandle(id)?.fit());
+    });
+    return () => cancelAnimationFrame(frameId);
   }, [paneIds]);
 
   return (
