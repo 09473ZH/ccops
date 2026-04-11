@@ -55,7 +55,7 @@ func InitRouter() *gin.Engine {
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     resolveCorsOrigins(),
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept", "X-Requested-With", "baggage", "sentry-trace"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept", "X-Requested-With", "baggage", "sentry-trace", "X-Refresh-Token"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
