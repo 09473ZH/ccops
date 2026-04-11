@@ -25,7 +25,8 @@ FROM ccr.ccs.tencentyun.com/corgi/python:3.10-slim
 
 
 # 设置国内的 pip 源
-RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
+    pip config set install.trusted-host mirrors.aliyun.com
 # 安装 Ansible 和 SSH 客户端
 RUN apt update
 RUN apt install -y openssh-client
