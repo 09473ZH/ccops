@@ -115,9 +115,12 @@ export default function SystemSettingsPage() {
 
   const renderFormInput = useCallback(
     (item: ConfigItem) => {
+      const placeholder = item.sensitive
+        ? '已配置，留空则保持不变'
+        : t('config.inputPlaceholder', { label: item.description || item.key });
       const baseInputProps = {
         autoComplete: 'off',
-        placeholder: t('config.inputPlaceholder', { label: item.description || item.key }),
+        placeholder,
         className: 'hover:border-primary focus:border-primary transition-colors',
       };
 

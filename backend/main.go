@@ -29,6 +29,7 @@ func main() {
 	err := core.InitAll()
 	if err != nil {
 		fmt.Println(err)
+		global.Log.Fatalf("initialization failed: %v", err)
 	}
 	// 添加 TimeSeriesDB 实例
 	global.TimeSeriesDB = monitor.NewTimeSeriesDB()

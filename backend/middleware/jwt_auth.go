@@ -1,11 +1,28 @@
 package middleware
 
 import (
+	"ccops/models/ctype"
 	"ccops/models/res"
 	"ccops/utils/jwts"
 	"github.com/gin-gonic/gin"
 	"strings"
 )
+
+// JwtAdmin requires a valid JWT whose role claim is admin. Must be chained after JwtUser.
+func JwtAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		_claims, exists := c.Get("claims")
+		if !exists {
+			handleHandshakeError(c, "未登录")
+			return
+		}
+		claims, ok := _claims.(*jwts.CustomClaims)
+		if !ok || claims.Role != ctype.PermissionAdmin {
+			handleHandshakeError(c, "权限不足")
+			return
+		}
+	}
+}
 
 func JwtUser() gin.HandlerFunc {
 	return func(c *gin.Context) {

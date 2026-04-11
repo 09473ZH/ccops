@@ -17,7 +17,9 @@ logger:
   show_line: true
   log_in_console: true
 jwt:
-  secret: xxx
-  issuer: xx
+  # Must be a strong random value of at least 32 characters. Prefer setting
+  # CCOPS_JWT_SECRET env var in production instead of committing to yaml.
+  secret: ""
+  issuer: ccops
   accessExpires  : 24
   refreshExpires : 720

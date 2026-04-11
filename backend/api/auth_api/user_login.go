@@ -2,12 +2,14 @@ package auth_api
 
 import (
 	"ccops/global"
+	"ccops/middleware"
 	"ccops/models"
 	"ccops/models/res"
 	"ccops/utils/jwts"
 	"ccops/utils/pwd"
-	"github.com/gin-gonic/gin"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type EmailLoginRequest struct {
@@ -23,27 +25,34 @@ func (AuthApi) UserLoginView(c *gin.Context) {
 		return
 	}
 
+	ip := c.ClientIP()
+	if allowed, msg := middleware.CheckLoginRate(ip, cr.UserName); !allowed {
+		c.JSON(429, gin.H{"code": res.Error, "data": map[string]any{}, "msg": msg})
+		c.Abort()
+		return
+	}
+
 	var userModel models.UserModel
 	err = global.DB.Take(&userModel, "username = ? or email = ? ", cr.UserName, cr.UserName).Error
 	if err != nil {
 		// 用户名不存在
+		middleware.RecordLoginFailure(ip, cr.UserName)
 		global.Log.Warn("用户不存在")
 		res.FailWithMessage("用户名或密码错误", c)
 		return
 	}
-	////检验是否启用
-	//if userModel.IsEnabled == false {
-	//	global.Log.Warn("用户未启用")
-	//	res.FailWithMessage("用户未启用", c)
-	//}
 
 	// 校验密码
 	isCheck := pwd.CheckPwd(userModel.Password, cr.Password)
 	if !isCheck {
+		middleware.RecordLoginFailure(ip, cr.UserName)
 		global.Log.Warn("用户名密码错误")
 		res.FailWithMessage("用户名或密码错误", c)
 		return
 	}
+
+	// 登录成功，清除限流状态
+	middleware.RecordLoginSuccess(ip, cr.UserName)
 
 	// 登录成功，生成token对
 	tokenPair, err := jwts.GenToken(jwts.JwtPayLoad{

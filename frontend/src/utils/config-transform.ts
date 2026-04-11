@@ -25,6 +25,14 @@ export function transformConfig(backendConfigs: BackendConfig[]): ConfigGroup[] 
     return acc;
   }, {} as Record<string, BackendConfig[]>);
 
+  // Sensitive fields never ship their plaintext value from the backend. We
+  // mark them here so the UI can show a "configured — leave blank to keep"
+  // placeholder and skip them on save when empty.
+  const isSensitive = (fieldName: string) => {
+    const n = fieldName.toLowerCase();
+    return n === 'privatekey' || n === 'apikey';
+  };
+
   // 转换为 ConfigGroup[] 格式
   const result = Object.entries(groupedByType).map(([type, configs]): ConfigGroup => {
     const items: ConfigItem[] = configs.map((config): ConfigItem => {
@@ -39,7 +47,8 @@ export function transformConfig(backendConfigs: BackendConfig[]): ConfigGroup[] 
           if (fieldNameLower.includes('key')) return 'textarea';
           return 'text';
         })(),
-        required: true,
+        required: !isSensitive(config.fieldName),
+        sensitive: isSensitive(config.fieldName),
         group: type,
       };
       return item as ConfigItem;

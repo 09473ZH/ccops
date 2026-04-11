@@ -69,8 +69,9 @@ func (ConfigurationApi) ConfigurationUpdateView(c *gin.Context) {
 		}
 	}
 
-	// ApiKey更新
-	if _, exists := requestData["apiKeyValue"]; exists {
+	// ApiKey更新 — sensitive field: ignore empty string so the masked value the UI
+	// re-submits doesn't overwrite the stored secret.
+	if _, exists := requestData["apiKeyValue"]; exists && cr.ApiKeyValue != nil && *cr.ApiKeyValue != "" {
 		if err := tx.Model(&models.Configuration{}).Where("field_name = ?", "ApiKey").Updates(map[string]interface{}{
 			"field_value": *cr.ApiKeyValue,
 			"is_changed":  true,
@@ -117,8 +118,9 @@ func (ConfigurationApi) ConfigurationUpdateView(c *gin.Context) {
 		}
 	}
 
-	// PrivateKey更新
-	if _, exists := requestData["privateKeyValue"]; exists {
+	// PrivateKey更新 — sensitive field: ignore empty string so the masked value the UI
+	// re-submits doesn't overwrite the stored key.
+	if _, exists := requestData["privateKeyValue"]; exists && cr.PrivateKeyValue != nil && *cr.PrivateKeyValue != "" {
 		if err := tx.Model(&models.Configuration{}).Where("field_name = ?", "PrivateKey").Updates(map[string]interface{}{
 			"field_value": *cr.PrivateKeyValue,
 			"is_changed":  true,

@@ -44,8 +44,9 @@ const userService = {
   /** 获取用户权限 */
   getPermissions: (id: string) => get<string[]>(UserApi.GetPermissions.replace(':id', id)),
 
-  /** 初始化用户密码 */
-  initializePassword: (params: { password: string }) => post(UserApi.Initialize, params),
+  /** 初始化用户密码 (首次登录强制改密) */
+  initializePassword: (params: { password: string; confirmPassword: string }) =>
+    post(UserApi.Initialize, params),
 
   /** 管理员重置用户密码 */
   resetPassword: (params: { id: string; password: string }) =>

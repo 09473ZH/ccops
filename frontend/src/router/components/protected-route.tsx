@@ -6,6 +6,8 @@ import { useUserToken } from '@/store/user';
 
 import { useRouter } from '../hooks';
 
+import ForceInitGuard from './force-init-guard';
+
 type Props = {
   children: React.ReactNode;
 };
@@ -23,5 +25,9 @@ export default function ProtectedRoute({ children }: Props) {
     check();
   }, [check]);
 
-  return <ErrorBoundary FallbackComponent={PageError}>{children}</ErrorBoundary>;
+  return (
+    <ErrorBoundary FallbackComponent={PageError}>
+      <ForceInitGuard>{children}</ForceInitGuard>
+    </ErrorBoundary>
+  );
 }

@@ -68,7 +68,11 @@ export default defineConfig(({ mode }) => {
       },
       proxy: {
         '/api': {
-          target: 'http://8.141.5.30:83',
+          // Honor VITE_APP_BASE_API from the active .env.* (override with a
+          // personal .env.development.local to point at a different backend).
+          // Hardcoding an internal IP here would leak infrastructure details
+          // into the repo.
+          target: env.VITE_APP_BASE_API || 'http://127.0.0.1:8080',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
         },

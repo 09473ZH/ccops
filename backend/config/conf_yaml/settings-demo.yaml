@@ -17,7 +17,8 @@ logger:
   show_line: true         # 显示行号
   log_in_console: true    # 控制台输出日志
 jwt:
-  secret: xxx     # JWT 密钥
-  issuer: xx     # JWT 发行者
+  # 必须是 >=32 字符的强随机值，或通过 CCOPS_JWT_SECRET 环境变量注入。
+  secret: ""
+  issuer: ccops
   accessExpires: 360      # 访问令牌过期时间（小时）
   refreshExpires: 1440     # 刷新令牌过期时间（小时）
